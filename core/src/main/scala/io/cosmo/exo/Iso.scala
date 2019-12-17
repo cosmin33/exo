@@ -23,16 +23,20 @@ trait Iso[->[_,_], A, B] { ab =>
   final def andThen[C](bc: Iso[->, B, C]): Iso.Aux[->, TC, A, C] =
     Iso.unsafe(cat.andThen(ab.to, bc.to), cat.andThen(bc.from, ab.from))(cat)
 
+  /** Flips the isomorphism from A <-> B to B <-> A grace to it's reflexivity property */
   def flip: Iso.Aux[->, TC, B, A] = new Iso[->, B, A] {
     type TC[a] = ab.TC[a]
     val (cat, to, from) = (ab.cat, ab.from, ab.to)
     override val flip = ab
   }
 
+  /** If A <-> B then having a function B -> B we can obtain A -> A */
   def teleport(f: ->[A, A])(implicit C: Semicategory[->]): ->[B, B] = C.andThen(ab.from, C.andThen(f, ab.to))
 
+  /** Having A <-> B searches implicits for B <-> C to obtain A <-> C */
   def chain[C](implicit i: HasIso[->, B, C]): Iso[->, A, C] = ab.andThen(i)
 
+  /** Having F <~> G searches implicits for G <~> H to obtain F <~> H */
   def chainK[C[_]](implicit
     ev: -> =~~= FunK,
     ta: IsTypeF[A],
@@ -40,6 +44,7 @@ trait Iso[->[_,_], A, B] { ab =>
     i: HasIso[->, B, TypeF[C]],
   ): Iso[->, A, TypeF[C]] = ab.andThen(i)
 
+  /** For some invariant F[_] if we have an F[A] we can obtain an F[B] using A <-> B */
   def derive[F[_]](implicit fa: F[A], I: Exofunctor.InvF[F], eq: -> =~~= Function1): F[B] =
     I.map(Dicat[* => *, A, B](eq(ab.to), eq(ab.from)))(fa)
 
@@ -51,9 +56,11 @@ trait Iso[->[_,_], A, B] { ab =>
     eq: -> =~~= FunK,
   ): HasTc[TC, B] = I.map(Dicat(eq(ab.to), eq(ab.from)))(tc)
 
+  /** From A <-> B, X <-> Y we can obtain (A ⨂ X) <-> (B ⨂ Y) if -> has a Cartesian instance with ⨂ */
   def and[I, J, ⨂[_,_]](that: Iso[->, I, J])(implicit C: Cartesian[->, ⨂]): Iso[->, ⨂[A, I], ⨂[B, J]] =
     Iso.unsafe(C.pair(ab.to, that.to), C.pair(ab.from, that.from))(ab.cat)
 
+  /** From A <-> B, X <-> Y we can obtain (A ⨁ X) <-> (B ⨁ Y) if -> has a Cocartesian instance with ⨁ */
   def or[I, J, ⨁[_,_]](that: Iso[->, I, J])(implicit C: Cocartesian[->, ⨁]): Iso[->, ⨁[A, I], ⨁[B, J]] =
     Iso.unsafe(C.pair(ab.to, that.to), C.pair(ab.from, that.from))(ab.cat)
 }
