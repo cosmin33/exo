@@ -28,7 +28,7 @@ class TypeHolderTests extends AnyFunSuite  {
 
     def load: ListHolderFromH = new ListHolderFromH
 
-    val lh = load.applyT(t => List.empty[t.Type])
+    val lh = load.applyT(t => List.empty[t.T])
 
     //implicitly[lh.T]
 

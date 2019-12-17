@@ -46,7 +46,7 @@ object IsK {
     def subst[F[_[_]]](fa: F[A]): F[A] = fa
   }
 
-  lazy val forall = ForallK.of[λ[f[_] => f =~= f]].fromH(t => new Refl[t.TypeF]())
+  lazy val forall = ForallK.of[λ[f[_] => f =~= f]].fromH(t => new Refl[t.T]())
 
   private type ForallFG[F[_], G[_]] = ForallHK[λ[a[_[_]] => a[F] <=> a[G]]]
   def isoCanonic[F[_], G[_]]: ForallFG[F, G] <=> (F =~= G) =
@@ -56,7 +56,7 @@ object IsK {
     )
   def isoExtensionality[F[_], G[_]]: ∀[λ[a => F[a] === G[a]]] <=> (F =~= G) =
     Iso.unsafeT(
-      fa => Axioms.tcExtensionality[F, G].applyT(t => fa[t.Type]),
+      fa => Axioms.tcExtensionality[F, G].applyT(t => fa[t.T]),
       fg => ∀.of[λ[a => F[a] === G[a]]].from(fg.is)
     )
 

@@ -2,6 +2,7 @@ package io.cosmo.exo.ops
 
 import scala.reflect.macros.blackbox
 
+// Copied from scalaz 8
 // Originally inspired by http://typelevel.org/blog/2013/10/13/spires-ops-macros.html
 
 /** Zero-cost syntax ops macros.

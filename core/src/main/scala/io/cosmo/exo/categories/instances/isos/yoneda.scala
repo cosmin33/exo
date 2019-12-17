@@ -100,7 +100,7 @@ trait yoneda {
       ab => {
         val fn1: (* => A) ~> (* => B) = coyoEmbedding[A, B].from(ab.to)
         val fn2: (* => B) ~> (* => A) = coyoEmbedding[B, A].from(ab.from)
-        ∀.mk[(* => A) <~> (* => B)].fromH(t => Iso.unsafeT(fn1[t.Type], fn2[t.Type]))
+        ∀.mk[(* => A) <~> (* => B)].fromH(t => Iso.unsafeT(fn1[t.T], fn2[t.T]))
       }
     )
   def yoCorol2[A, B]: ((A => *) <~> (B => *)) <=> (B <=> A) =
@@ -109,7 +109,7 @@ trait yoneda {
       ba => {
         val fn1: (A => *) ~> (B => *) = yoEmbedding[A, B].from(ba.to)
         val fn2: (B => *) ~> (A => *) = yoEmbedding[B, A].from(ba.from)
-        ∀.mk[(A => *) <~> (B => *)].fromH(t => Iso.unsafeT(fn1[t.Type], fn2[t.Type]))
+        ∀.mk[(A => *) <~> (B => *)].fromH(t => Iso.unsafeT(fn1[t.T], fn2[t.T]))
       }
     )
 

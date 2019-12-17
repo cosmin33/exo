@@ -28,7 +28,7 @@ trait IsInjective[F[_]] { F =>
    * of types and type constructors.
    */
   def monomorphism[G[_], H[_]](p: λ[x => F[G[x]]] =~= λ[x => F[H[x]]]): G =~= H =
-    Axioms.tcExtensionality[G, H].applyT { t => type T = t.Type
+    Axioms.tcExtensionality[G, H].applyT { t => type T = t.T
       F[G[T], H[T]](p.lower[λ[x[_] => x[T]]])
     }
 

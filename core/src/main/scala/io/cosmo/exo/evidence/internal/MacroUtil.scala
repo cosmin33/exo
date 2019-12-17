@@ -5,6 +5,7 @@ import io.cosmo.exo.evidence.TypeId
 
 import scala.reflect.macros.{blackbox, whitebox}
 
+/**  Copied from Alex Konovalov's "Leibniz" library: https://github.com/alexknvl/leibniz */
 @SuppressWarnings(Array("org.wartremover.warts.AsInstanceOf"))
 sealed abstract class Shared[C <: blackbox.Context] {
   val c: C

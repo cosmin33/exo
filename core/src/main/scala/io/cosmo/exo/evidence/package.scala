@@ -5,8 +5,7 @@ import scala.language.experimental.macros
 
 package object evidence {
 
-//  type ⋁[+A, +B] = Either[A, B]
-//  type ⋀[+A, +B] = (A, B)
+  type =:!=[A, B] = NotEq[A, B]
 
   type Proposition[A] = inhabitance.Proposition[A]
   val  Proposition = inhabitance.Proposition
@@ -30,7 +29,7 @@ package object evidence {
   val  SingletonOf = inhabitance.SingletonOf
   type <::[A, +B] = inhabitance.SingletonOf[A, B]
 
-  type ===[A, B]   = Is[A, B]
+  type ===[A, B] = Is[A, B]
 
   type WeakApart[A, B] = weakapart.WeakApart[A, B]
   val  WeakApart = weakapart.WeakApart

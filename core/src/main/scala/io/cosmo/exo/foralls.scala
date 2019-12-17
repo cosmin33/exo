@@ -387,15 +387,15 @@ object foralls {
     //////////////////////////// ⨂
     /** ∀ distributes over Tuple2 */
     def fnPdTo[F[_], G[_]]: ∀[λ[x => (F[x], G[x])]] => (∀[F], ∀[G]) =
-      f => (∀.of[F].fromH(x => f.apply[x.Type]._1), ∀.of[G].fromH(x => f.apply[x.Type]._2))
+      f => (∀.of[F].fromH(t => f.apply[t.T]._1), ∀.of[G].fromH(t => f.apply[t.T]._2))
     def fnPdFr[F[_], G[_]]: ((∀[F], ∀[G])) => ∀[λ[x => (F[x], G[x])]] =
-      {case (f, g) => ∀.of[λ[x => (F[x], G[x])]].fromH(x => (f[x.Type], g[x.Type]))}
+      {case (f, g) => ∀.of[λ[x => (F[x], G[x])]].fromH(t => (f[t.T], g[t.T]))}
     def isoDistribTuple[F[_], G[_]]: ∀[λ[x => (F[x], G[x])]] <=> (∀[F], ∀[G]) = Iso.unsafeT(fnPdTo, fnPdFr)
 
     //////////////////////// ⨁
     /** ∀ distributes over \/ (one way only) */
     def fnCdFr[F[_], G[_]]: (∀[F] \/ ∀[G]) => ∀[λ[x => F[x] \/ G[x]]] =
-      e => ∀.of[λ[x => F[x] \/ G[x]]].fromH(T => e.fold(_.apply[T.Type].left, _.apply[T.Type].right))
+      e => ∀.of[λ[x => F[x] \/ G[x]]].fromH(t => e.fold(_.apply[t.T].left, _.apply[t.T].right))
 
     ////////////////////////
     /** ∀ kinda distributes over => */
@@ -408,9 +408,9 @@ object foralls {
     ////////////////////////
     /** ∀ is commutative */
     def commute1[F[_,_]]: ∀[λ[a => ∀[F[a, *]]]] => ∀[λ[b => ∀[F[*, b]]]] =
-      ab => ∀.of[λ[b => ∀[F[*, b]]]].fromH(b => ∀.of[F[*, b.Type]].fromH(a => ab[a.Type][b.Type]))
+      ab => ∀.of[λ[b => ∀[F[*, b]]]].fromH(b => ∀.of[F[*, b.T]].fromH(a => ab[a.T][b.T]))
     def commute2[F[_,_]]: ∀[λ[b => ∀[F[*, b]]]] => ∀[λ[a => ∀[F[a, *]]]] =
-      ab => ∀.of[λ[a => ∀[F[a, *]]]].fromH(a => ∀.of[F[a.Type, *]].fromH(b => ab[b.Type][a.Type]))
+      ab => ∀.of[λ[a => ∀[F[a, *]]]].fromH(a => ∀.of[F[a.T, *]].fromH(b => ab[b.T][a.T]))
     def isoCommute[F[_,_]]: ∀[λ[a => ∀[λ[b => F[a, b]]]]] <=> ∀[λ[b => ∀[λ[a => F[a, b]]]]] =
       Iso.unsafeT(commute1[F], commute2[F])
 

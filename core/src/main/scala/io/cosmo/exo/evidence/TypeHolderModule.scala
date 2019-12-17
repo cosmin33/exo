@@ -1,60 +1,60 @@
 package io.cosmo.exo.evidence
 
 trait TypeHolderModule {
-  type Type
+  type T
 }
 
 object TypeHolderModule {
   trait Tag extends Any
-  type Aux[T] = TypeHolderModule with Tag { type Type = T }
+  type Aux[X] = TypeHolderModule with Tag { type T = X }
 
-  def apply[T]: Aux[T] = new TypeHolderModule with Tag { type Type = T }
+  def apply[X]: Aux[X] = new TypeHolderModule with Tag { type T = X }
 }
 
 trait TypeHolder2Module {
-  type TypeA
-  type TypeB
+  type T1
+  type T2
 }
 
 object TypeHolder2Module {
   trait Tag extends Any
-  type Aux[A, B] = TypeHolder2Module with Tag { type TypeA = A; type TypeB = B }
+  type Aux[X, Y] = TypeHolder2Module with Tag { type T1 = X; type T2 = Y }
 
-  def apply[A, B]: Aux[A, B] = new TypeHolder2Module with Tag { type TypeA = A; type TypeB = B }
+  def apply[X, Y]: Aux[X, Y] = new TypeHolder2Module with Tag { type T1 = X; type T2 = Y }
 }
 
 trait TypeHolder3Module {
-  type TypeA
-  type TypeB
-  type TypeC
+  type T1
+  type T2
+  type T3
 }
 
 object TypeHolder3Module {
   trait Tag extends Any
-  type Aux[A, B, C] = TypeHolder3Module with Tag { type TypeA = A; type TypeB = B; type TypeC = C }
+  type Aux[X, Y, Z] = TypeHolder3Module with Tag { type T1 = X; type T2 = Y; type T3 = Z }
 
-  def apply[A, B, C]: Aux[A, B, C] = new TypeHolder3Module with Tag { type TypeA = A; type TypeB = B; type TypeC = C }
+  def apply[X, Y, Z]: Aux[X, Y, Z] = new TypeHolder3Module with Tag { type T1 = X; type T2 = Y; type T3 = Z }
 }
 
 trait TypeHolderKModule {
-  type TypeF[_]
+  type T[_]
 }
 
 object TypeHolderKModule {
   trait Tag extends Any
-  type Aux[F[_]] = TypeHolderKModule with Tag {type TypeF[x] = F[x]}
+  type Aux[F[_]] = TypeHolderKModule with Tag {type T[x] = F[x]}
 
-  def apply[F[_]]: Aux[F] = new TypeHolderKModule with Tag {type TypeF[x] = F[x]}
+  def apply[F[_]]: Aux[F] = new TypeHolderKModule with Tag {type T[x] = F[x]}
 }
 
 trait TypeholderHKModule {
-  type TypeH[_[_]]
+  type T[_[_]]
 }
 
 object TypeholderHKModule {
   trait Tag extends Any
-  type Aux[H[_[_]]] = TypeholderHKModule with Tag {type TypeH[x[_]] = H[x]}
+  type Aux[H[_[_]]] = TypeholderHKModule with Tag {type T[x[_]] = H[x]}
 
-  def apply[H[_[_]]]: Aux[H] = new TypeholderHKModule with Tag {type TypeH[x[_]] = H[x]}
+  def apply[H[_[_]]]: Aux[H] = new TypeholderHKModule with Tag {type T[x[_]] = H[x]}
 }
 

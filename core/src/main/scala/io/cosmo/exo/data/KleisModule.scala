@@ -1,6 +1,5 @@
-package io.cosmo.exo.categories.data
+package io.cosmo.exo.data
 
-import io.cosmo.exo.<=>
 import io.cosmo.exo.evidence.{===, Is}
 
 trait KleisModule {

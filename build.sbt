@@ -105,5 +105,5 @@ lazy val root = project.in(file("."))
 
 lazy val core = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
-  .settings(name := "meow-mtl-core")
+  .settings(name := "exo-core")
   .settings(commonSettings)

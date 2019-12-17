@@ -3,14 +3,14 @@ package io.cosmo.exo.categories.functors
 import io.cosmo.exo.categories._
 import simulacrum.typeclass
 
-trait ExofunctorK[~~>[_[_],_[_]], |=>[_,_], Alg[_[_]]] {
+trait ExofunctorK[==>[_[_],_[_]], -->[_,_], Alg[_[_]]] {
   type TC1[_[_]]
-  def C: CategoryK.Aux[~~>, TC1]
+  def C: CategoryK.Aux[==>, TC1]
 
   type TC2[_]
-  def D: Subcat.Aux[|=>, TC2]
+  def D: Subcat.Aux[-->, TC2]
 
-  def mapK[F[_], G[_]](f: F ~~> G): Alg[F] |=> Alg[G]
+  def mapK[F[_], G[_]](f: F ==> G): Alg[F] --> Alg[G]
 }
 
 object ExofunctorK {

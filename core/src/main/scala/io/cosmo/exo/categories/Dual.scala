@@ -1,6 +1,5 @@
 package io.cosmo.exo.categories
 
-import io.cosmo.exo._
 import io.cosmo.exo.evidence.{===, =~~=, Is, IsK2}
 
 sealed trait DualModule {

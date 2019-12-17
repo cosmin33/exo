@@ -4,11 +4,11 @@ import io.cosmo.exo.categories.{Dual, Opp, Subcat}
 import io.cosmo.exo.evidence.{===, =~=, Is}
 import io.cosmo.exo.typeclasses.{IsTypeF, TypeF}
 
-trait FunK[A, B] {
+trait FunK[TA, TB] {
   type TypeA[_]
   type TypeB[_]
-  def eqA: TypeF[TypeA] === A
-  def eqB: TypeF[TypeB] === B
+  def eqA: TypeF[TypeA] === TA
+  def eqB: TypeF[TypeB] === TB
   def instance: TypeA ~> TypeB
 }
 object FunK {
@@ -40,11 +40,13 @@ object FunK {
   implicit def isoCanonic[F[_], G[_]]: FunK[TypeF[F], TypeF[G]] <=> ~>[F, G] =
     Iso.unsafeT(forallTo[F, G], forallFr[F, G])
 
-  implicit def conversion[F[_], G[_]](fn: F ~> G): FunK[TypeF[F], TypeF[G]] = apply(fn)
+  implicit def conversion[F[_], G[_]](fn: F ~> G): FunK[TypeF[F], TypeF[G]] = forallFr.of[F, G](fn)
 
   implicit def categ: Subcat.Aux[FunK, IsTypeF] =
     new Subcat[FunK] {
       type TC[a] = IsTypeF[a]
+
+//      def id[A](implicit tc: IsTypeF[A]) = apply(∀.mk[tc.Type ~> tc.Type].from(a => a))
 
       def id[A](implicit tc: IsTypeF[A]) = new FunK[A, A] {
         type T[a] = tc.Type[a]

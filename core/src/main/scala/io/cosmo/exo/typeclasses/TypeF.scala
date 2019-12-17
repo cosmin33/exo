@@ -12,7 +12,7 @@ sealed abstract class TypeF[F[_]]
 object TypeF {
   def apply[F[_]]: TypeF[F] = forall.apply[F]
 
-  val forall: ForallK[TypeF] = ForallK.of[TypeF].fromH(f => new TypeF[f.TypeF] {})
+  val forall: ForallK[TypeF] = ForallK.of[TypeF].fromH(f => new TypeF[f.T] {})
 
   implicit def impl: ForallK[TypeF] = forall
 
