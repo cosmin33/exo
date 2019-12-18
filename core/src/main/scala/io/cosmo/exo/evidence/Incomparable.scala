@@ -22,7 +22,7 @@ object Incomparable {
     new Incomparable[A, B](notBelow, notAbove)
 
   implicit def isoCanonic[A, B]: Canonic[A, B]  <=> (A >~< B) =
-    Iso.unsafeT({case (nb, na) => witness(nb, na)}, c => (c.notLessOrEqual, c.notGreaterOrEqual))
+    Iso.unsafe({case (nb, na) => witness(nb, na)}, c => (c.notLessOrEqual, c.notGreaterOrEqual))
 
   /**
    * a ≸ b ⟺ ¬(a ~ b) ⋀ ¬(a < b) ⋀ ¬(b < a)
@@ -50,7 +50,7 @@ object Incomparable {
   def irreflexive[A](ev: A >~< A): Void = ev.notEqual(Is.refl)
 
   implicit def proposition[A, B]: Proposition[Incomparable[A, B]] =
-    (Proposition[¬[A <~< B]] zip Proposition[¬[B <~< A]]).isomap(Iso.unsafeT(
+    (Proposition[¬[A <~< B]] zip Proposition[¬[B <~< A]]).isomap(Iso.unsafe(
       p => witness(p._1, p._2),
       p => (p.notLessOrEqual, p.notGreaterOrEqual)
     ))

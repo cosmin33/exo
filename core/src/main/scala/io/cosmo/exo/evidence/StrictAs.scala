@@ -96,7 +96,7 @@ object StrictAs {
   }
 
   implicit def isoCanonic[A, B]: (A =!= B, A <~< B)  <=> (A </< B) =
-    Iso.unsafeT({case (nb, ab) => witness(nb, ab)}, c => (c.inequality, c.conformity))
+    Iso.unsafe({case (nb, ab) => witness(nb, ab)}, c => (c.inequality, c.conformity))
 
   implicit def witness[A, B](implicit nab: A =!= B, conformity: A <~< B): StrictAs[A, B] =
     new Witness[A, B](nab, conformity)
@@ -113,7 +113,7 @@ object StrictAs {
     ev.inequality[A, A](Is.refl)
 
   implicit def strictAsIsProposition[A, B]: Proposition[StrictAs[A, B]] =
-    (Proposition[A =!= B] zip Proposition[A <~< B]).isomap(Iso.unsafeT(
+    (Proposition[A =!= B] zip Proposition[A <~< B]).isomap(Iso.unsafe(
       p => witness(p._1, p._2),
       p => (p.inequality[A, B], p.conformity)
     ))

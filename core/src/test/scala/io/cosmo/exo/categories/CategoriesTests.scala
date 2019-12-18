@@ -12,7 +12,7 @@ class CategoriesTests  extends AnyFunSuite with Matchers {
   implicitly[Subcat.Aux[Function1, Trivial.T1]]
   implicitly[Subcat[Function1]]
 
-  implicitly[Subcat[Opp[Function1]#l]]
+  implicitly[Subcat[Dual[Function1, *, *]]]
 
   implicitly[Subcat[ProdCat[Function1, Function1, *, *]]]
 

@@ -38,7 +38,7 @@ object FunK {
   }
 
   implicit def isoCanonic[F[_], G[_]]: FunK[TypeF[F], TypeF[G]] <=> ~>[F, G] =
-    Iso.unsafeT(forallTo[F, G], forallFr[F, G])
+    Iso.unsafe(forallTo[F, G], forallFr[F, G])
 
   implicit def conversion[F[_], G[_]](fn: F ~> G): FunK[TypeF[F], TypeF[G]] = forallFr.of[F, G](fn)
 

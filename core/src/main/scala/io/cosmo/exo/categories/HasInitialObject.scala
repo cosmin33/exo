@@ -1,6 +1,6 @@
 package io.cosmo.exo.categories
 
-import io.cosmo.exo.Iso
+import io.cosmo.exo.{<=>, Iso}
 
 trait HasInitialObject[->[_, _]] extends Subcat[->] {
   type Initial
@@ -17,8 +17,8 @@ object HasInitialObject extends HasInitialObjectInstances {
   implicit def isoUnit[->[_,_], TC[_], Init, A](implicit
     i: HasInitialObject.Aux[->, TC, Init],
     tc: TC[A]
-  ): Iso.AuxTF[Init -> A, Unit] =
-    Iso.unsafeT((_: Init -> A) => (), (_: Unit) => i.initiate[A])
+  ): (Init -> A) <=> Unit =
+    Iso.unsafe((_: Init -> A) => (), (_: Unit) => i.initiate[A])
 
 }
 

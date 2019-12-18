@@ -19,11 +19,9 @@ object Subcat {
 
   def oppCategory[->[_,_], C[_]](src: Subcat.Aux[->, C]): Subcat.Aux[Opp[->]#l, C] =
     new SemicategoryHelpers.Fun1OppSubcategory[->, C] { val op = src }
-  implicit def dualCategory[->[_,_], C[_]](src: Subcat.Aux[->, C]): Subcat.Aux[Dual[->,*,*], C] =
-    new SemicategoryHelpers.Fun1DualSubcategory[->, C] { val op = src }
 
   implicit class SubcatOps[->[_,_]](val s: Subcat[->]) extends AnyVal {
-    def opp: Subcat.Aux[Dual[->,*,*], s.TC] = dualCategory[->, s.TC](s)
+    def opp: Subcat.Aux[Dual[->,*,*], s.TC] = DualModule.category[->, s.TC](s)
   }
 
 }

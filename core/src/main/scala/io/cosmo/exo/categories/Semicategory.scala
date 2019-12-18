@@ -23,8 +23,7 @@ object Semicategory
 import SemicategoryHelpers._
 trait SemicategoryImplicits extends SemicategoryImplicits01 {
 
-  implicit def function1OppCat: Subcat.AuxT[Opp[* => *]#l] = Subcat.oppCategory(function1)
-  implicit def function1DualCat: Subcat.AuxT[Dual[* => *,*,*]] = Subcat.dualCategory(function1)
+  def function1OppCat: Subcat.AuxT[Opp[* => *]#l] = Subcat.oppCategory(function1)
 
   implicit def mapSemicategory: Semicategory[Map] = new Semicategory[Map] {
     override def andThen[A, B, C](ab: Map[A, B], bc: Map[B, C]): Map[A, C] =
@@ -39,11 +38,14 @@ trait SemicategoryImplicits extends SemicategoryImplicits01 {
     }
 
   implicit def function1: Ccc.Aux[Function1, Tuple2, Trivial.T1, Unit, Function1] =
-      new Ccc[Function1] with Function1Subcategory {
-        def cartesian = Associative.cartesianFn1Tuple
+      new Ccc[Function1] {
+        type TC[a] = Trivial.T1[a]
         type Hom[a,b] = a => b
         type ⊙[a,b] = (a, b)
         type ProductId = Unit
+        def cartesian = Associative.cartesianFn1Tuple
+        def id[A](implicit A: TC[A]): A => A = identity
+        def andThen[A, B, C](ab: A => B, bc: B => C): A => C = bc.compose(ab)
         def apply[A, B]: ⊙[A => B, A] => B = p => p._1(p._2)
         def curry[X, Y, Z](f: ⊙[X, Y] => Z): X => (Y => Z) = x => y => f((x, y))
         def uncurry[X, Y, Z](f: X => (Y => Z)): ⊙[X, Y] => Z = { case (x, y) => f(x)(y) }
@@ -66,22 +68,11 @@ object SemicategoryHelpers {
     override def concretize[A, B](ab: A === B): (A, Trivial.T1[A]) => (B, Trivial.T1[B]) =
       (a, p) => ab.subst[λ[X => (X, Trivial.T1[X])]]((a, p))
   }
-  trait Function1Subcategory extends Subcat[Function1] {
-    type TC[a] = Trivial.T1[a]
-    def id[A](implicit A: TC[A]): A => A = identity
-    def andThen[A, B, C](ab: A => B, bc: B => C): A => C = bc.compose(ab)
-  }
   trait Fun1OppSubcategory[->[_,_], C[_]] extends Subcat[Opp[->]#l] {
     type TC[a] = C[a]
     protected def op: Subcat.Aux[->, C]
     override def id[A](implicit A: TC[A]): A -> A = op.id[A]
     override def andThen[X, Y, Z](ab: Y -> X, bc: Z -> Y): Z -> X = op.andThen(bc, ab)
-  }
-  trait Fun1DualSubcategory[->[_,_], C[_]] extends Subcat[Dual[->,*,*]] {
-    type TC[a] = C[a]
-    protected def op: Subcat.Aux[->, C]
-    override def id[A](implicit A: TC[A]): Dual[->, A, A] = op.id[A]
-    override def andThen[X, Y, Z](ab: Dual[->, X, Y], bc: Dual[->, Y, Z]): Dual[->, X, Z] = op.andThen(bc, ab)
   }
 }
 

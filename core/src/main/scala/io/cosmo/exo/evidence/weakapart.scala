@@ -93,10 +93,10 @@ object weakapart {
 
     def witness[A, B](fn: (A === B) => Void): A =!= B = fn.coerce
 
-    implicit def isoCanonic[A, B]: ((A === B) => Void) <=> (A =!= B) = Iso.unsafeT(witness, _.run)
+    implicit def isoCanonic[A, B]: ((A === B) => Void) <=> (A =!= B) = Iso.unsafe(witness, _.run)
 
     implicit def proposition[A, B]: Proposition[A =!= B] =
-      Proposition.negation[A === B].isomap(Iso.unsafeT(x => WeakApart.witness(x.run), x => ¬.witness(x.run)))
+      Proposition.negation[A === B].isomap(Iso.unsafe(x => WeakApart.witness(x.run), x => ¬.witness(x.run)))
 
     implicit def inhabited[A, B](implicit A: ¬¬[A === B]): ¬[A =!= B] =
       ¬.witness(nab => A.contradicts(ab => nab.contradicts(ab)))

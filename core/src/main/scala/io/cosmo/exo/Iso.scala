@@ -1,40 +1,40 @@
 package io.cosmo.exo
 
-import cats.Invariant
 import io.cosmo.exo.Iso.HasIso
 import io.cosmo.exo.categories._
 import io.cosmo.exo.categories.data.ProdCat.Dicat
 import io.cosmo.exo.categories.functors.{Endobifunctor, Exofunctor}
-import io.cosmo.exo._
-import io.cosmo.exo.evidence.{=!=, =~~=, IsK2}
+import io.cosmo.exo.evidence.{=!=, =:!=, =~~=, IsK2}
 import io.cosmo.exo.internalstuff.TupleGeneric
 import io.cosmo.exo.typeclasses.{HasTc, IsTypeF, TypeF}
-import shapeless.tag.@@
-import shapeless.{tag, the}
+import io.estatico.newtype.macros.newtype
+import shapeless.{Generic, HList}
 
 trait Iso[->[_,_], A, B] { ab =>
-  type TC[_]
-  def cat: Subcat.Aux[->, TC]
+  def cat: Subcat[->]
   def to:   A -> B
   def from: B -> A
 
+  private type <->[X, Y] = Iso[->, X, Y]
+
   final def apply(a: A)(implicit ev: IsK2[->, * => *]): B = ev(to)(a)
 
-  final def andThen[C](bc: Iso[->, B, C]): Iso.Aux[->, TC, A, C] =
+  final def andThen[C](bc: B <-> C): A <-> C =
     Iso.unsafe(cat.andThen(ab.to, bc.to), cat.andThen(bc.from, ab.from))(cat)
 
+  final def compose[Z](za: Z <-> A): Z <-> B = za.andThen(ab)
+
   /** Flips the isomorphism from A <-> B to B <-> A grace to it's reflexivity property */
-  def flip: Iso.Aux[->, TC, B, A] = new Iso[->, B, A] {
-    type TC[a] = ab.TC[a]
+  def flip: B <-> A = new (B <-> A) {
     val (cat, to, from) = (ab.cat, ab.from, ab.to)
     override val flip = ab
   }
 
   /** If A <-> B then having a function B -> B we can obtain A -> A */
-  def teleport(f: ->[A, A])(implicit C: Semicategory[->]): ->[B, B] = C.andThen(ab.from, C.andThen(f, ab.to))
+  def teleport(f: A -> A)(implicit C: Semicategory[->]): B -> B = C.andThen(ab.from, C.andThen(f, ab.to))
 
   /** Having A <-> B searches implicits for B <-> C to obtain A <-> C */
-  def chain[C](implicit i: HasIso[->, B, C]): Iso[->, A, C] = ab.andThen(i)
+  def chain[C](implicit i: HasIso[->, B, C]): A <-> C = ab.andThen(i)
 
   /** Having F <~> G searches implicits for G <~> H to obtain F <~> H */
   def chainK[C[_]](implicit
@@ -42,7 +42,7 @@ trait Iso[->[_,_], A, B] { ab =>
     ta: IsTypeF[A],
     tb: IsTypeF[B],
     i: HasIso[->, B, TypeF[C]],
-  ): Iso[->, A, TypeF[C]] = ab.andThen(i)
+  ): A <-> TypeF[C] = ab.andThen(i)
 
   /** For some invariant F[_] if we have an F[A] we can obtain an F[B] using A <-> B */
   def derive[F[_]](implicit fa: F[A], I: Exofunctor.InvF[F], eq: -> =~~= Function1): F[B] =
@@ -57,90 +57,69 @@ trait Iso[->[_,_], A, B] { ab =>
   ): HasTc[TC, B] = I.map(Dicat(eq(ab.to), eq(ab.from)))(tc)
 
   /** From A <-> B, X <-> Y we can obtain (A ⨂ X) <-> (B ⨂ Y) if -> has a Cartesian instance with ⨂ */
-  def and[I, J, ⨂[_,_]](that: Iso[->, I, J])(implicit C: Cartesian[->, ⨂]): Iso[->, ⨂[A, I], ⨂[B, J]] =
-    Iso.unsafe(C.pair(ab.to, that.to), C.pair(ab.from, that.from))(ab.cat)
+  def and[I, J, ⨂[_,_]](that: I <-> J)(implicit C: Cartesian[->, ⨂]): ⨂[A, I] <-> ⨂[B, J] =
+    Iso.unsafe(C.pair(ab.to, that.to), C.pair(ab.from, that.from))(C.C)
 
   /** From A <-> B, X <-> Y we can obtain (A ⨁ X) <-> (B ⨁ Y) if -> has a Cocartesian instance with ⨁ */
-  def or[I, J, ⨁[_,_]](that: Iso[->, I, J])(implicit C: Cocartesian[->, ⨁]): Iso[->, ⨁[A, I], ⨁[B, J]] =
+  def or[I, J, ⨁[_,_]](that: I <-> J)(implicit C: Cocartesian[->, ⨁]): ⨁[A, I] <-> ⨁[B, J] =
     Iso.unsafe(C.pair(ab.to, that.to), C.pair(ab.from, that.from))(ab.cat)
 }
 
 object Iso extends IsoInstances {
-  type Aux[->[_,_], C[_], A, B] = Iso[->, A, B] { type TC[x] = C[x] }
-  type AuxT[->[_,_], A, B] = Iso.Aux[->, Trivial.T1, A, B]
-  type AuxF[C[_], A, B] = Iso.Aux[* => *, C, A, B]
-  type AuxTF[A, B] = Iso.Aux[* => *, Trivial.T1, A, B]
-
   def apply[->[_,_], A, B](implicit iso: Iso[->, A, B]): Iso[->, A, B] = iso
 
   private final class Refl[A]() extends Iso[* => *, A, A] {
     type TC[a] = Trivial.T1[a]
-    val cat = Semicategory.function1
+    val cat = implicitly
     val to = identity
     val from = identity
   }
   private val refl_ : ∀[Refl] = ∀.of[Refl](new Refl())
 
-  def refl[A]: Iso.AuxTF[A, A] = refl_[A]
+  def refl[A]: Iso[* => *, A, A] = refl_[A]
 
-  def refl[->[_,_], A, Cons[_]](implicit c: Subcat.Aux[->, Cons], cons: Cons[A]): Iso.Aux[->, Cons, A, A] =
-    new Iso[->, A, A] {type TC[a] = Cons[a]; val cat = c; val to, from = c.id[A]}
+  def refl[->[_,_], A, Cons[_]](implicit c: Subcat.Aux[->, Cons], cons: Cons[A]): Iso[->, A, A] =
+    new Iso[->, A, A] {val cat = c; val to, from = c.id[A]}
 
-  def unsafe[->[_,_], A, B, T[_]](ab: A -> B, ba: B -> A)(implicit C: Subcat.Aux[->, T]): Iso.Aux[->, T, A, B] =
-    new Iso[->, A, B] {type TC[a] = T[a]; val (cat, to, from) = (C, ab, ba)}
-
-  def unsafeT[A, B](to: A => B, from: B => A): Iso.Aux[* => *, Trivial.T1, A, B] = unsafe(to, from)
+  def unsafe[->[_,_], A, B](ab: A -> B, ba: B -> A)(implicit C: Subcat[->]): Iso[->, A, B] =
+    new Iso[->, A, B] {val (cat, to, from) = (C, ab, ba)}
 
   /** Isomorphism between a case class and a tuple of the proper arity (using shapeless) */
-  def forCaseClass[S <: Product](implicit ev: TupleGeneric[S]): Iso.AuxTF[S, ev.Repr] =
-    Iso.unsafeT(s => ev.to(s), t => ev.from(t))
+  def forCaseClass[S <: Product](implicit ev: TupleGeneric[S]): Iso[* => *, S, ev.Repr] =
+    Iso.unsafe(s => ev.to(s), t => ev.from(t))
 
+  /** Isomorphism between a case class and it's generic representation (from shapeless) */
+  def forGeneric[A, Repr](implicit g: Generic.Aux[A, Repr]): <=>[A, Repr] = Iso.unsafe(g.to, g.from)
+
+  /** Any singleton is isomorphic with unit */
   implicit def isoUnitSingleton[A <: Singleton](implicit
     a: ValueOf[A]
-  ): Iso.AuxTF[Unit, A] =
-    Iso.unsafeT((_: Unit) => a.value, (_: A) => ())
+  ): A <=> Unit = Iso.unsafe((_: A) => (), (_: Unit) => a.value)
 
+  /** Any two singletons are isomorphic */
   implicit def isoBetweenSingletons[A <: Singleton, B <: Singleton](implicit
-    a: ValueOf[A],
-    b: ValueOf[B],
-    neq: A =!= B
-  ): Iso.AuxTF[A, B] =
-    Iso.unsafeT((_: A) => b.value, (_: B) => a.value)
+    a: ValueOf[A], b: ValueOf[B], neq: A =:!= B
+  ): A <=> B = Iso.unsafe((_: A) => b.value, (_: B) => a.value)
 
-  def isoUnitToA[A]:     Iso.AuxTF[Unit => A, A]         = Iso.unsafeT(_(()), a => _ => a)
-  def isoAToUnit[A]:     Iso.AuxTF[A => Unit, Unit]      = Iso.unsafeT(_ => (), _ => _ => ())
-  def isoVoidUnitU[A]:   Iso.AuxTF[Unit, Void => A]      = Iso.unsafeT(_ => a => a, _ => ())
-  def isoVoidUnit[A, B]: Iso.AuxTF[A => Unit, Void => B] = Iso.unsafeT(_ => v => v, _ => _ => ())
+  def isoUnitToA[A]:     <=>[Unit => A, A]         = Iso.unsafe(_(()), a => _ => a)
+  def isoAToUnit[A]:     <=>[A => Unit, Unit]      = Iso.unsafe(_ => (), _ => _ => ())
+  def isoVoidUnitU[A]:   <=>[Unit, Void => A]      = Iso.unsafe(_ => a => a, _ => ())
+  def isoVoidUnit[A, B]: <=>[A => Unit, Void => B] = Iso.unsafe(_ => v => v, _ => _ => ())
 
   def isoTerminalInitial[->[_,_], T, I, A, TC[_]](implicit
     T: HasTerminalObject.Aux[->, TC, T],
     I: HasInitialObject.Aux[->, TC, I],
     TC: TC[A]
-  ): Iso.AuxTF[A -> T, I -> A] = Iso.unsafeT(_ => I.initiate, _ => T.terminate)
+  ): (A -> T) <=> (I -> A) = Iso.unsafe(_ => I.initiate, _ => T.terminate)
 
-  case class SingleOf[T, U <: {type TC[_]}](widen: T {type TC[a] = U#TC[a]})
-  object SingleOf {
-    implicit def mkSingleOf[T <: {type TC[_]}](implicit t: T): SingleOf[T, t.type] = SingleOf(t)
-  }
-
-  type HasIso[->[_,_], A, B] = Iso[->, A, B] @@ HasIsoOps
+  @newtype case class HasIso[->[_,_], A, B](iso: Iso[->, A, B])
   object HasIso {
-    type Aux[->[_,_], T[_], A, B] = Iso.Aux[->, T, A, B] @@ HasIsoOps
-    def from[->[_,_], A, B](i: Iso[->, A, B]): HasIso[->, A, B] = tag[HasIsoOps][Iso[->,A,B]](i)
-    def fromT[->[_,_], T[_], A, B](i: Iso.Aux[->, T, A, B]): HasIso.Aux[->, T, A, B] = tag[HasIsoOps][Iso.Aux[->,T,A,B]](i)
-  }
-  trait HasIsoOps
-  object HasIsoOps extends HasIsoOps01 {
-    implicit def hasIsoImpRefl[->[_,_], A, T[_]](implicit s: Subcat.Aux[->, T], t: T[A]): HasIso.Aux[->, T, A, A] =
-      HasIso.fromT(Iso.refl[->, A, T])
-  }
-  trait HasIsoOps01 extends HasIsoOps02 {
-    implicit def hasIsoImpAB[->[_,_], A, B, T[_]](implicit
-      i: Iso.Aux[->, T, A, B]): HasIso.Aux[->, T, A, B] = HasIso.fromT(i)
-  }
-  trait HasIsoOps02 {
-    implicit def hasIsoImpBA[->[_,_], A, B, T[_]](implicit
-      i: Iso.Aux[->, T, B, A]): HasIso.Aux[->, T, A, B] = HasIso.fromT(i.flip)
+    implicit def conversionToIso[->[_, _], A, B](hi: HasIso[->, A, B]): Iso[->, A, B] = hi.iso
+
+    implicit def hasIsoImpRefl[->[_,_], A, T[_]](implicit s: Subcat.Aux[->, T], t: T[A]): HasIso[->, A, A] =
+      HasIso(Iso.refl[->, A, T])
+    implicit def hasIsoImpAB[->[_,_], A: * =:!= B, B](implicit i: Iso[->, A, B]): HasIso[->, A, B] = HasIso(i)
+    implicit def hasIsoImpBA[->[_,_], A: * =:!= B, B](implicit i: Iso[->, B, A]): HasIso[->, A, B] = HasIso(i.flip)
   }
 
   object syntax extends IsoSyntax

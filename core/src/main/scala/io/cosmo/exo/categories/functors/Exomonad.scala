@@ -32,7 +32,7 @@ object Exomonad {
 //    }
 //
 //  implicit def isoMonad2Exomonad[F[_]]: cats.Monad[F] => cats.Monad[F] <=> Exomonad.AuxF[Id, F] =
-//    Iso.unsafeT(
+//    Iso.unsafe(
 //      to   = (M: cats.Monad[F]) =>
 //        new Exomonad.AuxF[Id, F] {
 //          override def I: Endofunctor.AuxF[Id] = implicitly

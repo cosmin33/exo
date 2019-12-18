@@ -38,14 +38,12 @@ object IsTypeF {
 
   type FF[F[_], a] = IsTypeF[TypeF[F]]#Type[a]
 
-  def someStupidRel[F[_], x]: F[x] <~< FF[F, x] = {
+  def someStupidRel[F[_], X]: F[X] <~< FF[F, X] = {
     val ist: IsTypeF[TypeF[F]] = impl[F]
     def s1[A]: F[A] <~< ist.Type[A] = TypeF.injectivity(ist.eq.flip).is[A].toAs
     def s2[A] = the[ist.Type[A] <~< FF[F, A]]
     def za[A]: F[A] <~< FF[F, A] = s1.andThen(s2)
-    //def j1[A] = <~<[FF[F, A], ist.H[A]]
-    
-    za[x]
+    za[X]
   }
 }
 

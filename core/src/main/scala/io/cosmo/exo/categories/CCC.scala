@@ -29,7 +29,7 @@ trait Ccc[->[_, _]] extends Subcat[->] {
   def curry  [A, B, C](f: ⊙[A, B] -> C): A -> Hom[B, C]
   def uncurry[A, B, C](f: A -> Hom[B, C]): ⊙[A, B] -> C
 
-  def isoCurry[A, B, C]: (⊙[A, B] -> C) <=> (A -> Hom[B, C]) = Iso.unsafeT(curry, uncurry)
+  def isoCurry[A, B, C]: (⊙[A, B] -> C) <=> (A -> Hom[B, C]) = Iso.unsafe(curry, uncurry)
 }
 
 object Ccc {

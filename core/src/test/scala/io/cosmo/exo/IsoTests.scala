@@ -2,16 +2,12 @@ package io.cosmo.exo
 
 import cats.Semigroup
 import cats.implicits._
-import io.cosmo.exo.Iso.{Aux, AuxTF, HasIso}
-import io.cosmo.exo.categories.Trivial.T1
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.funsuite.AnyFunSuite
-import io.cosmo.exo.categories._
-import io.cosmo.exo.evidence._
+import io.cosmo.exo.Iso.HasIso
+import io.cosmo.exo.categories.conversions.CatsInstances._
 import io.cosmo.exo.typeclasses.TypeF
-import shapeless.{Refute, tag}
-import shapeless.tag.@@
-    import io.cosmo.exo.categories.conversions.CatsInstances._
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
+import shapeless.Refute
 
 class IsoTests extends AnyFunSuite with Matchers {
 
@@ -31,6 +27,8 @@ class IsoTests extends AnyFunSuite with Matchers {
     implicitly[HasIso[* => *, String, Int]]
     implicitly[HasIso[* => *, Int, String]]
     implicitly[HasIso[* => *, Int, Int]]
+    implicitly[HasIso[FunK, TypeF[List], TypeF[List]]]
+    implicitly[Refute[HasIso[* => *, String, Long]]]
   }
 
   test("case class <-> tupleN iso derivation") {
@@ -45,7 +43,7 @@ class IsoTests extends AnyFunSuite with Matchers {
 
   locally {
 
-    implicit def isoListVect: <~>[List, Vector] = ∀.mk[List <~> Vector].from(Iso.unsafeT(_.toVector, _.toList))
+    implicit def isoListVect: <~>[List, Vector] = ∀.mk[List <~> Vector].from(Iso.unsafe(_.toVector, _.toList))
     implicitly[<~>[List, Vector]]
 
 

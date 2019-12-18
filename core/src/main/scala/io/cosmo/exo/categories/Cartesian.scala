@@ -12,7 +12,7 @@ trait Cartesian[->[_, _], ⨂[_, _]] extends Monoidal[->, ⨂] with Symmetric[->
     &&&(C.andThen(fst[A, X], f), C.andThen(snd[A, X], g))
 
   def isoCartesian[X, Y, Z]: (X -> Y, X -> Z) <=> (X -> ⨂[Y, Z]) =
-    Iso.unsafeT(p => &&&(p._1, p._2), fn => (C.andThen(fn, fst[Y, Z]), C.andThen(fn, snd[Y, Z])))
+    Iso.unsafe(p => &&&(p._1, p._2), fn => (C.andThen(fn, fst[Y, Z]), C.andThen(fn, snd[Y, Z])))
 
 }
 

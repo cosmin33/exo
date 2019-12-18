@@ -14,9 +14,9 @@ trait Associative[->[_, _], ⊙[_, _]] {
   def associate  [X, Y, Z]: ⊙[⊙[X, Y], Z] -> ⊙[X, ⊙[Y, Z]]
   def diassociate[X, Y, Z]: ⊙[X, ⊙[Y, Z]] -> ⊙[⊙[X, Y], Z]
 
-  private type <->[a, b] = Iso.Aux[->, TC, a, b]
+  private type <->[a, b] = Iso[->, a, b]
   def isoCanonic[X, Y, Z]: ⊙[⊙[X, Y], Z] <-> ⊙[X, ⊙[Y, Z]] =
-    Iso.unsafe[->, ⊙[⊙[X, Y], Z], ⊙[X, ⊙[Y, Z]], TC](associate[X,Y,Z], diassociate[X,Y,Z])(C)
+    Iso.unsafe[->, ⊙[⊙[X, Y], Z], ⊙[X, ⊙[Y, Z]]](associate[X,Y,Z], diassociate[X,Y,Z])(C)
 }
 
 object Associative extends AssociativeImplicits {

@@ -73,14 +73,13 @@ object Exofunctor {
   ): Exomap[==>, -->, F] = ∀∀.mk[Exomap[==>, -->, F]].from(fun.map)
 
   implicit def isoContravariant[F[_]]: Exofunctor.ConF[F] <=> Contravariant[F] =
-    Iso.unsafeT[Exofunctor.ConF[F], Contravariant[F]](
+    Iso.unsafe(
       F => new Contravariant[F] { def contramap[A, B](fa: F[A])(f: B => A): F[B] = F.map[A, B](Dual(f))(fa) },
       F => unsafeTCon(∀∀.of[λ[(a,b) => Dual[* => *, a, b] => F[a] => F[b]]].from(ba => F.contramap(_)(ba)))
-
     )
 
   implicit def isoInvariant[F[_]]: Exofunctor.InvF[F] <=> Invariant[F] =
-    Iso.unsafeT(
+    Iso.unsafe(
       F => new Invariant[F] {
              def imap[A, B](fa: F[A])(f: A => B)(g: B => A): F[B] =
                F.map(Dicat[* => *, A, B](f, g)).apply(fa)
@@ -96,7 +95,7 @@ object Exofunctor {
     )
 
   implicit def isoCovariant[F[_]]: Endofunctor.CovF[F] <=> Functor[F] =
-    Iso.unsafeT(
+    Iso.unsafe(
       F => new Functor[F] { def map[A, B](fa: F[A])(f: A => B): F[B] = F.map[A, B](f)(fa) },
       F => Exofunctor.unsafeTCov(∀∀.mk[Endomap[* => *, F]].from(ab => F.map(_)(ab)))
     )

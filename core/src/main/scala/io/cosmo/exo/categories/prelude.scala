@@ -1,14 +1,9 @@
 package io.cosmo.exo.categories
 
-import io.cosmo.exo._
-import io.cosmo.exo.evidence._
-
 //trait AllFunctions
-//  extends DisjunctionFunctions
 
-trait AllSyntax extends SubcategorySyntax
-//trait AllSyntax extends CccSyntax
-//  with CategorySyntax
+trait AllSyntax
+  extends SubcategorySyntax
 
 trait BaseHierarchyLowPriority extends BaseHierarchy
 

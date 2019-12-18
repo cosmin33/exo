@@ -74,7 +74,7 @@ object inhabitance {
 
     def witness[A](f: A => Void): ¬[A] = f.coerce
 
-    implicit def isoCanonic[A]: (A => Void) <=> ¬[A] = Iso.unsafeT(witness, _.run)
+    implicit def isoCanonic[A]: (A => Void) <=> ¬[A] = Iso.unsafe(witness, _.run)
 
     def contramap2[A, B, C](p: ¬¬[Either[¬[A], ¬[B]]])(f: C => (A, B)): ¬[C] =
       witness { c =>
@@ -120,7 +120,7 @@ object inhabitance {
     def witness[A](f: (A => Void) => Void): ¬¬[A] = f.coerce
     def value[A](a: A): ¬¬[A] = witness[A](f => f(a))
 
-    implicit def isoCanonic[A]: ((A => Void) => Void) <=> ¬¬[A] = Iso.unsafeT(witness, _.run)
+    implicit def isoCanonic[A]: ((A => Void) => Void) <=> ¬¬[A] = Iso.unsafe(witness, _.run)
 
     def lemEither[A]: ¬¬[Either[A => Void, A]] = witness(k => k(Left(a => k(Right(a)))))
 
@@ -183,7 +183,7 @@ object inhabitance {
     def apply[A](implicit A: Contractible[A]): Contractible[A] = A
 
     implicit def isoCanonic[A]: (¬¬[A], WeakProposition[A])  <=> Contractible[A] =
-      Iso.unsafeT({case (i, w) => witness(i, w)}, c => (c.inhabited, c.proposition))
+      Iso.unsafe({case (i, w) => witness(i, w)}, c => (c.inhabited, c.proposition))
 
     implicit def witness[A](implicit inhabited: ¬¬[A], proposition: WeakProposition[A]): Contractible[A] =
       Contractible[A](inhabited, proposition)

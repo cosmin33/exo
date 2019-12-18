@@ -43,7 +43,7 @@ object As1 {
     ): SingleOf[A, B, as.type] = SingleOf(as)
   }
 
-  implicit def proposition[A, B]: Proposition[As1[A, B]] = Proposition[A <~< B].isomap(Iso.unsafeT(_.fix, _.loosen))
+  implicit def proposition[A, B]: Proposition[As1[A, B]] = Proposition[A <~< B].isomap(Iso.unsafe(_.fix, _.loosen))
 
   def refl[A]: A As1 A = new Refl[A]()
 

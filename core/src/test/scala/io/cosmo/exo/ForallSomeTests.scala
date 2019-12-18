@@ -1,7 +1,6 @@
 package io.cosmo.exo
 
 import cats.data.Kleisli
-import io.cosmo.exo.Iso.Aux
 import io.cosmo.exo.categories.Trivial.T1
 import io.cosmo.exo.categories.{Cartesian, Ccc, HasTerminalObject}
 import io.cosmo.exo.evidence.Inhabited

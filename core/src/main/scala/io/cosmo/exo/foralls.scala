@@ -390,7 +390,7 @@ object foralls {
       f => (∀.of[F].fromH(t => f.apply[t.T]._1), ∀.of[G].fromH(t => f.apply[t.T]._2))
     def fnPdFr[F[_], G[_]]: ((∀[F], ∀[G])) => ∀[λ[x => (F[x], G[x])]] =
       {case (f, g) => ∀.of[λ[x => (F[x], G[x])]].fromH(t => (f[t.T], g[t.T]))}
-    def isoDistribTuple[F[_], G[_]]: ∀[λ[x => (F[x], G[x])]] <=> (∀[F], ∀[G]) = Iso.unsafeT(fnPdTo, fnPdFr)
+    def isoDistribTuple[F[_], G[_]]: ∀[λ[x => (F[x], G[x])]] <=> (∀[F], ∀[G]) = Iso.unsafe(fnPdTo, fnPdFr)
 
     //////////////////////// ⨁
     /** ∀ distributes over \/ (one way only) */
@@ -403,7 +403,7 @@ object foralls {
       faf => a => ∀.of[F](faf.apply.apply(a))
     def fnDistFrom[A, F[_]]: (A => ∀[F]) => ∀[λ[x => A => F[x]]] =
       afa => ∀.of[λ[x => A => F[x]]](a => afa(a).apply)
-    def isoDistribFn[A, F[_]]: ∀[λ[x => A => F[x]]] <=> (A => ∀[F]) = Iso.unsafeT(fnDistTo, fnDistFrom)
+    def isoDistribFn[A, F[_]]: ∀[λ[x => A => F[x]]] <=> (A => ∀[F]) = Iso.unsafe(fnDistTo, fnDistFrom)
 
     ////////////////////////
     /** ∀ is commutative */
@@ -412,7 +412,7 @@ object foralls {
     def commute2[F[_,_]]: ∀[λ[b => ∀[F[*, b]]]] => ∀[λ[a => ∀[F[a, *]]]] =
       ab => ∀.of[λ[a => ∀[F[a, *]]]].fromH(a => ∀.of[F[a.T, *]].fromH(b => ab[b.T][a.T]))
     def isoCommute[F[_,_]]: ∀[λ[a => ∀[λ[b => F[a, b]]]]] <=> ∀[λ[b => ∀[λ[a => F[a, b]]]]] =
-      Iso.unsafeT(commute1[F], commute2[F])
+      Iso.unsafe(commute1[F], commute2[F])
 
     ////////////////////////
   }

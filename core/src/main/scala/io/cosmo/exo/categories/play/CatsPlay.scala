@@ -38,7 +38,7 @@ object CatsPlay {
     }
 
     val iso: Expr <=> ∀[λ[z => ExprA[z] => z]] =
-      Iso.unsafeT(
+      Iso.unsafe(
         expr => ∀.of[λ[z => ExprA[z] => z]].from(foldAlg(expr)),
         _[Expr](reify)
       )

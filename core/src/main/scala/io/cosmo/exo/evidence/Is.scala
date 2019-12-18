@@ -41,13 +41,13 @@ object Is extends IsInstances {
   def apply[A, B](implicit ev: A Is B): A Is B = ev
 
   implicit def isoCanonic[A, B]: ∀~[λ[f[_] => f[A] => f[B]]] <=> (A === B) =
-    Iso.unsafeT(
+    Iso.unsafe(
       fa => new Is[A, B] { def subst[F[_]](f: F[A]): F[B] = fa.apply[F](f) },
       ab => ∀~.of[λ[f[_] => f[A] => f[B]]].from(ab.subst)
     )
 
   implicit def isoInjectivity[F[_]: IsInjective, A, B]: (F[A] === F[B]) <=> (A === B) =
-    Iso.unsafeT[F[A] === F[B], A === B](IsInjective[F].apply(_), _.lift)
+    Iso.unsafe(IsInjective[F].apply(_), _.lift)
 
   private final class Refl[A]() extends Is[A, A] {
     def subst[F[_]](fa: F[A]): F[A] = fa

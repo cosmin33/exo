@@ -1,7 +1,5 @@
 package io.cosmo.exo.typeclasses
 
-import io.cosmo.exo.Iso.Aux
-import io.cosmo.exo.categories.Trivial.T1
 import io.cosmo.exo.{<=>, Iso}
 import io.cosmo.exo.evidence.{===, =~=, Is}
 
@@ -28,7 +26,7 @@ object HasTypeclass {
   def isoCanonic[C[_[_]], F[_]]: C[F] <=> HasTypeclass[TypeH[C], TypeF[F]] =
     {
       val rr: C[F] <=> HasTypeclass[TypeH[C], TypeF[F]] =
-        Iso.unsafeT(
+        Iso.unsafe(
           HasTypeclass.steal(_),
           h => {
             val ff: F =~= h.F = TypeF.injectivity(h.leib2)

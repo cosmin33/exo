@@ -24,14 +24,14 @@ object HasTypeclassPlay {
     println(ltov[Int](List(1, 2)))
     println(ll(List(3, 4)))
 
-    implicit val iso: Iso.Aux[FunK, IsTypeF, TypeF[List], TypeF[Vector]] =
+    implicit val iso: Iso[FunK, TypeF[List], TypeF[Vector]] =
       Iso.unsafe(FunK(ltov), FunK(vtol))
 
     val rr1 = the[Iso[FunK, TypeF[List], TypeF[Vector]]]
-    val rr2 = the[Iso.Aux[FunK, IsTypeF, TypeF[List], TypeF[Vector]]]
+    val rr2 = the[Iso[FunK, TypeF[List], TypeF[Vector]]]
 
     val bb1 = the[HasIso[FunK, TypeF[List], TypeF[Vector]]]
-    val bb2 = the[HasIso.Aux[FunK, IsTypeF, TypeF[List], TypeF[Vector]]]
+    val bb2 = the[HasIso[FunK, TypeF[List], TypeF[Vector]]]
 
     val ii = iso.chain[TypeF[List]].chain[TypeF[Vector]]
     println(ii.to(List(5, 6)))

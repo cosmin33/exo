@@ -47,7 +47,7 @@ object IsConstant extends ConstantLowerPriority {
   def apply[F[_]](implicit ev: IsConstant[F]): IsConstant[F] = ev
 
   def isoCanonic[F[_]]: Canonic[F] <=> IsConstant[F] =
-    Iso.unsafeT(
+    Iso.unsafe(
       c => witness(c.apply[Void, Any]),
       i => ∀∀.mk[Canonic[F]].from(i.apply)
     )

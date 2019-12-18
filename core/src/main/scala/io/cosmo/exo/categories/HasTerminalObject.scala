@@ -1,6 +1,6 @@
 package io.cosmo.exo.categories
 
-import io.cosmo.exo.Iso
+import io.cosmo.exo.{<=>, Iso}
 
 trait HasTerminalObject[->[_, _]] extends Subcat[->] {
   type Terminal
@@ -17,8 +17,8 @@ object HasTerminalObject extends HasTerminalObjectInstances {
   implicit def isoUnit[->[_,_], TC[_], Term, A](implicit
     t: HasTerminalObject.Aux[->, TC, Term],
     tc: TC[A]
-  ): Iso.AuxTF[A -> Term, Unit] =
-    Iso.unsafeT((_: A -> Term) => (), (_: Unit) => t.terminate[A])
+  ): <=>[A -> Term, Unit] =
+    Iso.unsafe((_: A -> Term) => (), (_: Unit) => t.terminate[A])
 
 }
 

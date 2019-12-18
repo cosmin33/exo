@@ -50,21 +50,21 @@ object IsK {
 
   private type ForallFG[F[_], G[_]] = ForallHK[λ[a[_[_]] => a[F] <=> a[G]]]
   def isoCanonic[F[_], G[_]]: ForallFG[F, G] <=> (F =~= G) =
-    Iso.unsafeT(
+    Iso.unsafe(
       fa => new IsK[F, G] { def subst[Alg[_[_]]](f: Alg[F]): Alg[G] = fa[Alg].to(f) },
-      ev => ForallHK.mk[ForallFG[F, G]].from(Iso.unsafeT(ev.subst, ev.flip.subst))
+      ev => ForallHK.mk[ForallFG[F, G]].from(Iso.unsafe(ev.subst, ev.flip.subst))
     )
   def isoExtensionality[F[_], G[_]]: ∀[λ[a => F[a] === G[a]]] <=> (F =~= G) =
-    Iso.unsafeT(
+    Iso.unsafe(
       fa => Axioms.tcExtensionality[F, G].applyT(t => fa[t.T]),
       fg => ∀.of[λ[a => F[a] === G[a]]].from(fg.is)
     )
 
   def isoTypeFInjectivity[F[_], G[_]]: (TypeF[F] === TypeF[G]) <=> (F =~= G) =
-    Iso.unsafeT[TypeF[F] === TypeF[G], F =~= G](TypeF.injectivity, _.lower[TypeF])
+    Iso.unsafe(TypeF.injectivity, _.lower[TypeF])
 
 //  def isoInjectivity[F[_], G[_], X[_]]: (F =~= G) <=> (λ[a => X[F[a]]] =~= λ[a => X[G[a]]]) =
-//    Iso.unsafeT[F =~= G, λ[a => X[F[a]]] =~= λ[a => X[G[a]]]](
+//    Iso.unsafe[* => *, F =~= G, λ[a => X[F[a]]] =~= λ[a => X[G[a]]]](
 //
 //    )
 

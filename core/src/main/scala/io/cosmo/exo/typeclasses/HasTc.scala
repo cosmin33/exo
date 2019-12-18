@@ -20,10 +20,10 @@ object HasTc {
     new HasTc[TC, TypeF[F0]] {type F[x] = F0[x]; val leibniz = Is.refl; val instance = source}
 
   def isoCanonic[TC[_[_]], FF[_]]: TC[FF] <=> HasTc[TC, TypeF[FF]] =
-    Iso.unsafeT(HasTc.steal(_), h => TypeF.injectivity(h.leibniz).subst(h.instance))
+    Iso.unsafe(HasTc.steal(_), h => TypeF.injectivity(h.leibniz).subst(h.instance))
 
 //  implicit def isoCanonic[TC[_[_]], FF[_]]: TC[FF] <=> HasTc.Aux[TC, TypeF[FF], FF] =
-//    Iso.unsafeT(HasTc.steal(_), _.instance)
+//    Iso.unsafe(HasTc.steal(_), _.instance)
 
   def exofunc[->[_,_], TC[_[_]]](implicit
     c: Subcat.Aux[->, IsTypeF],
