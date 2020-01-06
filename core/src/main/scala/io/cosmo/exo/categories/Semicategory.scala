@@ -5,6 +5,7 @@ import io.cosmo.exo.categories.functors.{Endobifunctor, Exobifunctor}
 import io.cosmo.exo.evidence._
 import shapeless.the
 import cats.implicits._
+import io.cosmo.exo.categories.Trivial.T1
 
 import scala.language.experimental.macros
 
@@ -13,15 +14,16 @@ trait Semicategory[->[_, _]] {
   def andThen[A, B, C](ab: A -> B, bc: B -> C): A -> C
 }
 
-object Semicategory
-  extends SemicategoryImplicits
-  with SubcategoryImplicits
-  with DistributiveImplicits
-  with CccImplicits {
+object Semicategory extends SemicategoryImplicits {
   def apply[->[_,_]](implicit S: Semicategory[->]): Semicategory[->] = S
 }
 import SemicategoryHelpers._
 trait SemicategoryImplicits extends SemicategoryImplicits01 {
+
+  def distFunc1: Distributive.Aux[* => *, Trivial.T1, Tuple2, Unit, Either, Void] =
+    Distributive.unsafe(∀∀∀.of[λ[(a,b,c) => ((a, b Either c)) => ((a, b) Either (a, c))]].from(
+      {case (a, e) => e.fold((a, _).asLeft, (a, _).asRight)})
+    )
 
   def function1OppCat: Subcat.AuxT[Opp[* => *]#l] = Subcat.oppCategory(function1)
 
@@ -30,11 +32,16 @@ trait SemicategoryImplicits extends SemicategoryImplicits01 {
       ab.flatMap {case (a, b) => bc.get(b).map(c => (a, c))}
   }
 
-  implicit def liskovFnCategory: Subcat.AuxT[<~<] =
-    new Subcat[<~<] {
+  implicit def liskovFnCategory: Concrete.AuxT[<~<] =
+    new Concrete[<~<] {
       override type TC[a] = Trivial.T1[a]
       override def id[A](implicit A: Trivial.T1[A]): A <~< A = As.refl
       override def andThen[A, B, C](ab: A <~< B, bc: B <~< C): A <~< C = ab.andThen(bc)
+
+      override def concretize[A, B](f: A <~< B): (A, Trivial.T1[A]) => (B, Trivial.T1[B]) =
+        { case (a, _) => (f(a), the[Trivial.T1[B]]) }
+
+      override def toFunction[A, B](f: A <~< B)(implicit eq: =~=[T1, T1]) = f.apply
     }
 
   implicit def function1: Ccc.Aux[Function1, Tuple2, Trivial.T1, Unit, Function1] =

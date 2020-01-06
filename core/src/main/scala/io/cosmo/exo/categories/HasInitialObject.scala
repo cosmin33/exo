@@ -26,7 +26,7 @@ trait HasInitialObjectInstances {
 
   trait HasInitialObjectFunction1 extends HasInitialObject.Proto[Function1, Trivial.T1, Nothing] {
     override def initial: Trivial.T1[Nothing] = Trivial.trivialInstance
-    override def initiate[A](implicit A: Trivial.T1[A]): Nothing => A = sys.error("you obtained everything from nothing!")
+    override def initiate[A](implicit A: Trivial.T1[A]): Nothing => A = sys.error("obtained everything from nothing!")
   }
 
 }

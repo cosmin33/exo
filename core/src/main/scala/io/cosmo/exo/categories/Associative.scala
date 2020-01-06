@@ -2,6 +2,7 @@ package io.cosmo.exo.categories
 
 import cats.implicits._
 import io.cosmo.exo._
+import io.cosmo.exo.categories.Trivial.T1
 import io.cosmo.exo.categories.functors.{Endobifunctor, Exobifunctor}
 
 import scala.{:: => _}
@@ -15,21 +16,22 @@ trait Associative[->[_, _], ⊙[_, _]] {
   def diassociate[X, Y, Z]: ⊙[X, ⊙[Y, Z]] -> ⊙[⊙[X, Y], Z]
 
   private type <->[a, b] = Iso[->, a, b]
-  def isoCanonic[X, Y, Z]: ⊙[⊙[X, Y], Z] <-> ⊙[X, ⊙[Y, Z]] =
-    Iso.unsafe[->, ⊙[⊙[X, Y], Z], ⊙[X, ⊙[Y, Z]]](associate[X,Y,Z], diassociate[X,Y,Z])(C)
+  def isoAssociate[X, Y, Z]: ⊙[⊙[X, Y], Z] <-> ⊙[X, ⊙[Y, Z]] = Iso.unsafe(associate[X,Y,Z], diassociate[X,Y,Z])(C)
 }
 
 object Associative extends AssociativeImplicits {
   type Aux[->[_, _], ⊙[_, _], TC0[_]] = Associative[->, ⊙] {type TC[a] = TC0[a]}
   trait Proto[->[_, _], ⊙[_, _], TC0[_]] extends Associative[->, ⊙] { type TC[A] = TC0[A] }
 
-  private[categories] trait Impl[->[_, _], ⊙[_, _], C[_]] extends Associative[->, ⊙] {
-    protected def source: Associative.Aux[->, ⊙, C]
-    override type TC[a] = C[a]
-    override def C = source.C
-    override def bifunctor = source.bifunctor
-    override def associate[X, Y, Z] = source.associate
-    override def diassociate[X, Y, Z] = source.diassociate
+  def fromIso[->[_,_], ⊙[_,_], Tc[_]](i: ∀∀∀[λ[(a,b,c) => Iso[->, ⊙[⊙[a, b], c], ⊙[a, ⊙[b, c]]]]])(implicit
+    cat: Subcat.Aux[->, Tc],
+    bif: Endobifunctor.Aux[->, Tc, ⊙]
+  ): Associative.Aux[->, ⊙, Tc] = new Associative[->, ⊙] {
+    type TC[a] = Tc[a]
+    val C = cat
+    val bifunctor = bif
+    def associate  [X, Y, Z] = i.apply[X, Y, Z].to
+    def diassociate[X, Y, Z] = i.apply[X, Y, Z].from
   }
 
   def apply[->[_,_], ⊙[_,_]](implicit assoc: Associative[->, ⊙]): Associative.Aux[->, ⊙, assoc.TC] = assoc
@@ -37,12 +39,12 @@ object Associative extends AssociativeImplicits {
 }
 
 trait AssociativeImplicits extends AssociativeImplicits01 {
-  implicit def cartesianFn1Tuple: Cartesian.Aux[Function1, Tuple2, Trivial.T1, Unit] =
+  val cartesianFn1Tuple: Cartesian.Aux[Function1, Tuple2, Trivial.T1, Unit] =
       new Cartesian.Proto[Function1, Tuple2, Trivial.T1, Unit] {
         type ->[a, b] = a => b
         def C: Subcat.AuxT[* => *] = Semicategory.function1
         def bifunctor = Exobifunctor.tuple2Endobifunctor
-        def associate[X, Y, Z]: ((X, Y), Z) -> (X, (Y, Z)) = { case ((x, y), z) => (x, (y, z)) }
+        def associate  [X, Y, Z]: ((X, Y), Z) -> (X, (Y, Z)) = { case ((x, y), z) => (x, (y, z)) }
         def diassociate[X, Y, Z]: (X, (Y, Z)) -> ((X, Y), Z) = { case (x, (y, z)) => ((x, y), z) }
         def braid[A, B]: ((A, B)) => (B, A) = { case (a, b) => (b, a) }
         def coidl[A]: A -> (Unit, A) = a => ((), a)
@@ -57,46 +59,16 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
           {case (a, x) => (f(a), g(x))} // override for performance
       }
 
-  implicit def cocartesianFn1EitherDual: Cartesian.Aux[Dual[* => *,*,*], Either, Trivial.T1, Void] =
-    Dual.leibniz2[* => *].flip.subst[Cartesian.Aux[*[_,_], Either, Trivial.T1, Void]](cocartesianFn1Either)
+  implicit def impCartesianFn1Tuple: Cartesian.Aux[Function1, Tuple2, Trivial.T1, Unit] = cartesianFn1Tuple
 
-  implicit def cocartesianFn1Either: Cartesian.Aux[Opp[* => *]#l, Either, Trivial.T1, Void] =
-      new Cartesian.Proto[Opp[* => *]#l, Either, Trivial.T1, Void] {
-        def C: Subcat.AuxT[Opp[* => *]#l] = Semicategory.function1OppCat
-        def bifunctor = Exobifunctor.eitherOppEndoBifunctor
-        def diassociate[X, Y, Z]: Either[Either[X, Y], Z] => Either[X, Either[Y, Z]] = {
-          case Left(xy) => xy.fold(_.asLeft[Either[Y,Z]], _.asLeft[Z].asRight[X])
-          case Right(z) => z.asRight[Y].asRight[X]
-        }
-        def associate[X, Y, Z]: Either[X, Either[Y, Z]] => Either[Either[X, Y], Z] = {
-          case Left(x) => x.asLeft[Y].asLeft[Z]
-          case Right(yz) => yz.fold(_.asRight[X].asLeft[Z], _.asRight[Either[X, Y]])
-        }
-        def braid[A, B]: Either[B, A] => Either[A, B] = _.fold(_.asRight, _.asLeft)
-        def coidr[A]: Either[A, Void] => A = _.fold[A](identity, identity)
-        def coidl[A]: Either[Void, A] => A = _.fold[A](identity, identity)
-        def idl[A]: A => Either[Void, A] = _.asRight
-        def idr[A]: A => Either[A, Void] = _.asLeft
-        def fst[A, B]: A => Either[A, B] = _.asLeft
-        def snd[A, B]: B => Either[A, B] = _.asRight
-        def diag[A]: Either[A, A] => A = _.fold[A](identity, identity)
-        def &&&[X, Y, Z](f: Y => X, g: Z => X): Either[Y, Z] => X = _.fold(f, g)
-        // override for performance
-        override def pair[A, B, X, Y](f: B => A, g: Y => X): Either[B, Y] => Either[A, X] =
-          _.fold(f(_).asLeft, g(_).asRight)
-      }
-
-
-  def cocartesianFn1Disj(implicit
-    bi: Endobifunctor.Aux[Opp[* => *]#l, Trivial.T1, \/]
-  ): Cartesian.Aux[Opp[* => *]#l, \/, Trivial.T1, Void] =
+  val cocartesianFn1Disj: Cartesian.Aux[Opp[* => *]#l, \/, Trivial.T1, Void] =
       new Cartesian.Proto[Opp[* => *]#l, \/, Trivial.T1, Void] {
         def C: Subcat.AuxT[Opp[* => *]#l] = Semicategory.function1OppCat
-        def bifunctor = bi
+        def bifunctor = Exobifunctor.oppEndobifunctor
         def diassociate[X, Y, Z]: (X \/ Y \/ Z) => (X \/ (Y \/ Z)) =
           _.fold(xy => xy.fold(_.left[Y \/ Z], _.left[Z].right[X]),
                   z => z.right[Y].right[X])
-        def associate[X, Y, Z]: (X \/ (Y \/ Z)) => (X \/ Y \/ Z) =
+        def associate  [X, Y, Z]: (X \/ (Y \/ Z)) => (X \/ Y \/ Z) =
           _.fold(x => x.left[Y].left[Z],
                 yz => yz.fold(_.right[X].left[Z], _.right[X \/ Y]))
         def braid[A, B]: (B \/ A) => (A \/ B) = _.fold(_.right, _.left)
@@ -111,6 +83,12 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
         //// overrides for performance
         override def pair[A, B, X, Y](f: B => A, g: Y => X): (B \/ Y) => (A \/ X) = _.fold(f(_).left, g(_).right)
       }
+
+  def cocartesianFn1Either: Cartesian.Aux[Opp[* => *]#l, Either, Trivial.T1, Void] =
+    \/.leibniz.flip.subst[Cartesian.Aux[Opp[* => *]#l, *[_,_], Trivial.T1, Void]](cocartesianFn1Disj)
+
+  implicit def cocartesianFn1EitherDual: Cartesian.Aux[Dual[* => *,*,*], Either, Trivial.T1, Void] =
+    Dual.leibniz[* => *].subst[Cartesian.Aux[*[_,_], Either, Trivial.T1, Void]](cocartesianFn1Either)
 
 
 }

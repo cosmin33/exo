@@ -5,9 +5,10 @@ import io.cosmo.exo
 import io.cosmo.exo._
 import io.cosmo.exo.categories.Trivial.T1
 import io.cosmo.exo.categories._
-import io.cosmo.exo.categories.data.ProdCat
+import io.cosmo.exo.categories.data.{KleisModule, ProdCat}
 import io.cosmo.exo.categories.data.ProdCat.Dicat
 import io.cosmo.exo.evidence._
+import io.cosmo.exo.typeclasses.{HasTc, TypeF}
 import shapeless.the
 
 trait Exofunctor[==>[_,_], -->[_,_], F[_]] {
@@ -25,17 +26,27 @@ object Exofunctor {
     Exofunctor[==>, -->, F] {type TC1[A] = =>#[A]; type TC2[A] = ->#[A]}
   type AuxT[==>[_,_], -->[_,_], F[_]] = Aux[==>, -->, F, Trivial.T1, Trivial.T1]
 
-  type Cov[->[_,_], F[_], C[_]] = Aux[->, ->, F, C, C]
+  type Cov[->[_,_], F[_]] = Exofunctor[->, * => *, F]
   /** This is isomorphic with cats.Covariant */
-  type CovF[F[_]] = Cov[* => *, F, Trivial.T1]
+  type CovF[F[_]] = Cov[* => *, F]
 
-  type Con[->[_,_], F[_], C[_]] = Aux[Dual[->,*,*], ->, F, C, C]
+  type Con[->[_,_], F[_]] = Exofunctor[Dual[->,*,*], * => *, F]
   /** This is isomorphic with cats.Contravariant */
-  type ConF[F[_]] = Con[* => *, F, Trivial.T1]
+  type ConF[F[_]] = Con[* => *, F]
 
-  type Inv[->[_,_], F[_], C[_]] = Aux[Dicat[->, *, *], ->, F, C, C]
+  type Inv[->[_,_], F[_]] = Exofunctor[Dicat[->,*,*], * => *, F]
   /** This is isomorphic with cats.Invariant */
-  type InvF[F[_]] = Inv[* => *, F, Trivial.T1]
+  type InvF[F[_]] = Inv[* => *, F]
+
+  //type Pha[->[_,_], F[_]] = Exofunctor[]
+
+  /** Exofunctor from an isomorphism category to Function1 */
+  type IsoFun[->[_,_], F[_]] = Exofunctor[Iso[->,*,*], * => *, F]
+
+  /** Map on (A <-> B) gives you typeclass derivation: {{{HasTc[TC, A] => HasTc[TC, B]}}} */
+  //type IsoTypeclass[->[_,_], TC[_[_]]] = IsoFun[->, HasTc[TC, *]]
+
+//  type Traverse1[M[_], F[_]] = KleisModule.[]
 
   case class SingleOf[T, U <: {type TC1[_]; type TC2[_]}](widen: T {type TC1[a] = U#TC1[a]; type TC2[a] = U#TC2[a]})
   object SingleOf {
@@ -44,6 +55,23 @@ object Exofunctor {
 
   trait Proto[|=>[_,_], -->[_,_], F[_], =>#[_], ->#[_]] extends
     Exofunctor[|=>, -->, F] {type TC1[A] = =>#[A]; type TC2[A] = ->#[A]}
+
+  def unsafeH[==>[_,_], -->[_,_], F[_]] = new UnsafeH[==>, -->, F]
+  class UnsafeH[==>[_,_], -->[_,_], F[_]] {
+    type A
+    type B
+    def apply[=>#[_], ->#[_]](fn: TypeHolder2[A, B] => (A ==> B) => (F[A] --> F[B]))(implicit
+      c1: Subcat.Aux[==>, =>#],
+      c2: Subcat.Aux[-->, ->#]
+    ): Exofunctor.Aux[==>, -->, F, =>#, ->#] =
+      {
+        val bb: A ==> B => F[A] --> F[B] = fn(TypeHolder2[A, B])
+
+        //val rr = unsafe(∀∀.of[λ[(a,b) => (a ==> b) => F[a] --> F[b]]].from(bb))
+
+        ???
+      }
+  }
 
   def unsafe[==>[_,_], -->[_,_], F[_], =>#[_], ->#[_]](
     fn: Exomap[==>, -->, F]

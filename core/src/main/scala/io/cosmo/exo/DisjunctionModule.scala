@@ -2,7 +2,7 @@ package io.cosmo.exo
 
 import cats.Bifunctor
 import cats.implicits._
-import io.cosmo.exo.evidence.{=~~=, IsK2}
+import io.cosmo.exo.evidence.{===, =~~=, IsK2}
 import io.estatico.newtype.Coercible
 
 trait DisjunctionModule {
@@ -10,7 +10,7 @@ trait DisjunctionModule {
   type TypeL[L, R] <: Type[L, R]
   type TypeR[L, R] <: Type[L, R]
 
-  def isK2: Either =~~= Type
+  def leibniz: Either =~~= Type
   def bifunctor: Bifunctor[Type]
 
   def fold[L, R, A](d: Type[L, R])(la: L => A, ra: R => A): A
@@ -18,8 +18,8 @@ trait DisjunctionModule {
   def right[L, R](r: R): TypeR[L, R]
   def swap[L, R](d: Type[L, R]): Type[R, L]
 
-  final def apply[L, R](e: Either[L, R]): Type[L, R] = isK2.is[L, R](e)
-  final def iso[L, R]: Either[L, R] <=> Type[L, R] = isK2.is[L, R].toIso
+  final def apply[L, R](e: Either[L, R]): Type[L, R] = leibniz.is[L, R](e)
+  final def iso[L, R]: Either[L, R] <=> Type[L, R] = leibniz.is[L, R].toIso
   final def either[A, B, C](ac: A => C, bc: B => C): Type[A, B] => C = fold(_)(ac, bc)
 }
 
@@ -27,7 +27,7 @@ private[exo] object DisjunctionModuleImpl extends DisjunctionModule {
   type Type[L, R] = Either[L, R]
   type TypeL[L, R] = Left[L, R]
   type TypeR[L, R] = Right[L, R]
-  def isK2 = IsK2.refl
+  def leibniz = IsK2.refl
   def bifunctor = implicitly
   def fold[L, R, A](d: Either[L, R])(la: L => A, ra: R => A) = d.fold(la, ra)
   def left[L, R](l: L) = Left(l)
@@ -39,6 +39,15 @@ object DisjunctionModule extends DisjunctionModule01 {
   implicit class DisjunctionOps[L, R](value: L \/ R) {
     def fold[A](la: L => A, ra: R => A): A = \/.fold(value)(la, ra)
     def swap: R \/ L = \/.swap(value)
+  }
+  implicit class DisjunctionOps3[A, B, C](value: A \/ B \/ C) {
+    def fold3[Z](a: A => Z, b: B => Z, c: C => Z): Z = value.fold(_.fold(a, b), c)
+  }
+  implicit class DisjunctionOps4[A, B, C, D](value: A \/ B \/ C \/ D) {
+    def fold4[Z](a: A => Z, b: B => Z, c: C => Z, d: D => Z): Z = value.fold(_.fold3(a, b, c), d)
+  }
+  implicit class DisjunctionOps5[A, B, C, D, E](value: A \/ B \/ C \/ D \/ E) {
+    def fold5[Z](a: A => Z, b: B => Z, c: C => Z, d: D => Z, e: E => Z): Z = value.fold(_.fold4(a, b, c, d), e)
   }
 
   implicit val co: Coercible[∀∀[Either], ∀∀[\/]] = Coercible.instance

@@ -9,7 +9,7 @@ trait Distributive[->[_, _]] extends Subcat[->] {
   type SumId
   type ⨁[_, _]
   def cartesian: Cartesian.Aux[->, ⨂, TC, ProductId]
-  def cocartesian: Cartesian.Aux[Opp[->]#l, ⨁, TC, SumId]
+  def cocartesian: Cartesian.Aux[Dual[->,*,*], ⨁, TC, SumId]
   def distribute[A, B, C]: ⨂[A, ⨁[B, C]] -> ⨁[⨂[A, B], ⨂[A, C]]
 }
 object Distributive {
@@ -41,28 +41,20 @@ object Distributive {
     type SumId = SI;     type ⨁[A, B] = S[A, B]
   }
 
-  def unsafe[->[_,_], ->#[_], P[_,_], S[_,_], PI, SI](
-    ft: ∀∀∀[λ[(a,b,c) => P[a, S[b, c]] -> S[P[a, b], P[a, c]]]]
+  def unsafe[->[_,_], ⨂[_,_], ⨁[_,_], ->#[_], PI, SI](
+    ft: ∀∀∀[λ[(a,b,c) => ⨂[a, ⨁[b, c]] -> ⨁[⨂[a, b], ⨂[a, c]]]]
   )(implicit
-    CP: Cartesian.Aux[->, P, ->#, PI],
-    CS: Cartesian.Aux[Opp[->]#l, S, ->#, SI],
-  ): Distributive.Aux[->, ->#, P, PI, S, SI] =
-      new Distributive.Proto[->, ->#, P, PI, S, SI] {
-        def cartesian = CP
-        def cocartesian = CS
-        def id[A](implicit A: ->#[A]) = CP.C.id[A]
-        def andThen[A, B, C](ab: A -> B, bc: B -> C) = CP.C.andThen(ab, bc)
-        def distribute[A, B, C] = ft[A, B, C]
-      }
-
-
-  def distFunc1TupleDisj(implicit
-    C1: Cartesian.Aux[* => *, Tuple2, Trivial.T1, Unit],
-    C2: Cartesian.Aux[Opp[* => *]#l, \/, Trivial.T1, Void]
-  ): Distributive.Aux[* => *, Trivial.T1, Tuple2, Unit, \/, Void] =
-    unsafe(∀∀∀.of[λ[(a,b,c) => ((a, b \/ c)) => ((a, b) \/ (a, c))]].from(
-      {case (a, e) => e.fold((a, _).left, (a, _).right)})
-    )(C1, C2)
+    cat: Subcat.Aux[->, ->#],
+    CP: Cartesian.Aux[->, ⨂, ->#, PI],
+    CS: Cartesian.Aux[Dual[->,*,*], ⨁, ->#, SI],
+  ): Distributive.Aux[->, ->#, ⨂, PI, ⨁, SI] =
+    new Distributive.Proto[->, ->#, ⨂, PI, ⨁, SI] {
+      def cartesian = CP
+      def cocartesian = CS
+      def id[A](implicit A: ->#[A]) = cat.id[A]
+      def andThen[A, B, C](ab: A -> B, bc: B -> C) = cat.andThen(ab, bc)
+      def distribute[A, B, C] = ft[A, B, C]
+    }
 
   def apply[->[_, _]](implicit
     D: Distributive[->]
@@ -70,6 +62,3 @@ object Distributive {
 
 }
 
-trait DistributiveImplicits {
-
-}

@@ -26,10 +26,6 @@ object Subcat {
 
 }
 
-trait SubcategoryImplicits {
-
-}
-
 trait SubcategorySyntax {
   implicit final class ToCategoryOps[->[_, _], B, C](self: B -> C) {
     //def compose[A](f: A -> B)(implicit ev: Semicategory[->]): A -> C = macro ops.Ops.ia_1

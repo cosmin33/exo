@@ -23,7 +23,7 @@ object TypeF {
 
 trait IsTypeF[A] {
   type Type[a]
-  def eq: TypeF[Type] === A
+  def is: TypeF[Type] === A
 }
 object IsTypeF {
   type Aux[A, F[_]] = IsTypeF[A] {type Type[a] = F[a]}
@@ -31,7 +31,7 @@ object IsTypeF {
   val forall = ForallK.of[λ[k[_] => IsTypeF[TypeF[k]]]](new IsTypeFImpl)
   private final class IsTypeFImpl[F[_]] extends IsTypeF[TypeF[F]] {
     type Type[a] = F[a]
-    def eq = Is.refl
+    def is = Is.refl
   }
 
   implicit def impl[K[_]]: IsTypeF[TypeF[K]] = forall[K]
@@ -40,7 +40,7 @@ object IsTypeF {
 
   def someStupidRel[F[_], X]: F[X] <~< FF[F, X] = {
     val ist: IsTypeF[TypeF[F]] = impl[F]
-    def s1[A]: F[A] <~< ist.Type[A] = TypeF.injectivity(ist.eq.flip).is[A].toAs
+    def s1[A]: F[A] <~< ist.Type[A] = TypeF.injectivity(ist.is.flip).is[A].toAs
     def s2[A] = the[ist.Type[A] <~< FF[F, A]]
     def za[A]: F[A] <~< FF[F, A] = s1.andThen(s2)
     za[X]

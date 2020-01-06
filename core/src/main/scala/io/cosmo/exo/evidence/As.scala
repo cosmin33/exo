@@ -6,7 +6,6 @@ import io.cosmo.exo.categories.{Subcat, Opp, Trivial}
 import io.cosmo.exo.categories.Trivial.{T1 => Triv}
 import io.cosmo.exo.evidence.variance._
 import cats.implicits._
-import shapeless.OrElse
 
 sealed abstract class As[-A, +B] private[As]() { ab =>
   import As._
@@ -96,9 +95,13 @@ object As {
 
   val bottomTop: Void <~< Any = reify[Void, Any]
 
+  implicit def asIsCovariant[A]: IsCovariant[A <~< *] = IsCovariant.reify[λ[`+x` => A <~< x]]
+
+  implicit def asIsContravariant[A]: IsContravariant[* <~< A] = IsContravariant.reify[λ[`-x` => x <~< A]]
+
   implicit def liskovCovFunctor[F[_]](implicit
     cat: Subcat.Aux[<~<, Triv],
-    ec: IsCovariant[F] OrElse IsConstant[F]
+    ec: IsCovariant[F] \/ IsConstant[F]
   ): Endofunctor.AuxT[<~<, F] =
     new Endofunctor.ProtoT[<~<, F] {
       val C, D = cat
@@ -109,7 +112,7 @@ object As {
   implicit def liskovConFunctor[F[_]](implicit
     cat: Subcat.Aux[<~<, Triv],
     cop: Subcat.Aux[Opp[<~<]#l, Triv],
-    ec: IsContravariant[F] OrElse IsConstant[F]
+    ec: IsContravariant[F] \/ IsConstant[F]
   ): Exofunctor.AuxT[<~<, Opp[<~<]#l, F] =
     new Exofunctor.Proto[<~<, Opp[<~<]#l, F, Triv, Triv] {
       val C = cat; val D = cop

@@ -1,5 +1,8 @@
 package io.cosmo.exo.categories
 
+import io.cosmo.exo.categories.data.ProdCat
+import io.cosmo.exo.categories.data.ProdCat.Dicat
+import io.cosmo.exo.categories.functors.Exo
 import io.cosmo.exo.{categories, _}
 
 trait Monoidal[->[_, _], ⊙[_, _]] extends Associative[->, ⊙] {
@@ -14,6 +17,16 @@ trait Monoidal[->[_, _], ⊙[_, _]] extends Associative[->, ⊙] {
   private type <->[a, b] = Iso[->, a, b]
   def isoIdL[A]: ⊙[Id, A] <-> A = Iso.unsafe(idl[A], coidl[A])(C)
   def isoIdR[A]: ⊙[A, Id] <-> A = Iso.unsafe(idr[A], coidr[A])(C)
+}
+
+trait ClosedProunit[->[_,_], P[_,_]] extends Associative[->, P] {
+  //type U[x] = x ->
+}
+trait ClosedUnital[->[_,_], P[_,_]] extends ClosedProunit[->, P] {
+  type MUnit
+  type Hom[_,_]
+  private type ==>[a,b] = Hom[a,b]
+  //def HomF: Exo[Dicat[->,*,*], ->, ]
 }
 
 object Monoidal {

@@ -28,10 +28,8 @@ object HasTypeclassPlay {
       Iso.unsafe(FunK(ltov), FunK(vtol))
 
     val rr1 = the[Iso[FunK, TypeF[List], TypeF[Vector]]]
-    val rr2 = the[Iso[FunK, TypeF[List], TypeF[Vector]]]
-
+    val rr2 = the[HasIso[FunK, TypeF[Vector], TypeF[List]]]
     val bb1 = the[HasIso[FunK, TypeF[List], TypeF[Vector]]]
-    val bb2 = the[HasIso[FunK, TypeF[List], TypeF[Vector]]]
 
     val ii = iso.chain[TypeF[List]].chain[TypeF[Vector]]
     println(ii.to(List(5, 6)))
@@ -42,15 +40,15 @@ object HasTypeclassPlay {
     Functor[List]
     HasTc[Functor, TypeF[List]]
 
-    implicit def funcList: Exofunctor.Aux[Dicat[FunK, *, *], * => *, HasTc[Functor, *], IsTypeF, Trivial.T1] =
-      new Exofunctor[Dicat[FunK, *, *], * => *, HasTc[Functor, *]] {
+    implicit def funcList1: Exofunctor.Aux[Iso[FunK, *, *], * => *, HasTc[Functor, *], IsTypeF, Trivial.T1] =
+      new Exofunctor[Iso[FunK, *, *], * => *, HasTc[Functor, *]] {
         type TC1[a] = IsTypeF[a]
         type TC2[a] = Trivial.T1[a]
         def C = implicitly
         def D = implicitly
-        def map[A, B](f: Dicat[FunK, A, B]): HasTc[Functor, A] => HasTc[Functor, B] = { ha =>
-          val ab: FunK[A, B] = f.first
-          val ba: FunK[B, A] = f.second
+        def map[A, B](f: Iso[FunK, A, B]): HasTc[Functor, A] => HasTc[Functor, B] = { ha =>
+          val ab: FunK[A, B] = f.to
+          val ba: FunK[B, A] = f.from
 
           val eet: TypeF[ha.F] === TypeF[ab.TypeA] = ha.leibniz.andThen(ab.eqA.flip)
 
@@ -69,6 +67,8 @@ object HasTypeclassPlay {
         }
       }
 
+    def derivationFunctor[TC[_[_]], F[_], G[_]](ab: F <~> G): TC[F] => TC[G] = ???
+
     val funcVector: HasTc[Functor, TypeF[Vector]] = iso.deriveK[Functor]
 
     val fv: Functor[Vector] = HasTc.isoCanonic[Functor, Vector].from(funcVector)
@@ -78,7 +78,7 @@ object HasTypeclassPlay {
 
     println("done 1")
 
-    val bbr: FunK[TypeF[List], TypeF[Vector]] = FunK.forallFr.apply[List, Vector](ltov)
+    val bbr: FunK[TypeF[List], TypeF[Vector]] = FunK.isoCanonic.flip(ltov)
     val bba: List ~> Vector = bbr.unwrap
     println(s"blah: ${bba.apply(List(5,5,5))}")
 

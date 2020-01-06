@@ -23,6 +23,10 @@ class IsoTests extends AnyFunSuite with Matchers {
     assert(isoSI.chain[Long].flip.chain[String].chain[String].apply(4L) == "4")
   }
 
+  test("Iso syntax") {
+    assert(6.isoTo[String] == "6")
+  }
+
   test("HasIso implicit search") {
     implicitly[HasIso[* => *, String, Int]]
     implicitly[HasIso[* => *, Int, String]]
@@ -34,7 +38,7 @@ class IsoTests extends AnyFunSuite with Matchers {
   test("case class <-> tupleN iso derivation") {
     case class Afa[A, F[_]](a: A, fa: F[A])
     val tupleIso: Afa[Int, List] <=> (Int, List[Int]) = Iso.forCaseClass[Afa[Int, List]]
-    assert(tupleIso.from((1, List(2, 3))) == Afa(1, List(2, 3)))
+    assert(tupleIso.flip.apply((1, List(2, 3))) == Afa(1, List(2, 3)))
   }
 
   case class Int1(i: Int)
@@ -44,8 +48,9 @@ class IsoTests extends AnyFunSuite with Matchers {
   locally {
 
     implicit def isoListVect: <~>[List, Vector] = ∀.mk[List <~> Vector].from(Iso.unsafe(_.toVector, _.toList))
-    implicitly[<~>[List, Vector]]
-
+    val lv1: List <~> Vector = implicitly[<~>[List, Vector]]
+    //val lv2: List <~> Vector = TypeF[List].isoWith[Vector]
+    //assert(lv1 == lv2)
 
     println("done")
   }

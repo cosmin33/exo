@@ -12,9 +12,9 @@ trait FunK[TA, TB] {
   def instance: TypeA ~> TypeB
 }
 object FunK {
-  def apply[F[_], G[_]](fn: F ~> G): FunK[TypeF[F], TypeF[G]] = forallFr.of[F, G](fn)
+  def apply[F[_], G[_]](fn: F ~> G): FunK[TypeF[F], TypeF[G]] = faWrap.of[F, G](fn)
 
-  private def applyFrom[F[_], G[_]](fn: F ~> G): FunK[TypeF[F], TypeF[G]] =
+  private def wrapProto[F[_], G[_]](fn: F ~> G): FunK[TypeF[F], TypeF[G]] =
     new FunK[TypeF[F], TypeF[G]] {
       type TypeA[x] = F[x]
       type TypeB[x] = G[x]
@@ -22,53 +22,52 @@ object FunK {
       val eqB = Is.refl
       def instance = fn
     }
-  val forallFr = ForallKBi.of[λ[(f[_],g[_]) => (f ~> g) => FunK[TypeF[f], TypeF[g]]]](applyFrom)
-
-  private def applyTo[F[_], G[_]](fk: FunK[TypeF[F], TypeF[G]]): F ~> G = {
+  private def unwrapProto[F[_], G[_]](fk: FunK[TypeF[F], TypeF[G]]): F ~> G = {
     val i1: fk.TypeA =~= F = TypeF.injectivity(fk.eqA)
     val i2: fk.TypeB =~= G = TypeF.injectivity(fk.eqB)
     val eq: (fk.TypeA ~> fk.TypeB) === (F ~> G) = i1.lower2[~>](i2)
     eq(fk.instance)
   }
-  val forallTo = ForallKBi.of[λ[(f[_],g[_]) => FunK[TypeF[f], TypeF[g]] => (f ~> g)]].from(applyTo)
+  private val faWrap   = ForallKBi.of[λ[(f[_],g[_]) => (f ~> g) => FunK[TypeF[f], TypeF[g]]]](wrapProto)
+  private val faUnwrap = ForallKBi.of[λ[(f[_],g[_]) => FunK[TypeF[f], TypeF[g]] => (f ~> g)]](unwrapProto)
 
   implicit class FunKOps[F[_], G[_]](val self: FunK[TypeF[F], TypeF[G]]) extends AnyVal {
-    def unwrap: F ~> G = forallTo.apply(self)
-    def apply[A](fa: F[A]): G[A] = unwrap[A](fa)
+    def unwrap: F ~> G = faUnwrap.apply(self)
+    def apply[A](fa: F[A]): G[A] = unwrap.of[A](fa)
   }
 
   implicit def isoCanonic[F[_], G[_]]: FunK[TypeF[F], TypeF[G]] <=> ~>[F, G] =
-    Iso.unsafe(forallTo[F, G], forallFr[F, G])
+    Iso.unsafe(faUnwrap[F, G], faWrap[F, G])
 
-  implicit def conversion[F[_], G[_]](fn: F ~> G): FunK[TypeF[F], TypeF[G]] = forallFr.of[F, G](fn)
+  implicit def isoKIso[F[_], G[_]]: Iso[FunK, TypeF[F], TypeF[G]] <=> (F <~> G) =
+    Iso.unsafe(
+      iso => <~>.unsafe(iso.to.unwrap, iso.from.unwrap),
+      fig => Iso.unsafe(FunK(fig.to), FunK(fig.from)))
+
+  def isoKConversion[F[_], G[_]](i: F <~> G): Iso[FunK, TypeF[F], TypeF[G]] = isoKIso[F, G].from(i)
+
+  implicit def conversion[F[_], G[_]](fn: F ~> G): FunK[TypeF[F], TypeF[G]] = faWrap.of[F, G](fn)
 
   implicit def categ: Subcat.Aux[FunK, IsTypeF] =
     new Subcat[FunK] {
       type TC[a] = IsTypeF[a]
 
-//      def id[A](implicit tc: IsTypeF[A]) = apply(∀.mk[tc.Type ~> tc.Type].from(a => a))
+      def id[A](implicit tc: IsTypeF[A]): FunK[A, A] =
+        Is.lift2[FunK](tc.is, tc.is)(FunK(∀.mk[tc.Type ~> tc.Type].from(a => a)))
 
-      def id[A](implicit tc: IsTypeF[A]) = new FunK[A, A] {
-        type T[a] = tc.Type[a]
-        type TypeA[x] = T[x]
-        type TypeB[x] = T[x]
-        def eqA: TypeF[T] === A = tc.eq
-        def eqB: TypeF[T] === A = tc.eq
-        def instance = ∀.mk[T ~> T].from(a => a)
-      }
-
-      override def andThen[A, B, C](ab: FunK[A, B], bc: FunK[B, C]) =
+      private[this] def andThenProto[A, B, C](ab: FunK[A, B], bc: FunK[B, C]) =
         new FunK[A, C] {
           type TypeA[x] = ab.TypeA[x]
           type TypeB[x] = bc.TypeB[x]
-          def eqA = ab.eqA
-          def eqB = bc.eqB
-          def instance = ∀.mk[TypeA ~> TypeB].from(
+          val (eqA, eqB) = (ab.eqA, bc.eqB)
+          val instance = ∀.mk[TypeA ~> TypeB].from(
             TypeF.injectivity(ab.eqB.andThen(bc.eqA.flip))
               .subst(ab.instance).apply
-              .andThen(bc.instance.apply)
-          )
+              .andThen(bc.instance.apply))
         }
+      val faAndThen = ∀∀∀.of[λ[(a,b,c) => (FunK[a,b], FunK[b,c]) => FunK[a,c]]](andThenProto(_,_))
+
+      override def andThen[A, B, C](ab: FunK[A, B], bc: FunK[B, C]): FunK[A, C] = faAndThen.of(ab, bc)
     }
 
 }

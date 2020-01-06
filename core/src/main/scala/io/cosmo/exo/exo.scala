@@ -1,5 +1,7 @@
 package io.cosmo
 
+import io.cosmo.exo.typeclasses.TypeF
+
 package object exo extends Existence with syntax {
   val InstanceOf: InstanceOfModule = InstanceOfImpl
   type InstanceOf[T] = InstanceOf.InstanceOf[T]
@@ -10,22 +12,22 @@ package object exo extends Existence with syntax {
   val Forall: foralls.ForallModule = foralls.ForallImpl
   val ∀ : Forall.type = Forall
   type Forall[F[_]]   = Forall.Forall[F]
-  type ∀[F[_]]        = Forall[F]
+  type ∀[F[_]]        = Forall.Forall[F]
 
   val Forall2: foralls.Forall2Module = foralls.Forall2Impl
   val ∀∀ : Forall2.type = Forall2
   type Forall2[F[_, _]] = Forall2.Forall2[F]
-  type ∀∀[F[_, _]]      = Forall2[F]
+  type ∀∀[F[_, _]]      = Forall2.Forall2[F]
 
   val Forall3: foralls.Forall3Module = foralls.Forall3Impl
   val ∀∀∀ : Forall3.type = Forall3
   type Forall3[F[_,_,_]] = Forall3.Forall3[F]
-  type ∀∀∀[F[_,_,_]]     = Forall3[F]
+  type ∀∀∀[F[_,_,_]]     = Forall3.Forall3[F]
 
   val ForallK: foralls.ForallKModule = foralls.ForallKImpl
   val ∀~ : ForallK.type = ForallK
   type ForallK[A[_[_]]] = ForallK.ForallK[A]
-  type ∀~[A[_[_]]]      = ForallK[A]
+  type ∀~[A[_[_]]]      = ForallK.ForallK[A]
 
   val ForallHK: foralls.ForallHKModule = foralls.ForallHKImpl
   type ForallHK[A[_[_[_]]]] = ForallHK.ForallHK[A]
@@ -39,12 +41,12 @@ package object exo extends Existence with syntax {
   val ForallK2: foralls.ForallK2Module = foralls.ForallK2Impl
   val ∀∀~ : ForallK2.type   = ForallK2
   type ForallK2[Bi[_[_,_]]] = ForallK2.ForallK2[Bi]
-  type ∀∀~[Bi[_[_,_]]]      = ForallK2[Bi]
+  type ∀∀~[Bi[_[_,_]]]      = ForallK2.ForallK2[Bi]
 
   val ForallKBi: foralls.ForallKKModule = foralls.ForallKKImpl
   val ∀~∀~ : ForallKBi.type      = ForallKBi
   type ForallKBi[Bi[_[_], _[_]]] = ForallKBi.ForallKBi[Bi]
-  type ∀~∀~[Bi[_[_], _[_]]]      = ForallKBi[Bi]
+  type ∀~∀~[Bi[_[_], _[_]]]      = ForallKBi.ForallKBi[Bi]
 
   val Disjunction: DisjunctionModule = DisjunctionModuleImpl
   type Disjunction[L, R] = Disjunction.Type[L, R]
@@ -68,20 +70,27 @@ package object exo extends Existence with syntax {
   //type BifunK[->[_,_], F[_,_],  G[_,_]]  = ∀∀[λ[(a,b) => F[a,b] -> G[a,b]]]
   //type FunHK [->[_,_], A[_[_]], B[_[_]]] = ∀~[λ[f[_]  => A[f] -> B[f]]]
 
-  type Iso2[A, B] = Iso[FunK, A, B]
+  type IsoFunK[A, B] = Iso[FunK, A, B]
 
   type IsoK [->[_,_], F[_], G[_]]       =  ∀[λ[a     => Iso[->, F[a], G[a]]]]
   type IsoK2[->[_,_], F[_,_], G[_,_]]   = ∀∀[λ[(a,b) => Iso[->, F[a,b], G[a,b]]]]
   type IsoHK[->[_,_], A[_[_]], B[_[_]]] = ∀~[λ[f[_]  => Iso[->, A[f], B[f]]]]
 
-  type <=> [A,       B]       = Iso[* => *, A, B]
-  type ~>  [F[_],    G[_]]    = ∀[λ[ᵒ => F[ᵒ] => G[ᵒ]]]
-  type <~> [F[_],    G[_]]    = ∀[λ[a => F[a] <=> G[a]]]
-  type ~~> [F[_,_],  G[_,_]]  = ∀∀[λ[(a,b) => F[a,b] => G[a,b]]]
+  type <=> [A, B] = Iso[* => *, A, B]
+  type ~>  [F[_], G[_]] = ∀[λ[ᵒ => F[ᵒ] =>  G[ᵒ]]]
+  type <~> [F[_], G[_]] = ∀[λ[a => F[a] <=> G[a]]]
+  object <~> {
+    def unsafe[F[_], G[_]](fg: F ~> G, gf: G ~> F): F <~> G = ∀.mk[F <~> G].fromH(t => Iso.unsafe(fg[t.T], gf[t.T]))
+  }
+  type ~~> [F[_,_],  G[_,_]]  = ∀∀[λ[(a,b) => F[a,b] =>  G[a,b]]]
   type <~~>[F[_,_],  G[_,_]]  = ∀∀[λ[(a,b) => F[a,b] <=> G[a,b]]]
-  type ≈>  [A[_[_]], B[_[_]]] = ∀~[λ[f[_]  => A[f] => B[f]]]
-  type <≈> [A[_[_]], B[_[_]]] = ∀~[λ[f[_] => A[f] <=> B[f]]]
+  object <~~> {
+    def unsafe[F[_,_], G[_,_]](fg: F ~~> G, gf: G ~~> F): F <~~> G =
+      ∀∀.mk[F <~~> G].fromH(t => Iso.unsafe(fg[t.T1, t.T2], gf[t.T1, t.T2]))
+  }
+  type ≈>  [A[_[_]], B[_[_]]] = ∀~[λ[f[_]  => A[f] =>  B[f]]]
+  type <≈> [A[_[_]], B[_[_]]] = ∀~[λ[f[_]  => A[f] <=> B[f]]]
 
-  type Exofun[==>[_,_], -->[_,_], F[_]] = ~~>[==>, λ[(a,b) => F[a] --> F[b]]]
+  type Exofun[==>[_,_], -->[_,_], F[_]] = ==> ~~> λ[(a, b) => F[a] --> F[b]]
 
 }

@@ -5,9 +5,9 @@ import io.cosmo.exo.evidence.{===, =~~=, Is, IsK2}
 sealed trait DualModule {
   type Dual[->[_,_], A, B] <: B -> A
 
-  def leibniz[->[_, _], A, B]: Dual[->, A, B] === (B -> A)
-  def leibniz2[->[_,_]]: Dual[->,*,*] =~~= Opp[->]#l
-  def apply[->[_, _], A, B](f: B -> A): Dual[->, A, B] = leibniz.flip(f)
+  def leibniz[->[_,_]]: Opp[->]#l =~~= Dual[->,*,*]
+  def is[->[_, _], A, B]: (B -> A) === Dual[->, A, B] = leibniz[->].is[A, B]
+  def apply[->[_, _], A, B](f: B -> A): Dual[->, A, B] = is(f)
 }
 
 object DualModule extends DualInstances {
@@ -19,8 +19,7 @@ object DualModule extends DualInstances {
 
 private[categories] object DualImpl extends DualModule {
   type Dual[->[_,_], A, B] = B -> A
-  override def leibniz[->[_, _], A, B] = Is.refl
-  override def leibniz2[->[_,_]] = IsK2.refl
+  override def leibniz[->[_,_]] = IsK2.refl
 }
 
 trait DualInstances {

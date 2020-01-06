@@ -10,6 +10,8 @@ final case class ProdCat[==>[_,_], -->[_,_], A, B](first: A ==> B, second: A -->
 
 object ProdCat {
   type BicatEndo[->[_,_], A, B] = ProdCat[->,     ->   , A, B]
+  // TODO: trebuie sa inversez Dicat'ul: .. = ProdCat[Dual[->,*,*], ->, A, B]
+  // pentru ca la profunctori tre'sa fie contravariantul primul functor si covariantul al doilea
   type Dicat[->[_,_], A, B] = ProdCat[->, Dual[->,*,*], A, B]
   object Dicat {
     def apply[->[_,_], A, B](to: A -> B, from: B -> A): Dicat[->, A, B] = new Dicat(to, Dual(from))

@@ -1,10 +1,11 @@
 package io.cosmo.exo
 
+import io.cosmo.exo.categories.{Cartesian, Ccc}
 import io.cosmo.exo.evidence._
 
 object foralls {
 
-  private[exo] sealed trait ForallModule {
+  sealed trait ForallModule {
     type Forall[F[_]]
     type ∀[F[_]] = Forall[F]
 
@@ -34,7 +35,7 @@ object foralls {
     }
   }
 
-  private[exo] object ForallImpl extends ForallModule {
+  private[exo] object ForallImpl extends ForallModule with ForallSyntax {
     type Forall[F[_]] = F[Any]
 
     def specialize[F[_], A](f: ∀[F]): F[A]    = f.asInstanceOf[F[A]]
@@ -43,6 +44,99 @@ object foralls {
     def monotonicity[F[_], G[_]](ev: ∀[λ[α => F[α] <~< G[α]]]): ∀[F] <~< ∀[G] = As.refl[Any].asInstanceOf[∀[F] <~< ∀[G]]
     def from[F[_]](p: Prototype[F]): ∀[F]     = p[Any]
     def of[F[_]]: MkForall[F] = new MkForallImpl[F]
+  }
+
+  private[exo] final class MkForallImpl[F[_]](val dummy: Boolean = false) extends AnyVal with ForallImpl.MkForall[F] {
+    type T = Any
+    def from(ft: F[T]): ForallImpl.∀[F] = ft
+  }
+
+  object ForallModule extends ForallSyntax
+  trait ForallSyntax {
+    implicit final class Ops[F[_]](val f: ∀[F]) {
+      def of[A]: F[A]    = Forall.specialize(f)
+      def apply[A]: F[A] = of[A]
+      def lift[G[_]]: ∀[λ[X => F[G[X]]]] = ∀.of[λ[ᵒ => F[G[ᵒ]]]](of)
+      def const[A](a: A): ∀[λ[X => A]] = ∀.of[λ[X => A]].apply(a)
+    }
+
+    implicit class FunctionKOps[F[_], G[_]](val trans: F ~> G) {
+      def $(f: ∀[F]): ∀[G] = ∀.of[G](exec(f.apply))
+      def exec[A](fa: F[A]): G[A] = trans[A](fa)
+      def andThen[H[_]](fn2: G ~> H): F ~> H = ∀.mk[F ~> H].from(trans.apply.andThen(fn2.apply))
+      def andThen_[H[_], I[_]](fn2: H ~> I)(implicit eq: G =~= H): F ~> I = eq.subst(trans).andThen(fn2)
+    }
+
+    implicit class IsoKOps[F[_], G[_]](val iso: F <~> G) {
+      def to:   F ~> G = ∀.mk[F ~> G].fromH(t => iso[t.T].to)
+      def from: G ~> F = ∀.mk[G ~> F].fromH(t => iso[t.T].from)
+    }
+
+    // https://nokyotsu.com/qscripts/2014/07/distribution-of-quantifiers-over-logic-connectives.html
+    //////////////////////////// ⨂
+    /** ∀ distributes over Tuple2 */
+    def fnPdTo_[->[_,_], ⨂[_,_], F[_], G[_]](implicit
+      cc: Cartesian[->, ⨂]
+    ): ∀[λ[x => F[x] ⨂ G[x]]] -> (∀[F] ⨂ ∀[G]) = {
+      //f => (∀.of[F].fromH(t => f.apply[t.T]._1), ∀.of[G].fromH(t => f.apply[t.T]._2))
+      def p1[x]: F[x] ⨂ G[x] -> F[x] = cc.fst[F[x], G[x]]
+      def p2[x]: F[x] ⨂ G[x] -> G[x] = cc.snd[F[x], G[x]]
+      ???
+    }
+
+    def fnPdTo[F[_], G[_]]: ∀[λ[x => (F[x], G[x])]] => (∀[F], ∀[G]) =
+      f => (∀.of[F].fromH(t => f.apply[t.T]._1), ∀.of[G].fromH(t => f.apply[t.T]._2))
+    def fnPdFr[F[_], G[_]]: ((∀[F], ∀[G])) => ∀[λ[x => (F[x], G[x])]] =
+    {case (f, g) => ∀.of[λ[x => (F[x], G[x])]].fromH(t => (f[t.T], g[t.T]))}
+    def isoDistribTuple[F[_], G[_]]: ∀[λ[x => (F[x], G[x])]] <=> (∀[F], ∀[G]) = Iso.unsafe(fnPdTo, fnPdFr)
+
+    //////////////////////// ⨁
+    /** ∀ distributes over \/ (one way only) */
+    def fnCdFr[F[_], G[_]]: (∀[F] \/ ∀[G]) => ∀[λ[x => F[x] \/ G[x]]] =
+      e => ∀.of[λ[x => F[x] \/ G[x]]].fromH(t => e.fold(_.apply[t.T].left, _.apply[t.T].right))
+
+    ////////////////////////
+    /** ∀ kinda distributes over => */
+    def fnDistTo_[->[_,_], ⨂[_,_], A, F[_]](implicit
+      cc: Cartesian[->, ⨂],
+      ccc: Ccc.AuxPH[->, ⨂, ->],
+    ): ∀[λ[x => A -> F[x]]] => (A -> ∀[F]) = { faf =>
+      def f1[x]: A -> F[x] = faf[x]
+      def ap[x]: ((A -> F[x]) ⨂ A) -> F[x] = ccc.apply[A, F[x]]
+      //def cu[x] = ccc.curry[A -> F[x], A, x]
+
+      ???
+    }
+
+    def fnDistTo1[A, F[_]]: ∀[λ[x => A => F[x]]] => A => ∀[F] = {
+      faf => {
+        a => {
+          def ap[x]: A => F[x] = faf.apply[x]
+          def xx[x]: F[x] = ap[x].apply(a)
+          ∀.of[F].from(xx)
+        }
+      }
+    }
+
+    def fnDistTo[A, F[_]]: ∀[λ[x => A => F[x]]] => A => ∀[F] =
+      faf => a => ∀.of[F](faf.apply.apply(a))
+    def fnDistFrom[A, F[_]]: (A => ∀[F]) => ∀[λ[x => A => F[x]]] =
+      afa => ∀.of[λ[x => A => F[x]]](a => afa(a).apply)
+    def isoDistribFn[A, F[_]]: ∀[λ[x => A => F[x]]] <=> (A => ∀[F]) = Iso.unsafe(fnDistTo, fnDistFrom)
+
+    def fnDistFun[F[_], G[_]](fg: F ~> G):  ∀[F] => ∀[G] = fg.$(_)
+    def fnDistIso[F[_], G[_]](fg: F <~> G): ∀[F] <=> ∀[G] = ???
+
+    ////////////////////////
+    /** ∀ is commutative */
+    def commute1[F[_,_]]: ∀[λ[a => ∀[F[a, *]]]] => ∀[λ[b => ∀[F[*, b]]]] =
+      ab => ∀.of[λ[b => ∀[F[*, b]]]].fromH(b => ∀.of[F[*, b.T]].fromH(a => ab[a.T][b.T]))
+    def commute2[F[_,_]]: ∀[λ[b => ∀[F[*, b]]]] => ∀[λ[a => ∀[F[a, *]]]] =
+      ab => ∀.of[λ[a => ∀[F[a, *]]]].fromH(a => ∀.of[F[a.T, *]].fromH(b => ab[b.T][a.T]))
+    def isoCommute[F[_,_]]: ∀[λ[a => ∀[λ[b => F[a, b]]]]] <=> ∀[λ[b => ∀[λ[a => F[a, b]]]]] =
+      Iso.unsafe(commute1[F], commute2[F])
+
+    ////////////////////////
   }
 
   private[exo] sealed trait Forall2Module {
@@ -86,6 +180,56 @@ object foralls {
     def of[F[_, _]]: MkForall2[F] = new MkForall2Impl[F]
   }
 
+  object Forall2Module {
+    implicit final class OpsForall2[Arr[_, _]](val a: ∀∀[Arr]) extends AnyVal {
+      def of   [A, B]: Arr[A, B] = Forall2.specialize(a)
+      def apply[A, B]: Arr[A, B] = of[A, B]
+
+      def to[F[_,_], G[_,_]](implicit ev: Arr =~~= λ[(a,b) => F[a,b] <=> G[a,b]]
+      ): F ~~> G = ∀∀.mk[F ~~> G].from(ev.subst[∀∀](a).apply.to)
+
+      def from[F[_,_], G[_,_]](implicit ev: Arr =~~= λ[(a,b) => F[a,b] <=> G[a,b]]
+      ): G ~~> F = ∀∀.mk[G ~~> F].from(ev.subst[∀∀](a).apply.from)
+
+      def exec[F[_,_], A, B, G[_,_]](fa: F[A, B])(implicit
+        ev: Arr =~~= λ[(a,b) => F[a,b] <=> G[a,b]]
+      ): G[A, B] = ev.subst[∀∀](a).of[A, B](fa)
+
+//      def $[F[_,_], G[_,_]](fa: ∀∀[F])(implicit
+//        ev: Arr =~~= λ[(a,b) => F[a,b] <=> G[a,b]]
+//      ): ∀∀[G] = ???
+
+
+//      def exec[F[_,_], A, B, G[_,_]](fa: F[A, B])(implicit
+//        ev: ∀∀[Arr] === <~~>[F, G]
+//      ): G[A, B] = ev(a)[A, B](fa)
+//
+//      def $[F[_,_], G[_,_]](fa: ∀∀[F])(implicit
+//        ev: ∀∀[Arr] === <~~>[F, G]
+//      ): ∀∀[G] = ∀∀.of[G](exec(fa.apply))
+//
+    }
+
+//    implicit class BinaturalTransformationOps[F[_, _], G[_, _]](val trans: F ~~> G) extends AnyVal {
+//      def $(f: ∀∀[F]): ∀∀[G] = ∀∀.of[G](exec(f.apply))
+//      def exec[A, B](fa: F[A, B]): G[A, B] = trans[A, B](fa)
+//      def andThen[H[_,_]](fn2: G ~~> H): F ~~> H = ∀∀.mk[F ~~> H].from(trans.apply.andThen(fn2.apply))
+//      def andThen_[H[_,_], I[_,_]](fn2: H ~~> I)(implicit eq: G =~~= H): F ~~> I = eq.subst(trans).andThen(fn2)
+//    }
+//
+//    implicit class IsoK2Ops[F[_,_], G[_,_]](val iso: F <~~> G) {
+//      def to:   F ~~> G = ∀∀.mk[F ~~> G].fromH(t => iso[t.T1, t.T2].to)
+//      def from: G ~~> F = ∀∀.mk[G ~~> F].fromH(t => iso[t.T1, t.T2].from)
+//    }
+
+  }
+
+  private[exo] final class MkForall2Impl[F[_,_]](val dummy: Boolean = false) extends AnyVal with Forall2Impl.MkForall2[F] {
+    type T = Any
+    type U = Any
+    def from(ft: F[T, U]): Forall2Impl.∀∀[F] = ft
+  }
+
   private[exo] sealed trait Forall3Module {
     type Forall3[F[_,_,_]]
     type ∀∀∀[F[_,_,_]] = Forall3[F]
@@ -108,7 +252,7 @@ object foralls {
       type C
       def from(ft: F[A, B, C]): ∀∀∀[F]
       def apply(ft: F[A, B, C]): ∀∀∀[F] = from(ft)
-      def fromH(ft: TypeHolder3[A, B, C] => F[A, B, C]): Forall3[F] = from(ft(TypeHolder3[A, B, C]))
+      def fromH(ft: TypeHolder3[A, B, C] => F[A, B, C]): ∀∀∀[F] = from(ft(TypeHolder3[A, B, C]))
     }
 
     trait Unapply[X] { type F[_,_,_] }
@@ -127,6 +271,19 @@ object foralls {
       As.refl[(Any, Any, Any)].asInstanceOf[∀∀∀[F] <~< ∀∀∀[G]]
     def from[F[_,_,_]](p: Prototype[F]): ∀∀∀[F] = p[Any, Any, Any]
     def of[F[_,_,_]]: MkForall3[F] = new MkForall3Impl[F]
+  }
+
+  object Forall3Module {
+    implicit final class Ops[F[_,_,_]](val a: ∀∀∀[F]) extends AnyVal {
+      def of   [A, B, C]: F[A, B, C] = Forall3.specialize(a)
+      def apply[A, B, C]: F[A, B, C] = of[A, B, C]
+    }
+  }
+  private[exo] final class MkForall3Impl[F[_,_,_]](val dummy: Boolean = false) extends AnyVal with Forall3Impl.MkForall3[F] {
+    type A = Any
+    type B = Any
+    type C = Any
+    def from(ft: F[A, B, C]): Forall3Impl.∀∀∀[F] = ft
   }
 
   private[exo] sealed trait ForallKModule {
@@ -367,74 +524,6 @@ object foralls {
     def of[Bi[_[_], _[_]]]: MkForallKBi[Bi] = new MkForallKKImpl[Bi]
   }
 
-
-  object ForallModule {
-    implicit final class Ops[F[_]](val f: ∀[F]) {
-      def of[A]: F[A]    = Forall.specialize(f)
-      def apply[A]: F[A] = of[A]
-      def lift[G[_]]: ∀[λ[X => F[G[X]]]] = ∀.of[λ[ᵒ => F[G[ᵒ]]]](of)
-      def const[A](a: A): ∀[λ[X => A]] = ∀.of[λ[X => A]].apply(a)
-    }
-
-    implicit class NaturalTransformationOps[F[_], G[_]](val trans: F ~> G) {
-      def $(f: ∀[F]): ∀[G] = ∀.of[G](trans.exec(f.apply))
-      def exec[A](fa: F[A]): G[A] = trans[A](fa)
-      def andThen[H[_]](fn2: G ~> H): F ~> H = ∀.mk[F ~> H].from(trans.apply.andThen(fn2.apply))
-      def andThen_[H[_], I[_]](fn2: H ~> I)(implicit eq: G =~= H): F ~> I = eq.subst(trans).andThen(fn2)
-    }
-
-    // https://nokyotsu.com/qscripts/2014/07/distribution-of-quantifiers-over-logic-connectives.html
-    //////////////////////////// ⨂
-    /** ∀ distributes over Tuple2 */
-    def fnPdTo[F[_], G[_]]: ∀[λ[x => (F[x], G[x])]] => (∀[F], ∀[G]) =
-      f => (∀.of[F].fromH(t => f.apply[t.T]._1), ∀.of[G].fromH(t => f.apply[t.T]._2))
-    def fnPdFr[F[_], G[_]]: ((∀[F], ∀[G])) => ∀[λ[x => (F[x], G[x])]] =
-      {case (f, g) => ∀.of[λ[x => (F[x], G[x])]].fromH(t => (f[t.T], g[t.T]))}
-    def isoDistribTuple[F[_], G[_]]: ∀[λ[x => (F[x], G[x])]] <=> (∀[F], ∀[G]) = Iso.unsafe(fnPdTo, fnPdFr)
-
-    //////////////////////// ⨁
-    /** ∀ distributes over \/ (one way only) */
-    def fnCdFr[F[_], G[_]]: (∀[F] \/ ∀[G]) => ∀[λ[x => F[x] \/ G[x]]] =
-      e => ∀.of[λ[x => F[x] \/ G[x]]].fromH(t => e.fold(_.apply[t.T].left, _.apply[t.T].right))
-
-    ////////////////////////
-    /** ∀ kinda distributes over => */
-    def fnDistTo[A, F[_]]: ∀[λ[x => A => F[x]]] => A => ∀[F] =
-      faf => a => ∀.of[F](faf.apply.apply(a))
-    def fnDistFrom[A, F[_]]: (A => ∀[F]) => ∀[λ[x => A => F[x]]] =
-      afa => ∀.of[λ[x => A => F[x]]](a => afa(a).apply)
-    def isoDistribFn[A, F[_]]: ∀[λ[x => A => F[x]]] <=> (A => ∀[F]) = Iso.unsafe(fnDistTo, fnDistFrom)
-
-    ////////////////////////
-    /** ∀ is commutative */
-    def commute1[F[_,_]]: ∀[λ[a => ∀[F[a, *]]]] => ∀[λ[b => ∀[F[*, b]]]] =
-      ab => ∀.of[λ[b => ∀[F[*, b]]]].fromH(b => ∀.of[F[*, b.T]].fromH(a => ab[a.T][b.T]))
-    def commute2[F[_,_]]: ∀[λ[b => ∀[F[*, b]]]] => ∀[λ[a => ∀[F[a, *]]]] =
-      ab => ∀.of[λ[a => ∀[F[a, *]]]].fromH(a => ∀.of[F[a.T, *]].fromH(b => ab[b.T][a.T]))
-    def isoCommute[F[_,_]]: ∀[λ[a => ∀[λ[b => F[a, b]]]]] <=> ∀[λ[b => ∀[λ[a => F[a, b]]]]] =
-      Iso.unsafe(commute1[F], commute2[F])
-
-    ////////////////////////
-  }
-  object Forall2Module {
-    implicit final class Ops[F[_, _]](val a: ∀∀[F]) extends AnyVal {
-      def of   [A, B]: F[A, B] = Forall2.specialize(a)
-      def apply[A, B]: F[A, B] = of[A, B]
-    }
-
-    implicit class BinaturalTransformationOps[F[_, _], G[_, _]](val trans: F ~~> G) extends AnyVal {
-      def $(f: ∀∀[F]): ∀∀[G] = ∀∀.of[G](trans.apply.apply(f.apply))
-      def exec[A, B](fa: F[A, B]): G[A, B] = trans[A, B](fa)
-      def andThen[H[_,_]](fn2: G ~~> H): F ~~> H = ∀∀.mk[F ~~> H].from(trans.apply.andThen(fn2.apply))
-      def andThen_[H[_,_], I[_,_]](fn2: H ~~> I)(implicit eq: G =~~= H): F ~~> I = eq.subst(trans).andThen(fn2)
-    }
-  }
-  object Forall3Module {
-    implicit final class Ops[F[_,_,_]](val a: ∀∀∀[F]) extends AnyVal {
-      def of   [A, B, C]: F[A, B, C] = Forall3.specialize(a)
-      def apply[A, B, C]: F[A, B, C] = of[A, B, C]
-    }
-  }
   object ForallKModule {
     implicit final class Ops[Alg[_[_]]](val a: ∀~[Alg]) {
       def of   [F[_]]: Alg[F] = ForallK.specialize(a)
@@ -472,21 +561,6 @@ object foralls {
     }
   }
 
-  private[exo] final class MkForallImpl[F[_]](val dummy: Boolean = false) extends AnyVal with ForallImpl.MkForall[F] {
-    type T = Any
-    def from(ft: F[T]): ForallImpl.∀[F] = ft
-  }
-  private[exo] final class MkForall2Impl[F[_,_]](val dummy: Boolean = false) extends AnyVal with Forall2Impl.MkForall2[F] {
-    type T = Any
-    type U = Any
-    def from(ft: F[T, U]): Forall2Impl.∀∀[F] = ft
-  }
-  private[exo] final class MkForall3Impl[F[_,_,_]](val dummy: Boolean = false) extends AnyVal with Forall3Impl.MkForall3[F] {
-    type A = Any
-    type B = Any
-    type C = Any
-    def from(ft: F[A, B, C]): Forall3Impl.∀∀∀[F] = ft
-  }
   private[exo] final class MkForallKImpl[Alg[_[_]]](val dummy: Boolean = false) extends AnyVal with ForallKImpl.MkForallK[Alg] {
     type T[α] = Any
     def from(ft: Alg[T]): ForallKImpl.∀~[Alg] = ft

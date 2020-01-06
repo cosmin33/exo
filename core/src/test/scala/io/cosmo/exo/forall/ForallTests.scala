@@ -3,7 +3,6 @@ package io.cosmo.exo.forall
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import io.cosmo.exo._
-import io.cosmo.exo.evidence.<~<
 
 class ForallTests extends AnyFunSuite with Matchers {
 
@@ -71,7 +70,7 @@ class ForallTests extends AnyFunSuite with Matchers {
 
       // applying a universally quantified function to a universally quantified value
       // yields a universally quantified value
-      val none2: ∀∀[Option2] = pick $ emptyMap
+//      val none2: ∀∀[Option2] = pick $ emptyMap
     }
   }
 
