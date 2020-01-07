@@ -1,11 +1,10 @@
 package io.cosmo.exo.evidence
 
-import io.cosmo.exo._
-import io.cosmo.exo.categories.functors.{Endofunctor, Exofunctor}
-import io.cosmo.exo.categories.{Opp, Subcat, Trivial}
 import cats.implicits._
-import io.cosmo.exo.evidence.variance.{IsConstant, IsContravariant, IsCovariant}
-import shapeless.{OrElse, the}
+import io.cosmo.exo._
+import io.cosmo.exo.categories.functors._
+import io.cosmo.exo.categories.{Dual, Endobifunctor, Groupoid, Semicategory, Subcat, Trivial}
+import shapeless.the
 
 sealed abstract class Is[A, B] private[Is]()  { ab =>
   import Is._
@@ -48,6 +47,25 @@ object Is extends IsInstances {
 
   implicit def isoInjectivity[F[_]: IsInjective, A, B]: (F[A] === F[B]) <=> (A === B) =
     Iso.unsafe(IsInjective[F].apply(_), _.lift)
+
+  implicit def exoCov[A]: Exo.Cov[===, A === *] =
+    Exo.unsafe(∀∀.of[λ[(x,y) => (x === y) => (A === x) => (A === y)]].from(xy => xy.subst[A === *]))
+  implicit def exoCon[A]: Exo.Con[===, * === A] =
+    Exo.unsafe[Dual[===,*,*], * => *, * === A, Trivial.T1, Trivial.T1](
+      ∀∀.of[λ[(x,y) => Dual[===,x,y] => (x === A) => (y === A)]].from(yx => yx.flip.subst[* === A]))
+
+  // de sters, e deja la groupoid
+  def groupoidIso[A, B]: (A === B) <=> Iso[===, A, B] = Groupoid.isoIso
+
+  implicit def isBifunctor[P[_,_]]: Endobifunctor[===, P] = new Endobifunctor[===, P] {
+    type TCL[a] = Trivial.T1[a]
+    type TCR[a] = Trivial.T1[a]
+    type TC [a] = Trivial.T1[a]
+    val L, R, C = Semicategory.leibnizGroupoid
+    def bimap[A, X, B, Y](left: A === X, right: B === Y): P[A, B] === P[X, Y] = left.lift2[P](right)
+    def leftMap [A, B, Z](fn: A === Z): P[A, B] === P[Z, B] = fn.lift[P[*, B]]
+    def rightMap[A, B, Z](fn: B === Z): P[A, B] === P[A, Z] = fn.lift[P[A, *]]
+  }
 
   private final class Refl[A]() extends Is[A, A] {
     def subst[F[_]](fa: F[A]): F[A] = fa
@@ -107,6 +125,4 @@ object Is extends IsInstances {
 }
 
 trait IsInstances {
-  implicit def impkk[B[_,_]]: ∀∀[λ[(a,b) => B[a,b] === B[a,b]]] =
-    ∀∀.of[λ[(a,b) => B[a,b] === B[a,b]]](Is.refl)
 }

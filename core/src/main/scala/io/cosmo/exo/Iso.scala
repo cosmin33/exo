@@ -65,16 +65,13 @@ trait Iso[->[_,_], A, B] { ab =>
 object Iso extends IsoInstances {
   def apply[->[_,_], A, B](implicit iso: Iso[->, A, B]): Iso[->, A, B] = iso
 
-  def liftFunctionIso[-->[_,_], ==>[_,_]](iso: --> <~~> ==>)(implicit c1: Subcat[-->], c2: Subcat[==>]
-  ): Iso[-->,*,*] <~~> Iso[==>,*,*] = {
-//    val ab = ∀∀.mk[Iso[-->,*,*] ~~> Iso[==>,*,*]].from(i => Iso.unsafe(iso.to.exec(i.to),   iso.to.exec(i.from)))
-//    val ba = ∀∀.mk[Iso[==>,*,*] ~~> Iso[-->,*,*]].from(i => Iso.unsafe(iso.from.exec(i.to), iso.from.exec(i.from)))
-//    <~~>.unsafe(ab, ba)
-//    def ab1[a,b]: Iso[-->,a,b] => Iso[==>,a,b] = i => Iso.unsafe(iso.to.exec(i.to),   iso.to.exec(i.from))
-//    def ba1[a,b]: Iso[==>,a,b] => Iso[-->,a,b] = i => Iso.unsafe(iso.from.exec(i.to), iso.from.exec(i.from))
-//    <~~>.unsafe[Iso[-->,*,*], Iso[==>,*,*]](ab1, ba1)
-    ???
-  }
+  def liftIsoFunctions[=>:[_,_], ->:[_,_]](iso: =>: <~~> ->:)(implicit
+    c1: Subcat[=>:], c2: Subcat[->:]
+  ): Iso[=>:,*,*] <~~> Iso[->:,*,*] =
+    <~~>.unsafe(
+      ∀∀.mk[Iso[=>:,*,*] ~~> Iso[->:,*,*]].from(i => Iso.unsafe(iso.to.exec(i.to),   iso.to.exec(i.from))),
+      ∀∀.mk[Iso[->:,*,*] ~~> Iso[=>:,*,*]].from(i => Iso.unsafe(iso.from.exec(i.to), iso.from.exec(i.from)))
+    )
 
   private final class Refl[A]() extends Iso[* => *, A, A] {
     type TC[a] = Trivial.T1[a]
@@ -89,6 +86,7 @@ object Iso extends IsoInstances {
   def refl[->[_,_], A, TC[_]](implicit c: Subcat.Aux[->, TC], tc: TC[A]): Iso[->, A, A] =
     new Iso[->, A, A] {val cat = c; val to, from = c.id[A]}
 
+  /** create an isomorphism given the two complementary functions as long as you promise to uphold the iso laws */
   def unsafe[->[_,_], A, B](ab: A -> B, ba: B -> A)(implicit C: Subcat[->]): Iso[->, A, B] =
     new Iso[->, A, B] {val (cat, to, from) = (C, ab, ba)}
 
@@ -173,31 +171,31 @@ trait IsoInstances extends IsoInstances1 {
   implicit def isoGroupoid[->[_,_], T[_]](implicit C: Subcat.Aux[->, T]
   ): Groupoid.Aux[Iso[->, *, *], T] = new IsoGroupoid[->, T] {val cat = C}
 
-  implicit def isoAssoc[->[_,_], P[_,_], T[_]](implicit
+  implicit def isoAssoc[->[_,_], ⊙[_,_], T[_]](implicit
     c: Subcat.Aux[->, T],
-    a: Associative.Aux[->, P, T],
-    b: Endobifunctor.Aux[->, T, P],
-  ): Associative[Iso[->, *, *], P] = new IsoAssoc[->, T, P] {val cat = c; val A = a; val bif = b}
+    a: Associative.Aux[->, ⊙, T],
+    b: Endobifunctor.Aux[->, T, ⊙],
+  ): Associative[Iso[->, *, *], ⊙] = new IsoAssoc[->, T, ⊙] {val cat = c; val A = a; val bif = b}
 }
 trait IsoInstances1 extends IsoInstances2 {
-  implicit def isoBraided[->[_,_], P[_,_], T[_]](implicit
+  implicit def isoBraided[->[_,_], ⊙[_,_], T[_]](implicit
     c: Subcat.Aux[->, T],
-    a: Braided.Aux[->, P, T],
-    b: Endobifunctor.Aux[->, T, P],
-  ): Braided.Aux[Iso[->, *, *], P, T] = new IsoBraided[->, P, T] {val cat = c; val A = a; val bif = b}
+    a: Braided.Aux[->, ⊙, T],
+    b: Endobifunctor.Aux[->, T, ⊙],
+  ): Braided.Aux[Iso[->, *, *], ⊙, T] = new IsoBraided[->, ⊙, T] {val cat = c; val A = a; val bif = b}
 
-  implicit def isoMonoidal[->[_,_], P[_,_], T[_], I](implicit
+  implicit def isoMonoidal[->[_,_], ⊙[_,_], T[_], I](implicit
     c: Subcat.Aux[->, T],
-    a: Monoidal.Aux[->, P, T, I],
-    b: Endobifunctor.Aux[->, T, P],
-  ): Monoidal.Aux[Iso[->, *, *], P, T, I] = new IsoMonoidal[->, P, T, I] {val cat = c; val A = a; val bif = b}
+    a: Monoidal.Aux[->, ⊙, T, I],
+    b: Endobifunctor.Aux[->, T, ⊙],
+  ): Monoidal.Aux[Iso[->, *, *], ⊙, T, I] = new IsoMonoidal[->, ⊙, T, I] {val cat = c; val A = a; val bif = b}
 }
 trait IsoInstances2 {
-  implicit def isoSymmetric[->[_,_], P[_,_], T[_]](implicit
+  implicit def isoSymmetric[->[_,_], ⊙[_,_], T[_]](implicit
     c: Subcat.Aux[->, T],
-    a: Symmetric.Aux[->, P, T],
-    b: Endobifunctor.Aux[->, T, P],
-  ): Symmetric.Aux[Iso[->, *, *], P, T] = new IsoSymmetric[->, P, T] {val cat = c; val A = a; val bif = b}
+    a: Symmetric.Aux[->, ⊙, T],
+    b: Endobifunctor.Aux[->, T, ⊙],
+  ): Symmetric.Aux[Iso[->, *, *], ⊙, T] = new IsoSymmetric[->, ⊙, T] {val cat = c; val A = a; val bif = b}
 }
 
 object IsoHelperTraits {
@@ -212,6 +210,10 @@ object IsoHelperTraits {
     private type <->[a,b] = Iso[->, a, b]
     override def bimap[A, X, B, Y](l: A <-> X, r: B <-> Y): ⊙[A, B] <-> ⊙[X, Y] =
       Iso.unsafe(bif.bimap(l.to, r.to), bif.bimap(l.from, r.from))(cat)
+    override def leftMap [A, B, Z](fn: A <-> Z): ⊙[A, B] <-> ⊙[Z, B] =
+      Iso.unsafe(bif.leftMap[A, B, Z](fn.to), bif.leftMap[Z, B, A](fn.from))(cat)
+    override def rightMap[A, B, Z](fn: B <-> Z): ⊙[A, B] <-> ⊙[A, Z] =
+      Iso.unsafe(bif.rightMap[A, B, Z](fn.to), bif.rightMap[A, Z, B](fn.from))(cat)
   }
 
   trait IsoGroupoid[->[_,_], T[_]] extends Groupoid[Iso[->, *, *]] {
@@ -245,10 +247,10 @@ object IsoHelperTraits {
   trait IsoMonoidal[->[_,_], ⊙[_,_], T[_], I] extends Monoidal[Iso[->, *, *], ⊙] with IsoAssoc[->, T, ⊙] {
     def A: Monoidal.Aux[->, ⊙, T, I]
     type Id = I
-    def idl[A]:   Iso[->,  I ⊙ A, A  ] = Iso.unsafe(A.idl[A], A.coidl[A])(cat)
-    def coidl[A]: Iso[->,    A, I ⊙ A] = Iso.unsafe(A.coidl[A], A.idl[A])(cat)
-    def idr[A]:   Iso[->,  A ⊙ I, A  ] = Iso.unsafe(A.idr[A], A.coidr[A])(cat)
-    def coidr[A]: Iso[->,    A, A ⊙ I] = Iso.unsafe(A.coidr[A], A.idr[A])(cat)
+    def idl[A]:   Iso[->, I ⊙ A, A  ] = Iso.unsafe(A.idl[A], A.coidl[A])(cat)
+    def coidl[A]: Iso[->,   A, I ⊙ A] = Iso.unsafe(A.coidl[A], A.idl[A])(cat)
+    def idr[A]:   Iso[->, A ⊙ I, A  ] = Iso.unsafe(A.idr[A], A.coidr[A])(cat)
+    def coidr[A]: Iso[->,   A, A ⊙ I] = Iso.unsafe(A.coidr[A], A.idr[A])(cat)
   }
 
 }

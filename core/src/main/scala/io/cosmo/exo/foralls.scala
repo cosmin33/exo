@@ -1,6 +1,7 @@
 package io.cosmo.exo
 
 import io.cosmo.exo.categories.{Cartesian, Ccc}
+import io.cosmo.exo.categories.functors.Exo
 import io.cosmo.exo.evidence._
 
 object foralls {
@@ -56,8 +57,8 @@ object foralls {
     implicit final class Ops[F[_]](val f: ∀[F]) {
       def of[A]: F[A]    = Forall.specialize(f)
       def apply[A]: F[A] = of[A]
-      def lift[G[_]]: ∀[λ[X => F[G[X]]]] = ∀.of[λ[ᵒ => F[G[ᵒ]]]](of)
-      def const[A](a: A): ∀[λ[X => A]] = ∀.of[λ[X => A]].apply(a)
+      def lift[G[_]]: ∀[λ[x => F[G[x]]]] = ∀.of[λ[ᵒ => F[G[ᵒ]]]](of)
+      def const[A](a: A): ∀[λ[x => A]] = ∀.of[λ[x => A]].apply(a)
     }
 
     implicit class FunctionKOps[F[_], G[_]](val trans: F ~> G) {
@@ -97,12 +98,19 @@ object foralls {
 
     ////////////////////////
     /** ∀ kinda distributes over => */
-    def fnDistTo_[->[_,_], ⨂[_,_], A, F[_]](implicit
+    def fnDistTo_[->[_,_], |->[_,_], ⨂[_,_], A, F[_]](implicit
       cc: Cartesian[->, ⨂],
-      ccc: Ccc.AuxPH[->, ⨂, ->],
+      ccc: Ccc.AuxPH[->, ⨂, |->],
+      E: Exo.Cov[->, F],
     ): ∀[λ[x => A -> F[x]]] => (A -> ∀[F]) = { faf =>
-      def f1[x]: A -> F[x] = faf[x]
-      def ap[x]: ((A -> F[x]) ⨂ A) -> F[x] = ccc.apply[A, F[x]]
+      def f1[x]: A -> F[x] = faf.apply[x]
+      def ap[x]: ((A |-> F[x]) ⨂ A) -> F[x] = ccc.apply[A, F[x]]
+      //def sf[x]: (A |-> x) => (x |-> A) => x |-> x = ccc.homCov[x].map[A, x](_)
+      //def sd[x]: (A |-> F[A]) => (x |-> A) => x |-> F[A] = ccc.homCov[x].map[A, F[A]](_)
+
+      //def adf[x, y, z] = ccc.homProfunctor.
+
+      //def mr[x] = E.map()
       //def cu[x] = ccc.curry[A -> F[x], A, x]
 
       ???
@@ -111,8 +119,7 @@ object foralls {
     def fnDistTo1[A, F[_]]: ∀[λ[x => A => F[x]]] => A => ∀[F] = {
       faf => {
         a => {
-          def ap[x]: A => F[x] = faf.apply[x]
-          def xx[x]: F[x] = ap[x].apply(a)
+          def xx[x]: F[x] = faf.apply[x](a)
           ∀.of[F].from(xx)
         }
       }
@@ -124,8 +131,8 @@ object foralls {
       afa => ∀.of[λ[x => A => F[x]]](a => afa(a).apply)
     def isoDistribFn[A, F[_]]: ∀[λ[x => A => F[x]]] <=> (A => ∀[F]) = Iso.unsafe(fnDistTo, fnDistFrom)
 
-    def fnDistFun[F[_], G[_]](fg: F ~> G):  ∀[F] => ∀[G] = fg.$(_)
-    def fnDistIso[F[_], G[_]](fg: F <~> G): ∀[F] <=> ∀[G] = ???
+    def fnLowerFunk[F[_], G[_]](fg: F  ~> G): ∀[F]  => ∀[G] = fg.$(_)
+    def fnLowerIsok[F[_], G[_]](fg: F <~> G): ∀[F] <=> ∀[G] = Iso.unsafe(fg.to.$(_), fg.from.$(_))
 
     ////////////////////////
     /** ∀ is commutative */
@@ -185,16 +192,16 @@ object foralls {
       def of   [A, B]: Arr[A, B] = Forall2.specialize(a)
       def apply[A, B]: Arr[A, B] = of[A, B]
 
-      def to[F[_,_], G[_,_]](implicit ev: Arr =~~= λ[(a,b) => F[a,b] <=> G[a,b]]
-      ): F ~~> G = ∀∀.mk[F ~~> G].from(ev.subst[∀∀](a).apply.to)
-
-      def from[F[_,_], G[_,_]](implicit ev: Arr =~~= λ[(a,b) => F[a,b] <=> G[a,b]]
-      ): G ~~> F = ∀∀.mk[G ~~> F].from(ev.subst[∀∀](a).apply.from)
-
-      def exec[F[_,_], A, B, G[_,_]](fa: F[A, B])(implicit
-        ev: Arr =~~= λ[(a,b) => F[a,b] <=> G[a,b]]
-      ): G[A, B] = ev.subst[∀∀](a).of[A, B](fa)
-
+//      def to[F[_,_], G[_,_]](implicit ev: Arr =~~= λ[(a,b) => F[a,b] <=> G[a,b]]
+//      ): F ~~> G = ∀∀.mk[F ~~> G].from(ev.subst[∀∀](a).apply.to)
+//
+//      def from[F[_,_], G[_,_]](implicit ev: Arr =~~= λ[(a,b) => F[a,b] <=> G[a,b]]
+//      ): G ~~> F = ∀∀.mk[G ~~> F].from(ev.subst[∀∀](a).apply.from)
+//
+//      def exec[F[_,_], A, B, G[_,_]](fa: F[A, B])(implicit
+//        ev: Arr =~~= λ[(a,b) => F[a,b] <=> G[a,b]]
+//      ): G[A, B] = ev.subst[∀∀](a).of[A, B](fa)
+//
 //      def $[F[_,_], G[_,_]](fa: ∀∀[F])(implicit
 //        ev: Arr =~~= λ[(a,b) => F[a,b] <=> G[a,b]]
 //      ): ∀∀[G] = ???
@@ -210,17 +217,17 @@ object foralls {
 //
     }
 
-//    implicit class BinaturalTransformationOps[F[_, _], G[_, _]](val trans: F ~~> G) extends AnyVal {
-//      def $(f: ∀∀[F]): ∀∀[G] = ∀∀.of[G](exec(f.apply))
-//      def exec[A, B](fa: F[A, B]): G[A, B] = trans[A, B](fa)
-//      def andThen[H[_,_]](fn2: G ~~> H): F ~~> H = ∀∀.mk[F ~~> H].from(trans.apply.andThen(fn2.apply))
-//      def andThen_[H[_,_], I[_,_]](fn2: H ~~> I)(implicit eq: G =~~= H): F ~~> I = eq.subst(trans).andThen(fn2)
-//    }
-//
-//    implicit class IsoK2Ops[F[_,_], G[_,_]](val iso: F <~~> G) {
-//      def to:   F ~~> G = ∀∀.mk[F ~~> G].fromH(t => iso[t.T1, t.T2].to)
-//      def from: G ~~> F = ∀∀.mk[G ~~> F].fromH(t => iso[t.T1, t.T2].from)
-//    }
+    implicit class BinaturalTransformationOps[F[_, _], G[_, _]](val trans: F ~~> G) extends AnyVal {
+      def $(f: ∀∀[F]): ∀∀[G] = ∀∀.of[G](exec(f.apply))
+      def exec[A, B](fa: F[A, B]): G[A, B] = trans[A, B](fa)
+      def andThen[H[_,_]](fn2: G ~~> H): F ~~> H = ∀∀.mk[F ~~> H].from(trans.apply.andThen(fn2.apply))
+      def andThen_[H[_,_], I[_,_]](fn2: H ~~> I)(implicit eq: G =~~= H): F ~~> I = eq.subst(trans).andThen(fn2)
+    }
+
+    implicit class IsoK2Ops[F[_,_], G[_,_]](val iso: F <~~> G) {
+      def to:   F ~~> G = ∀∀.mk[F ~~> G].fromH(t => iso[t.T1, t.T2].to)
+      def from: G ~~> F = ∀∀.mk[G ~~> F].fromH(t => iso[t.T1, t.T2].from)
+    }
 
   }
 

@@ -56,23 +56,6 @@ object Exofunctor {
   trait Proto[|=>[_,_], -->[_,_], F[_], =>#[_], ->#[_]] extends
     Exofunctor[|=>, -->, F] {type TC1[A] = =>#[A]; type TC2[A] = ->#[A]}
 
-  def unsafeH[==>[_,_], -->[_,_], F[_]] = new UnsafeH[==>, -->, F]
-  class UnsafeH[==>[_,_], -->[_,_], F[_]] {
-    type A
-    type B
-    def apply[=>#[_], ->#[_]](fn: TypeHolder2[A, B] => (A ==> B) => (F[A] --> F[B]))(implicit
-      c1: Subcat.Aux[==>, =>#],
-      c2: Subcat.Aux[-->, ->#]
-    ): Exofunctor.Aux[==>, -->, F, =>#, ->#] =
-      {
-        val bb: A ==> B => F[A] --> F[B] = fn(TypeHolder2[A, B])
-
-        //val rr = unsafe(∀∀.of[λ[(a,b) => (a ==> b) => F[a] --> F[b]]].from(bb))
-
-        ???
-      }
-  }
-
   def unsafe[==>[_,_], -->[_,_], F[_], =>#[_], ->#[_]](
     fn: Exomap[==>, -->, F]
   )(implicit
@@ -109,17 +92,15 @@ object Exofunctor {
   implicit def isoInvariant[F[_]]: Exofunctor.InvF[F] <=> Invariant[F] =
     Iso.unsafe(
       F => new Invariant[F] {
-             def imap[A, B](fa: F[A])(f: A => B)(g: B => A): F[B] =
-               F.map(Dicat[* => *, A, B](f, g)).apply(fa)
+             def imap[A, B](fa: F[A])(f: A => B)(g: B => A): F[B] = F.map(Dicat(f, g))(fa)
            },
-      F =>
-        new Exofunctor[Dicat[* => *, *, *], * => *, F] {
-          type TC1[a] = Trivial.T1[a]
-          type TC2[a] = Trivial.T1[a]
-          def C = ProdCat.categorySameTC
-          def D = the[Subcat.Aux[* => *, Trivial.T1]]
-          def map[A, B](f: Dicat[Function, A, B]) = F.imap(_)(f.first)(f.second)
-        }
+      I => new Exofunctor[Dicat[* => *, *, *], * => *, F] {
+             type TC1[a] = Trivial.T1[a]
+             type TC2[a] = Trivial.T1[a]
+             def C = ProdCat.categorySameTC
+             def D = the[Subcat.Aux[* => *, Trivial.T1]]
+             def map[A, B](f: Dicat[Function, A, B]) = I.imap(_)(f.first)(f.second)
+           }
     )
 
   implicit def isoCovariant[F[_]]: Endofunctor.CovF[F] <=> Functor[F] =

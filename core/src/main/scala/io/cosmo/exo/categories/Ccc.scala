@@ -1,7 +1,7 @@
 package io.cosmo.exo.categories
 
-import io.cosmo.exo.categories.functors.Exofunctor
 import io.cosmo.exo._
+import io.cosmo.exo.categories.functors._
 
 trait Ccc[->[_, _]] extends Subcat[->] {
   type Hom[_, _]
@@ -10,22 +10,25 @@ trait Ccc[->[_, _]] extends Subcat[->] {
   type ProductId
   def cartesian: Cartesian.Aux[->, ⊙, TC, ProductId]
 
-  private type |=>[a,b] = Hom[a,b]
-  type Phy[A, B] = ∀[λ[x => (A |=> x) -> (B |=> x)]]
-  //Φc : Pre(A, 6)(a, c) ! Pre(A, 6)(b, c)
+  private type |->[a,b] = Hom[a,b]
 
-  def apply[A, B]: ⊙[A |=> B, A] -> B
+  // TODO: de implementat (in toate instantele)
+  def homProfunctor: Exobifunctor[Dual[Hom,*,*], Hom, * => *, Hom] = ???
+  //def homCov[A]: Exo.Cov[Hom, A Hom *] = ???
+  //def homCon[B]: Exo.Con[Hom, * Hom B] = ???
 
-  def apExperiment1[A, B]: (A |=> B) -> (A |=> B) = curry(apply)
-  def apExperiment2[A, B](in: ProductId -> (A |=> B)): A -> B = andThen(cartesian.coidl[A], uncurry(in))
+  def apply[A, B]: ⊙[A |-> B, A] -> B
+
+  def apExperiment1[A, B]: (A |-> B) -> (A |-> B) = curry(apply)
+  def apExperiment2[A, B](in: ProductId -> (A |-> B)): A -> B = andThen(cartesian.coidl[A], uncurry(in))
   // apply obtained uncurrying the identity of Hom (but I have to request the typeclass)
-  def apExperiment3[A, B](implicit tc: TC[A |=> B]): ⊙[A |=> B, A] -> B = uncurry(id[A |=> B])
+  def apExperiment3[A, B](implicit tc: TC[A |-> B]): ⊙[A |-> B, A] -> B = uncurry(id[A |-> B])
 
-  def curry  [A, B, C](f: ⊙[A, B] -> C): A -> (B |=> C)
-  def uncurry[A, B, C](f: A -> (B |=> C)): ⊙[A, B] -> C
+  def curry  [A, B, C](f: ⊙[A, B] -> C): A -> (B |-> C)
+  def uncurry[A, B, C](f: A -> (B |-> C)): ⊙[A, B] -> C
 
-  /** Adjunction between ⊙[*, B] and B |=> * */
-  def isoClosedAdjunction[A, B, C]: (⊙[A, B] -> C) <=> (A -> (B |=> C)) = Iso.unsafe(curry, uncurry)
+  /** Adjunction between ⊙[*, B] and B |-> * */
+  def isoClosedAdjunction[A, B, C]: (⊙[A, B] -> C) <=> (A -> (B |-> C)) = Iso.unsafe(curry, uncurry)
 }
 
 object Ccc {

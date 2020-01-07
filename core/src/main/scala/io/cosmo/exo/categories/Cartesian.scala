@@ -8,23 +8,11 @@ trait Cartesian[->[_, _], ⨂[_, _]] extends Monoidal[->, ⨂] with Symmetric[->
   def diag[A]: A -> ⨂[A, A]
   def &&&[X, Y, Z](f: X -> Y, g: X -> Z): X -> ⨂[Y, Z]
 
-  def &&&&[X, Y, Z]: ⨂[X -> Y, X -> Z] -> (X -> ⨂[Y, Z]) = {
-
-    ???
-  }
-
-
   def pair[A, B, X, Y](f: A -> B, g: X -> Y): ⨂[A, X] -> ⨂[B, Y] =
     &&&(C.andThen(fst[A, X], f), C.andThen(snd[A, X], g))
 
-  def pair1[A, B, X, Y]: ⨂[A -> B, X -> Y] -> (⨂[A, X] -> ⨂[B, Y]) = {
-
-    ???
-  }
-
   def isoCartesian[X, Y, Z]: (X -> Y, X -> Z) <=> (X -> ⨂[Y, Z]) =
     Iso.unsafe(p => &&&(p._1, p._2), fn => (C.andThen(fn, fst[Y, Z]), C.andThen(fn, snd[Y, Z])))
-
 }
 
 object Cartesian extends CartesianInstances with CartesianSyntax {

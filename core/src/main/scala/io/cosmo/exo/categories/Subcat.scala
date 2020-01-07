@@ -18,7 +18,7 @@ object Subcat {
   trait Proto[->[_,_], ->#[_]] extends Subcat[->] {type TC[a] = ->#[a]}
 
   def oppCategory[->[_,_], C[_]](src: Subcat.Aux[->, C]): Subcat.Aux[Opp[->]#l, C] =
-    new SemicategoryHelpers.Fun1OppSubcategory[->, C] { val op = src }
+    new SemicategoryHelpers.OppSubcategory[->, C] { val op = src }
 
   implicit class SubcatOps[->[_,_]](val s: Subcat[->]) extends AnyVal {
     def opp: Subcat.Aux[Dual[->,*,*], s.TC] = DualModule.category[->, s.TC](s)

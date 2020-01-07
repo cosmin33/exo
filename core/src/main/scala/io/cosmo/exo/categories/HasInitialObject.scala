@@ -8,7 +8,8 @@ trait HasInitialObject[->[_, _]] extends Subcat[->] {
 
   def initiate[A](implicit A: TC[A]): Initial -> A
 }
-object HasInitialObject extends HasInitialObjectInstances {
+
+object HasInitialObject {
   type Aux[->[_,_], C[_], I] = HasInitialObject[->] {type TC[a] = C[a]; type Initial = I}
   trait Proto[->[_, _], C0[_], I] extends HasInitialObject[->] with Subcat.Proto[->, C0] {
     type Initial = I
@@ -19,14 +20,4 @@ object HasInitialObject extends HasInitialObjectInstances {
     tc: TC[A]
   ): (Init -> A) <=> Unit =
     Iso.unsafe((_: Init -> A) => (), (_: Unit) => i.initiate[A])
-
-}
-
-trait HasInitialObjectInstances {
-
-  trait HasInitialObjectFunction1 extends HasInitialObject.Proto[Function1, Trivial.T1, Nothing] {
-    override def initial: Trivial.T1[Nothing] = Trivial.trivialInstance
-    override def initiate[A](implicit A: Trivial.T1[A]): Nothing => A = sys.error("obtained everything from nothing!")
-  }
-
 }

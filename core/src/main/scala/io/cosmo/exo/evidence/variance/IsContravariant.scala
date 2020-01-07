@@ -5,7 +5,6 @@ import io.cosmo.exo.evidence._
 import cats.implicits._
 
 trait IsContravariant[F[_]] { F =>
-  import IsContravariant._
 
   def apply[A, B](implicit ab: A <~< B): F[B] <~< F[A]
 
@@ -46,10 +45,6 @@ object IsContravariant {
             eqv => eqv.lift[F].flip.toAs
           )
         }.proved
-//        Is.lem[X, Y].map {
-//          case \/-(eqv) => eqv.lift[F].flip.toAs
-//          case -\/(neqv) => Parametric[F].liftCt[A, B, X, Y](ab, fba, StrictAs.witness(neqv, xy))
-//        }.proved
     }
 
   def witness1[F[_]](implicit ev: F[Any] <~< F[Void]): IsContravariant[F] =

@@ -65,7 +65,7 @@ object FunK {
               .subst(ab.instance).apply
               .andThen(bc.instance.apply))
         }
-      val faAndThen = ∀∀∀.of[λ[(a,b,c) => (FunK[a,b], FunK[b,c]) => FunK[a,c]]](andThenProto(_,_))
+      private[this] val faAndThen = ∀∀∀.of[λ[(a,b,c) => (FunK[a,b], FunK[b,c]) => FunK[a,c]]](andThenProto(_,_))
 
       override def andThen[A, B, C](ab: FunK[A, B], bc: FunK[B, C]): FunK[A, C] = faAndThen.of(ab, bc)
     }

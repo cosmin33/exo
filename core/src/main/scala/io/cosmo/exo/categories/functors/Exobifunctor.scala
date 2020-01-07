@@ -3,26 +3,27 @@ package io.cosmo.exo.categories.functors
 import io.cosmo.exo._
 import io.cosmo.exo.categories._
 import io.estatico.newtype.Coercible
+import cats.implicits._
+import cats.syntax._
 
-trait Exobifunctor[==>[_, _], -->[_, _], ~~>[_, _], Bi[_, _]] {
+trait Exobifunctor[=>:[_, _], ->:[_, _], ~>:[_, _], Bi[_, _]] {
   type TCL[_]
-  def L : Subcat.Aux[==>, TCL]
+  def L : Subcat.Aux[=>:, TCL]
 
   type TCR[_]
-  def R : Subcat.Aux[-->, TCR]
+  def R : Subcat.Aux[->:, TCR]
 
   type TC[_]
-  def C : Subcat.Aux[~~>, TC]
+  def C : Subcat.Aux[~>:, TC]
 
-  def bimap[A, X, B, Y](left: A ==> X, right: B --> Y): Bi[A, B] ~~> Bi[X, Y]
-// TODO: see how to not need typeclasses (TCR / TCL) for these:
-  def leftMap [A, B, Z](fn: A ==> Z): Bi[A, B] ~~> Bi[Z, B] = ??? //bimap(fn, R.id[B])
-  def rightMap[A, B, Z](fn: B --> Z): Bi[A, B] ~~> Bi[A, Z] = ??? //bimap(L.id[A], fn)
+  def bimap[A, X, B, Y](left: A =>: X, right: B ->: Y): Bi[A, B] ~>: Bi[X, Y]
+  def leftMap [A, B, Z](fn: A =>: Z): Bi[A, B] ~>: Bi[Z, B] //bimap(fn, R.id[B])
+  def rightMap[A, B, Z](fn: B ->: Z): Bi[A, B] ~>: Bi[A, Z] //bimap(L.id[A], fn)
 }
 
 object Exobifunctor extends ExobifunctorInstances {
-  type Aux[|=>[_, _], =>#[_], -->[_, _], ->#[_], ~~>[_, _], ~>#[_], ⊙[_, _]] =
-    Exobifunctor[|=>, -->, ~~>, ⊙] {type TCL[a] = =>#[a]; type TCR[a] = ->#[a]; type TC[a] = ~>#[a]}
+  type Aux[=>:[_, _], =>#[_], ->:[_, _], ->#[_], ~>:[_, _], ~>#[_], ⊙[_, _]] =
+    Exobifunctor[=>:, ->:, ~>:, ⊙] {type TCL[a] = =>#[a]; type TCR[a] = ->#[a]; type TC[a] = ~>#[a]}
   type AuxTF[⊙[_, _]] = Aux[* => *, Trivial.T1, * => *, Trivial.T1, * => *, Trivial.T1, ⊙]
   type ProTF[⊙[_, _]] = Aux[Dual[* => *,*,*], Trivial.T1, * => *, Trivial.T1, * => *, Trivial.T1, ⊙]
 
@@ -34,12 +35,12 @@ object Exobifunctor extends ExobifunctorInstances {
     E: Endobifunctor.Aux[->, ->#, P],
   ): Endobifunctor.Aux[->, ->#, R] = ev(E)
 
-  def apply[==>[_, _], =>#[_], -->[_, _], ->#[_], ~~>:[_, _], ~>#[_], ⊙[_, _]](implicit
-    bi: Exobifunctor.Aux[==>, =>#, -->, ->#, ~~>:, ~>#, ⊙]
-  ): Exobifunctor.Aux[==>, =>#, -->, ->#, ~~>:, ~>#, ⊙] = bi
+  def apply[=>:[_, _], =>#[_], ->:[_, _], ->#[_], ~>:[_, _], ~>#[_], ⊙[_, _]](implicit
+    bi: Exobifunctor.Aux[=>:, =>#, ->:, ->#, ~>:, ~>#, ⊙]
+  ): Exobifunctor.Aux[=>:, =>#, ->:, ->#, ~>:, ~>#, ⊙] = bi
 
-  trait Proto[|=>[_, _], =>#[_], -->[_, _], ->#[_], ~~>[_, _], ~>#[_], ⊙[_, _]] extends
-    Exobifunctor[|=>, -->, ~~>, ⊙] {type TCL[a] = =>#[a]; type TCR[a] = ->#[a]; type TC[a] = ~>#[a]}
+  trait Proto[=>:[_, _], =>#[_], ->:[_, _], ->#[_], ~>:[_, _], ~>#[_], ⊙[_, _]] extends
+    Exobifunctor[=>:, ->:, ~>:, ⊙] {type TCL[a] = =>#[a]; type TCR[a] = ->#[a]; type TC[a] = ~>#[a]}
 
 }
 
@@ -60,8 +61,10 @@ trait ExobifunctorInstances {
     source: Endobifunctor.Aux[->, TC, Bi],
   ): Endobifunctor.Aux[Opp[->]#l, TC, Bi] = new Endobifunctor.Proto[Opp[->]#l, TC, Bi] {
     val L, R, C = Subcat.oppCategory(c)
-    override def bimap[LX, LY, RX, RY](left: LY -> LX, right: RY -> RX): Bi[LY, RY] -> Bi[LX, RX] =
+    def bimap[LX, LY, RX, RY](left: LY -> LX, right: RY -> RX): Bi[LY, RY] -> Bi[LX, RX] =
       source.bimap[LY, LX, RY, RX](left, right)
+    def leftMap [A, B, Z](fn: Z -> A): Bi[Z, B] -> Bi[A, B] = source.leftMap(fn)
+    def rightMap[A, B, Z](fn: Z -> B): Bi[A, Z] -> Bi[A, B] = source.rightMap(fn)
   }
   implicit def dualEndobifunctor[->[_, _], TC[_], Bi[_, _]](implicit
     c: Subcat.Aux[->, TC],
@@ -72,8 +75,10 @@ trait ExobifunctorInstances {
   implicit def tuple2Endobifunctor: Endobifunctor.Aux[* => *, Trivial.T1, Tuple2] =
     new Endobifunctor.Proto[* => *, Trivial.T1, Tuple2] {
       val L, R, C = Subcat[* => *]
-      override def bimap[A, X, B, Y](left: A => X, right: B => Y): ((A, B)) => (X, Y) =
+      def bimap[A, X, B, Y](left: A => X, right: B => Y): ((A, B)) => (X, Y) =
         { case (a, b) => (left(a), right(b)) }
+      def leftMap [A, B, Z](fn: A => Z): ((A, B)) => (Z, B) = { case (a, b) => (fn(a), b) }
+      def rightMap[A, B, Z](fn: B => Z): ((A, B)) => (A, Z) = { case (a, b) => (a, fn(b)) }
     }
 
   def tuple2OppEndobifunctor: Endobifunctor.Aux[Opp[* => *]#l, Trivial.T1, Tuple2] =
@@ -84,8 +89,12 @@ trait ExobifunctorInstances {
   implicit def eitherEndoBifunctor: Endobifunctor.Aux[* => *, Trivial.T1, Either] =
     new Endobifunctor.Proto[* => *, Trivial.T1, Either] {
       override val L, R, C = Subcat[* => *]
-      override def bimap[LX, LY, RX, RY](lxy: LX => LY, rxy: RX => RY): Either[LX, RX] => Either[LY, RY] =
-        _.fold(x => Left [LY, RY](lxy(x)), x => Right[LY, RY](rxy(x)))
+      def bimap[LX, LY, RX, RY](lxy: LX => LY, rxy: RX => RY): Either[LX, RX] => Either[LY, RY] =
+        _.fold(x => lxy(x).asLeft, x => rxy(x).asRight)
+      def leftMap [A, B, Z](fn: A => Z): Either[A, B] => Either[Z, B] =
+        _.fold(a => fn(a).asLeft, b => b.asRight)
+      def rightMap[A, B, Z](fn: B => Z): Either[A, B] => Either[A, Z] =
+        _.fold(a => a.asLeft, b => fn(b).asRight)
     }
 
   def eitherDualEndoBifunctor: Endobifunctor.Aux[Dual[* => *,*,*], Trivial.T1, Either] =

@@ -2,7 +2,7 @@ package io.cosmo.exo.evidence
 
 import io.cosmo.exo._
 import io.cosmo.exo.categories.functors.{Endofunctor, Exofunctor}
-import io.cosmo.exo.categories.{Subcat, Opp, Trivial}
+import io.cosmo.exo.categories.{Opp, Semicategory, Subcat, Trivial}
 import io.cosmo.exo.categories.Trivial.{T1 => Triv}
 import io.cosmo.exo.evidence.variance._
 import cats.implicits._
@@ -100,24 +100,32 @@ object As {
   implicit def asIsContravariant[A]: IsContravariant[* <~< A] = IsContravariant.reify[λ[`-x` => x <~< A]]
 
   implicit def liskovCovFunctor[F[_]](implicit
-    cat: Subcat.Aux[<~<, Triv],
     ec: IsCovariant[F] \/ IsConstant[F]
-  ): Endofunctor.AuxT[<~<, F] =
+  ): Exofunctor.AuxT[<~<, <~<, F] =
     new Endofunctor.ProtoT[<~<, F] {
-      val C, D = cat
+      val C, D = Semicategory.liskov
       def map[A, B](f: A <~< B): F[A] <~< F[B] =
         ec.fold(cv => cv(f), const => const[A, B].toAs)
     }
 
+  implicit def liskovCovFunctorFn[F[_]](implicit
+    ec: IsCovariant[F] \/ IsConstant[F]
+  ): Exofunctor.AuxT[<~<, * => *, F] =
+    new Exofunctor.Proto[<~<, * => *, F, Triv, Triv] {
+      val C = Semicategory.liskov
+      val D = Semicategory.function1
+      def map[A, B](f: A <~< B): F[A] => F[B] =
+        ec.fold(cv => cv(f), const => const[A, B].toAs).apply(_)
+    }
+
   implicit def liskovConFunctor[F[_]](implicit
-    cat: Subcat.Aux[<~<, Triv],
-    cop: Subcat.Aux[Opp[<~<]#l, Triv],
     ec: IsContravariant[F] \/ IsConstant[F]
-  ): Exofunctor.AuxT[<~<, Opp[<~<]#l, F] =
-    new Exofunctor.Proto[<~<, Opp[<~<]#l, F, Triv, Triv] {
-      val C = cat; val D = cop
-      def map[A, B](f: A <~< B): F[B] <~< F[A] =
-        ec.fold(cn => cn(f), const => const[B, A].toAs)
+  ): Exofunctor.AuxT[Opp[<~<]#l, <~<, F] =
+    new Exofunctor.Proto[Opp[<~<]#l, <~<, F, Triv, Triv] {
+      val C = Subcat.oppCategory[<~<, Triv](Semicategory.liskov)
+      val D = Semicategory.liskov
+      def map[A, B](f: B <~< A): F[A] <~< F[B] =
+        ec.fold(cn => cn(f), const => const[A, B].toAs)
     }
 
   object syntax extends AsSyntax
@@ -125,9 +133,9 @@ object As {
 
 trait AsSyntax {
   implicit final class ToAsOps[A, B](val ab: A <~< B) {
-    def liftCvF[F[_]](implicit F: IsCovariant[F]): F[A] <~< F[B] = F(ab)
+    def liftCvF[F[_]](implicit F: IsCovariant[F]):     F[A] <~< F[B] = F(ab)
     def liftCtF[F[_]](implicit F: IsContravariant[F]): F[B] <~< F[A] = F(ab)
-    def substCvF[F[_]](fa: F[A])(implicit F: IsCovariant[F]): F[B] = F.coerce(fa)(ab)
+    def substCvF[F[_]](fa: F[A])(implicit F: IsCovariant[F]):     F[B] = F.coerce(fa)(ab)
     def substCtF[F[_]](fb: F[B])(implicit F: IsContravariant[F]): F[A] = F.coerce(fb)(ab)
   }
 }

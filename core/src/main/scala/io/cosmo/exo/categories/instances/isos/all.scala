@@ -1,5 +1,5 @@
 package io.cosmo.exo.categories.instances.isos
 
-trait all extends yoneda
+trait all
 
 object all extends all
