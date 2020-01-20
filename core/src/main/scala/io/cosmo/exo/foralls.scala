@@ -1,6 +1,6 @@
 package io.cosmo.exo
 
-import io.cosmo.exo.categories.{Cartesian, Ccc}
+import io.cosmo.exo.categories.{Cartesian, Ccc, HasTerminalObject}
 import io.cosmo.exo.categories.functors.Exo
 import io.cosmo.exo.evidence._
 
@@ -99,15 +99,18 @@ object foralls {
     ////////////////////////
     /** ∀ kinda distributes over => */
     def fnDistTo_[->[_,_], |->[_,_], ⨂[_,_], A, F[_]](implicit
+      T: HasTerminalObject[->],
       cc: Cartesian[->, ⨂],
       ccc: Ccc.AuxPH[->, ⨂, |->],
       E: Exo.Cov[->, F],
     ): ∀[λ[x => A -> F[x]]] => (A -> ∀[F]) = { faf =>
       def f1[x]: A -> F[x] = faf.apply[x]
       def ap[x]: ((A |-> F[x]) ⨂ A) -> F[x] = ccc.apply[A, F[x]]
+      def cz[x]: A |-> F[x] -> (A |-> F[x]) = ccc.curry[A |-> F[x], A, F[x]](ap[x])
       //def sf[x]: (A |-> x) => (x |-> A) => x |-> x = ccc.homCov[x].map[A, x](_)
       //def sd[x]: (A |-> F[A]) => (x |-> A) => x |-> F[A] = ccc.homCov[x].map[A, F[A]](_)
-
+      def ff: A -> F[A] = f1[A]
+      ccc.homProfunctor.rightMap[A, F[A], ∀[F]](/* F[A] |-> ∀[F] */???)
       //def adf[x, y, z] = ccc.homProfunctor.
 
       //def mr[x] = E.map()
@@ -119,6 +122,7 @@ object foralls {
     def fnDistTo1[A, F[_]]: ∀[λ[x => A => F[x]]] => A => ∀[F] = {
       faf => {
         a => {
+          def yy[x]: A => F[x] = faf.apply[x]
           def xx[x]: F[x] = faf.apply[x](a)
           ∀.of[F].from(xx)
         }
@@ -188,33 +192,9 @@ object foralls {
   }
 
   object Forall2Module {
-    implicit final class OpsForall2[Arr[_, _]](val a: ∀∀[Arr]) extends AnyVal {
-      def of   [A, B]: Arr[A, B] = Forall2.specialize(a)
-      def apply[A, B]: Arr[A, B] = of[A, B]
-
-//      def to[F[_,_], G[_,_]](implicit ev: Arr =~~= λ[(a,b) => F[a,b] <=> G[a,b]]
-//      ): F ~~> G = ∀∀.mk[F ~~> G].from(ev.subst[∀∀](a).apply.to)
-//
-//      def from[F[_,_], G[_,_]](implicit ev: Arr =~~= λ[(a,b) => F[a,b] <=> G[a,b]]
-//      ): G ~~> F = ∀∀.mk[G ~~> F].from(ev.subst[∀∀](a).apply.from)
-//
-//      def exec[F[_,_], A, B, G[_,_]](fa: F[A, B])(implicit
-//        ev: Arr =~~= λ[(a,b) => F[a,b] <=> G[a,b]]
-//      ): G[A, B] = ev.subst[∀∀](a).of[A, B](fa)
-//
-//      def $[F[_,_], G[_,_]](fa: ∀∀[F])(implicit
-//        ev: Arr =~~= λ[(a,b) => F[a,b] <=> G[a,b]]
-//      ): ∀∀[G] = ???
-
-
-//      def exec[F[_,_], A, B, G[_,_]](fa: F[A, B])(implicit
-//        ev: ∀∀[Arr] === <~~>[F, G]
-//      ): G[A, B] = ev(a)[A, B](fa)
-//
-//      def $[F[_,_], G[_,_]](fa: ∀∀[F])(implicit
-//        ev: ∀∀[Arr] === <~~>[F, G]
-//      ): ∀∀[G] = ∀∀.of[G](exec(fa.apply))
-//
+    implicit final class OpsForall2[F[_,_]](val a: ∀∀[F]) extends AnyVal {
+      def of   [A, B]: F[A, B] = Forall2.specialize(a)
+      def apply[A, B]: F[A, B] = of[A, B]
     }
 
     implicit class BinaturalTransformationOps[F[_, _], G[_, _]](val trans: F ~~> G) extends AnyVal {

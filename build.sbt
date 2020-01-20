@@ -78,7 +78,7 @@ lazy val commonSettings = Seq(
     "org.typelevel"        %%% "alleycats-core"      % versionOf.cats,
 //    "org.typelevel"        %%% "cats-effect"         % versionOf.catsEffect,
     "io.monix"             %%% "monix"               % versionOf.monix,
-    "org.scalaz"           %%% "scalaz-core"         % versionOf.scalaz,
+//    "org.scalaz"           %%% "scalaz-core"         % versionOf.scalaz,
     "com.github.alexarchambault" %%% "scalacheck-shapeless_1.14" % "1.2.3",
     "io.estatico"          %%% "newtype"             % versionOf.estaticoNewtype,
     "io.chrisdavenport"    %%% "cats-scalacheck"     % versionOf.scalaCheckCats, // % Test,

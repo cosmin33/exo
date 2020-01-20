@@ -76,7 +76,7 @@ object yoneda {
     Iso.unsafe(i => Iso.unsafe(i[A].to(C.id[A]), i[B].from(C.id[B])),
                i => <~>.unsafe[* -> A, * -> B](yoEmbedConFrom(i.to), yoEmbedConFrom(i.from)))
 
-  /** object containing all general yoneda isomorphisms applied to Function1: */
+  /** object containing all general yoneda isomorphisms applied to Function1 */
   object function1 {
     /** yoneda lemma covariant for Function1 */
     def lemmaYoIso[A, F[_]: Exo.CovF]: ((A => *) ~> F) <=> F[A] = yoneda.lemmaYoIsoCov
