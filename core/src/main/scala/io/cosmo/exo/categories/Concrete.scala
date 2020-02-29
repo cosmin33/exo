@@ -10,7 +10,7 @@ trait Concrete[->[_, _]] extends Subcat[->] {
   def toFunction[A, B](f: A -> B)(implicit eq: Trivial.T1 =~= TC): A => B =
     concretize(f)(_, eq(the[Trivial.T1[A]]))._1
 
-  def concretize1[A, B](a: A)(f: A -> B)(implicit A: TC[A]): B =
+  def concrete[A, B](a: A)(f: A -> B)(implicit A: TC[A]): B =
     concretize[A, B](f)(a, A)._1
 }
 object Concrete {

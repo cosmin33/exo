@@ -17,7 +17,6 @@ package object categories extends categories.syntax {
   type Cocartesian[->[_, _], ⨂[_, _]] = Cartesian[Opp[->]#l, ⨂]
   type Endofunctor[->[_,_], F[_]] = Exofunctor[->, ->, F]
 
-//  type Exobifunctor[==>[_,_], -->[_,_], ~~>[_,_], ⊙[_,_]] = InstanceOf[ExobifunctorClass[==>, -->, ~~>, ⊙]]
   type Endobifunctor[->[_,_], ⊙[_,_]] = Exobifunctor[->, ->, ->, ⊙]
 
 }

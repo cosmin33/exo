@@ -3,7 +3,7 @@ package io.cosmo.exo.evidence
 import cats.implicits._
 import io.cosmo.exo._
 import io.cosmo.exo.categories.functors._
-import io.cosmo.exo.categories.{Dual, Endobifunctor, Groupoid, Semicategory, Subcat, Trivial}
+import io.cosmo.exo.categories.{Dual, Endobifunctor, Endofunctor, Groupoid, Semicategory, Subcat, Trivial}
 import shapeless.the
 
 sealed abstract class Is[A, B] private[Is]()  { ab =>
@@ -51,7 +51,7 @@ object Is extends IsInstances {
   implicit def exoCov[A]: Exo.Cov[===, A === *] =
     Exo.unsafe(∀∀.of[λ[(x,y) => (x === y) => (A === x) => (A === y)]].from(xy => xy.subst[A === *]))
   implicit def exoCon[A]: Exo.Con[===, * === A] =
-    Exo.unsafe[Dual[===,*,*], * => *, * === A, Trivial.T1, Trivial.T1](
+    Exo.unsafe[Dual[===,*,*], * => *, * === A](
       ∀∀.of[λ[(x,y) => Dual[===,x,y] => (x === A) => (y === A)]].from(yx => yx.flip.subst[* === A]))
 
   // de sters, e deja la groupoid
@@ -62,7 +62,7 @@ object Is extends IsInstances {
     type TCR[a] = Trivial.T1[a]
     type TC [a] = Trivial.T1[a]
     val L, R, C = Semicategory.leibnizGroupoid
-    def bimap[A, X, B, Y](left: A === X, right: B === Y): P[A, B] === P[X, Y] = left.lift2[P](right)
+    override def bimap[A, X, B, Y](left: A === X, right: B === Y): P[A, B] === P[X, Y] = left.lift2[P](right)
     def leftMap [A, B, Z](fn: A === Z): P[A, B] === P[Z, B] = fn.lift[P[*, B]]
     def rightMap[A, B, Z](fn: B === Z): P[A, B] === P[A, Z] = fn.lift[P[A, *]]
   }
@@ -114,10 +114,10 @@ object Is extends IsInstances {
   def consistent[A, B](f: (A =!= B) => Void): A === B =
     proposition[A, B].proved(¬¬.witness(a => f(WeakApart.witness(a))))
 
-  implicit def leibnizFunctor[F[_], TC[_]](implicit
-    cat: Subcat.Aux[===, TC],
-  ): Endofunctor.Aux[===, F, TC] =
-    new Endofunctor.Proto[===, F, TC] {
+  implicit def leibnizFunctor[F[_]](implicit
+    cat: Semicategory[===],
+  ): Endofunctor[===, F] =
+    new Endofunctor[===, F] {
       val C, D = cat
       def map[A, B](f: A === B): F[A] === F[B] = Is.lift(f)
     }

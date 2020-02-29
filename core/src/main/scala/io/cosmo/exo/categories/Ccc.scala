@@ -19,16 +19,17 @@ trait Ccc[->[_, _]] extends Subcat[->] {
 
   def apply[A, B]: ⊙[A |-> B, A] -> B
 
-  def apExperiment1[A, B]: (A |-> B) -> (A |-> B) = curry(apply)
-  def apExperiment2[A, B](in: ProductId -> (A |-> B)): A -> B = andThen(cartesian.coidl[A], uncurry(in))
-  // apply obtained uncurrying the identity of Hom (but I have to request the typeclass)
-  def apExperiment3[A, B](implicit tc: TC[A |-> B]): ⊙[A |-> B, A] -> B = uncurry(id[A |-> B])
+  private def apExperiment1[A, B]: (A |-> B) -> (A |-> B) = uncurry(apply)
+  private def apExperiment2[A, B](in: ProductId -> (A |-> B)): A -> B = andThen(cartesian.coidl[A], curry(in))
+  // apply obtained uncurrying the identity of Hom (but I have to ask for the typeclass)
+  private def apExperiment3[A, B](implicit tc: TC[A |-> B]): ⊙[A |-> B, A] -> B = curry(id[A |-> B])
 
-  def curry  [A, B, C](f: ⊙[A, B] -> C): A -> (B |-> C)
-  def uncurry[A, B, C](f: A -> (B |-> C)): ⊙[A, B] -> C
+
+  def curry  [A, B, C](f: A -> (B |-> C)): ⊙[A, B] -> C
+  def uncurry[A, B, C](f: ⊙[A, B] -> C): A -> (B |-> C)
 
   /** Adjunction between ⊙[*, B] and B |-> * */
-  def isoClosedAdjunction[A, B, C]: (⊙[A, B] -> C) <=> (A -> (B |-> C)) = Iso.unsafe(curry, uncurry)
+  def isoClosedAdjunction[A, B, C]: (⊙[A, B] -> C) <=> (A -> (B |-> C)) = Iso.unsafe(uncurry, curry)
 }
 
 object Ccc {

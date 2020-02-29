@@ -1,5 +1,8 @@
 package io.cosmo.exo.evidence
 
+import io.cosmo.exo
+import io.cosmo.exo._
+
 sealed abstract class IsK2[F[_,_], G[_,_]] private[IsK2]() { ab =>
   import IsK2._
 
@@ -18,6 +21,8 @@ sealed abstract class IsK2[F[_,_], G[_,_]] private[IsK2]() { ab =>
   final def lower[T[_[_,_]]]: T[F] === T[G] = IsK2.lower[T, F, G](ab)
 
   final def is[A, B]: F[A, B] === G[A, B] = subst[λ[f[_,_] => F[A,B] === f[A,B]]](Is.refl[F[A, B]])
+
+  final def toIso: F <~~> G = ∀∀.mk[F <~~> G].from(is.toIso)
 
 }
 

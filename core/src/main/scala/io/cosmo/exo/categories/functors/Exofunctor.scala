@@ -1,33 +1,27 @@
 package io.cosmo.exo.categories.functors
 
-import cats.{Contravariant, Functor, Id, Invariant}
-import io.cosmo.exo
+import cats.data.{Cokleisli, Kleisli}
+import cats.implicits._
+import cats.{CoflatMap, Contravariant, FlatMap, Functor, FunctorFilter, Invariant, Monad, Traverse, TraverseFilter}
 import io.cosmo.exo._
-import io.cosmo.exo.categories.Trivial.T1
 import io.cosmo.exo.categories._
-import io.cosmo.exo.categories.data.{KleisModule, ProdCat}
+import io.cosmo.exo.categories.conversions.CatsInstances
+import io.cosmo.exo.categories.data.ProdCat
 import io.cosmo.exo.categories.data.ProdCat.Dicat
-import io.cosmo.exo.evidence._
-import io.cosmo.exo.typeclasses.{HasTc, TypeF}
+import io.cosmo.exo.typeclasses.HasTc
+import mouse.any._
 import shapeless.the
 
 trait Exofunctor[==>[_,_], -->[_,_], F[_]] {
-  type TC1[_]
-  def C : Subcat.Aux[==>, TC1]
-
-  type TC2[_]
-  def D : Subcat.Aux[-->, TC2]
-
+  def C : Semicategory[==>]
+  def D : Semicategory[-->]
   def map[A, B](f: A ==> B): F[A] --> F[B]
 }
 
 object Exofunctor {
-  type Aux[==>[_,_], -->[_,_], F[_], =>#[_], ->#[_]] =
-    Exofunctor[==>, -->, F] {type TC1[A] = =>#[A]; type TC2[A] = ->#[A]}
-  type AuxT[==>[_,_], -->[_,_], F[_]] = Aux[==>, -->, F, Trivial.T1, Trivial.T1]
 
   type Cov[->[_,_], F[_]] = Exofunctor[->, * => *, F]
-  /** This is isomorphic with cats.Covariant */
+  /** This is isomorphic with cats.Functor */
   type CovF[F[_]] = Cov[* => *, F]
 
   type Con[->[_,_], F[_]] = Exofunctor[Dual[->,*,*], * => *, F]
@@ -38,106 +32,128 @@ object Exofunctor {
   /** This is isomorphic with cats.Invariant */
   type InvF[F[_]] = Inv[* => *, F]
 
-  //type Pha[->[_,_], F[_]] = Exofunctor[]
-
   /** Exofunctor from an isomorphism category to Function1 */
   type IsoFun[->[_,_], F[_]] = Exofunctor[Iso[->,*,*], * => *, F]
 
+  /** Exofunctor from Function to an isomorphism category */
+  type FunIso[->[_,_], F[_]] = Exofunctor[* => *, Iso[->,*,*], F]
+
   /** Map on (A <-> B) gives you typeclass derivation: {{{HasTc[TC, A] => HasTc[TC, B]}}} */
-  //type IsoTypeclass[->[_,_], TC[_[_]]] = IsoFun[->, HasTc[TC, *]]
+  type IsoTypeclass[->[_,_], TC[_[_]]] = IsoFun[->, HasTc[TC, *]]
 
-//  type Traverse1[M[_], F[_]] = KleisModule.[]
+//  case class SingleOf[T, U <: {type TC1[_]; type TC2[_]}](widen: T {type TC1[a] = U#TC1[a]; type TC2[a] = U#TC2[a]})
+//  object SingleOf {
+//    implicit def mkSingleOf[T <: {type TC1[_]; type TC2[_]}](implicit t: T): SingleOf[T, t.type] = SingleOf(t)
+//  }
 
-  case class SingleOf[T, U <: {type TC1[_]; type TC2[_]}](widen: T {type TC1[a] = U#TC1[a]; type TC2[a] = U#TC2[a]})
-  object SingleOf {
-    implicit def mkSingleOf[T <: {type TC1[_]; type TC2[_]}](implicit t: T): SingleOf[T, t.type] = SingleOf(t)
-  }
-
-  trait Proto[|=>[_,_], -->[_,_], F[_], =>#[_], ->#[_]] extends
-    Exofunctor[|=>, -->, F] {type TC1[A] = =>#[A]; type TC2[A] = ->#[A]}
-
-  def unsafe[==>[_,_], -->[_,_], F[_], =>#[_], ->#[_]](
+  def unsafe[==>[_,_], -->[_,_], F[_]](
     fn: Exomap[==>, -->, F]
   )(implicit
-    c1: Subcat.Aux[==>, =>#],
-    c2: Subcat.Aux[-->, ->#],
-  ): Exofunctor.Aux[==>, -->, F, =>#, ->#] =
+    c1: Semicategory[==>],
+    c2: Semicategory[-->],
+  ): Exofunctor[==>, -->, F] =
     new Exofunctor[==>, -->, F] {
-      type TC1[a] = =>#[a]
-      type TC2[a] = ->#[a]
       val C = c1
       val D = c2
       def map[A, B](f: A ==> B): F[A] --> F[B] = fn.apply(f)
     }
-  def unsafeTCov[F[_]](fn: Exomap[* => *, * => *, F]): Aux[Function, Function, F, T1, T1] = unsafe(fn)
-  def unsafeTCon[F[_]](fn: Exomap[Dual[* => *,*,*], * => *, F]): Aux[Dual[* => *,*,*], * => *, F, T1, T1] = unsafe(fn)
 
-  // TODO: de implementat:
-//  type IsInvariantFunctor[F[_]]           = Exofunctor.AuxT[=!=, >~<, F]
-//  type IsCovariantFunctor[F[_]]           = Endofunctor.AuxT[<~<, F]
-//  type IsContravariantFunctor[F[_]]       = Exofunctor.AuxT[<~<, Opp[<~<]#l, F]
-//  type IsConstantFunctor[F[_]]            = Exofunctor.AuxT[Trivial.T11, ===, F] // cam stupid
-//  type LiskovBracketFunctor[F[_]]         = Exofunctor.AuxT[Dicat[<~<,*,*], ===, F]
-
-  def toFn[==>[_, _], -->[_, _], F[_], =>#[_], ->#[_]](
-    fun: Exofunctor.Aux[==>, -->, F, =>#, ->#]
+  def toFn[==>[_, _], -->[_, _], F[_]](
+    fun: Exofunctor[==>, -->, F]
   ): Exomap[==>, -->, F] = ∀∀.mk[Exomap[==>, -->, F]].from(fun.map)
 
-  implicit def isoContravariant[F[_]]: Exofunctor.ConF[F] <=> Contravariant[F] =
+  implicit def catsIsoContravariant[F[_]]: Exofunctor.ConF[F] <=> Contravariant[F] =
     Iso.unsafe(
-      F => new Contravariant[F] { def contramap[A, B](fa: F[A])(f: B => A): F[B] = F.map[A, B](Dual(f))(fa) },
-      F => unsafeTCon(∀∀.of[λ[(a,b) => Dual[* => *, a, b] => F[a] => F[b]]].from(ba => F.contramap(_)(ba)))
+      F => new Contravariant[F] {def contramap[A, B](fa: F[A])(f: B => A): F[B] = F.map[A, B](Dual(f))(fa)},
+      F => Exo.unsafe(∀∀.of[λ[(a,b) => Dual[* => *, a, b] => F[a] => F[b]]].from(ba => F.contramap(_)(ba)))
     )
 
-  implicit def isoInvariant[F[_]]: Exofunctor.InvF[F] <=> Invariant[F] =
+  implicit def catsIsoInvariant[F[_]]: Exofunctor.InvF[F] <=> Invariant[F] =
     Iso.unsafe(
-      F => new Invariant[F] {
-             def imap[A, B](fa: F[A])(f: A => B)(g: B => A): F[B] = F.map(Dicat(f, g))(fa)
-           },
-      I => new Exofunctor[Dicat[* => *, *, *], * => *, F] {
-             type TC1[a] = Trivial.T1[a]
-             type TC2[a] = Trivial.T1[a]
-             def C = ProdCat.categorySameTC
-             def D = the[Subcat.Aux[* => *, Trivial.T1]]
-             def map[A, B](f: Dicat[Function, A, B]) = I.imap(_)(f.first)(f.second)
-           }
+      F => new Invariant[F] {def imap[A, B](fa: F[A])(f: A => B)(g: B => A): F[B] = F.map(Dicat(f, g))(fa)},
+      I => Exo.unsafe(∀∀.mk[Exomap[Dicat[* => *, *, *], * => *, F]].from(f => I.imap(_)(f.first)(f.second)))
     )
 
-  implicit def isoCovariant[F[_]]: Endofunctor.CovF[F] <=> Functor[F] =
+  implicit def catsIsoCovariant[F[_]]: Endofunctor.CovF[F] <=> Functor[F] =
     Iso.unsafe(
       F => new Functor[F] { def map[A, B](fa: F[A])(f: A => B): F[B] = F.map[A, B](f)(fa) },
-      F => Exofunctor.unsafeTCov(∀∀.mk[Endomap[* => *, F]].from(ab => F.map(_)(ab)))
+      F => Exo.unsafe(∀∀.mk[Endomap[* => *, F]].from(ab => F.map(_)(ab)))
     )
+
+  implicit def exoFromCatsTraverse[M[_]: Monad, F[_]: Traverse]: Endofunctor[Kleisli[M,*,*], F] =
+    new Endofunctor[Kleisli[M,*,*], F] {
+      val C, D = CatsInstances.comp2semi[Kleisli[M, *, *]]
+      def map[A, B](f: Kleisli[M, A, B]): Kleisli[M, F[A], F[B]] = Kleisli(_.traverse(f.run))
+    }
+  def exoFromTraverse1[M[_]: Monad, F[_]: Traverse]: Endofunctor[λ[(a,b) => a => M[b]], F] =
+    new Endofunctor[λ[(a,b) => a => M[b]], F] {
+      val C, D = new Semicategory[λ[(a,b) => a => M[b]]] {
+        def andThen[A, B, C](ab: A => M[B], bc: B => M[C]): A => M[C] = ab(_).flatMap(bc)
+      }
+      def map[A, B](f: A => M[B]): F[A] => M[F[B]] = _.traverse(f)
+    }
+
+  def isoCatsFunctorFilter[F[_]]: FunctorFilter[F] <=> Exofunctor[λ[(a,b) => a => Option[b]], * => *, F] = ???
+
+  def isoCatsTravFilter[F[_], M[_]: Monad]
+  : TraverseFilter[F] <=> Exofunctor[λ[(a,b) => a => M[Option[b]]], λ[(a,b) => a => M[b]], F] = ???
+
+  implicit def exoFromCatsFlatMap[F[_]: FlatMap]: Exofunctor[Kleisli[F,*,*], * => *, F] =
+      new Exofunctor[Kleisli[F,*,*], * => *, F] {
+        type TC1[x] = Trivial.T1[x]
+        type TC2[x] = Trivial.T1[x]
+        def C = CatsInstances.comp2semi[Kleisli[F, *, *]]
+        def D = Semicategory.function1
+        def map[A, B](f: Kleisli[F, A, B]): F[A] => F[B] = _.flatMap(f.run)
+      }
+  def exoFromFlatMap1[F[_]: FlatMap]: Exofunctor[λ[(a,b) => a => F[b]], * => *, F] =
+      new Exofunctor[λ[(a,b) => a => F[b]], * => *, F] {
+        type TC1[x] = Trivial.T1[x]
+        type TC2[x] = Trivial.T1[x]
+        def C = new Semicategory[λ[(a,b) => a => F[b]]] {
+          def andThen[A, B, C](ab: A => F[B], bc: B => F[C]): A => F[C] = ab(_).flatMap(bc)
+        }
+        def D = Semicategory.function1
+        def map[A, B](f: A => F[B]): F[A] => F[B] = _.flatMap(f)
+      }
+
+  implicit def exoFromCatsCoflatMap[F[_]: CoflatMap]: Exofunctor[Cokleisli[F,*,*], * => *, F] =
+    new Exofunctor[Cokleisli[F,*,*], * => *, F] {
+      type TC1[x] = Trivial.T1[x]
+      type TC2[x] = Trivial.T1[x]
+      def C = CatsInstances.comp2semi[Cokleisli[F, *, *]]
+      def D = Semicategory.function1
+      def map[A, B](f: Cokleisli[F, A, B]): F[A] => F[B] = _.coflatMap(f.run)
+    }
+  def exoFromCoflatMap1[F[_]: CoflatMap]: Exofunctor[λ[(a,b) => F[a] => b], * => *, F] =
+    new Exofunctor[λ[(a,b) => F[a] => b], * => *, F] {
+      type TC1[x] = Trivial.T1[x]
+      type TC2[x] = Trivial.T1[x]
+      def C = new Semicategory[λ[(a,b) => F[a] => b]] {
+        def andThen[A, B, C](ab: F[A] => B, bc: F[B] => C): F[A] => C = _.coflatMap(ab) |> bc
+      }
+      def D = Semicategory.function1
+      def map[A, B](f: F[A] => B): F[A] => F[B] = _.coflatMap(f)
+    }
 
 }
 
 object Endofunctor {
-  type Aux[->[_,_], F[_], C[_]] = Exofunctor.Aux[->, ->, F, C, C]
-  type AuxT[->[_,_], F[_]] = Aux[->, F, Trivial.T1]
-
   /** This is isomorphic with cats.Functor[F] */
-  type CovF[F[_]] = Aux[* => *, F, Trivial.T1]
-  trait Proto[->[_,_], F[_], C[_]] extends Exofunctor.Proto[->, ->, F, C, C]
-  trait ProtoT[->[_,_], F[_]] extends Exofunctor.Proto[->, ->, F, Trivial.T1, Trivial.T1]
-  trait ProtoA[->[_,_], F[_]] extends Exofunctor[->, ->, F] {type TC2[ᵒ] = TC1[ᵒ]}
+  type CovF[F[_]] = Endofunctor[* => *, F]
 
-  def unsafe[->[_,_], F[_], =>#[_]](
-    fn: Exomap[->, ->, F]
-  )(implicit
-    c1: Subcat.Aux[->, =>#],
-  ): Endofunctor.Aux[->, F, =>#] = Exofunctor.unsafe(fn)
-
-  // e buna dar poate nu trebuie (daca unsafe simplu face fata la toate situatiile)
-  //  def unsafeT[F[_]](fn: Exomap[* => *, * => *, F]) = unsafe[* => *, F, Trivial.T1](fn)
+  def unsafe[->[_,_], F[_]](fn: Endomap[->, F])(implicit
+    c1: Semicategory[->]
+  ): Endofunctor[->, F] = Exofunctor.unsafe(fn)
 
 }
 
-trait Exorepresentable[==>[_,_], ->[_,_], F[_]] {
-  type Representation
-  def functor: Exofunctor[==>, ->, F]
-  def index   [A]: F[A] -> (Representation ==> A)
-  def tabulate[A]: (Representation ==> A) -> F[A]
-
-  private type <->[a,b] = Iso[->,a,b]
-  def iso[A]: (Representation ==> A) <-> F[A] = Iso.unsafe(tabulate[A], index[A])(functor.D)
-}
+//trait Exorepresentable[==>[_,_], ->[_,_], F[_]] {
+//  type Representation
+//  def functor: Exofunctor[==>, ->, F]
+//  def index   [A]: F[A] -> (Representation ==> A)
+//  def tabulate[A]: (Representation ==> A) -> F[A]
+//
+//  private type <->[a,b] = Iso[->,a,b]
+//  def iso[A]: (Representation ==> A) <-> F[A] = Iso.unsafe(tabulate[A], index[A])(functor.D)
+//}

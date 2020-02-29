@@ -3,17 +3,15 @@ package io.cosmo.exo.categories.functors
 import io.cosmo.exo.categories.Trivial.{T1 => Trivial}
 import cats._
 import io.cosmo.exo._
+import io.cosmo.exo.categories.Endofunctor
 
-trait Exomonad[->[_,_], I[_], F[_]] extends Endofunctor.ProtoA[->, F] {
-  def I: Endofunctor.Aux[->, TC1, I]
+trait Exomonad[->[_,_], I[_], F[_]] extends Endofunctor[->, F] {
+  def I: Endofunctor[->, I]
   def pure[A]: I[A] -> F[A]
   def bind[A, B](f: I[A] -> F[B]): F[A] -> F[B]
 }
 
 object Exomonad {
-  type Aux[->:[_, _], ->#[_], I[_], F[_]] = Exomonad[->:, I, F] with Endofunctor.Proto[->:, ->#, F]
-  type AuxT[->:[_, _], I[_], F[_]] = Aux[->:, Trivial, I, F]
-  type AuxF[I[_], F[_]] = Aux[Function1, Trivial, I, F]
 
 //  implicit def monad2monad[F[_]](implicit F: Exomonad.AuxF[Id, F]): cats.Monad[F] =
 //    new cats.Monad[F] {

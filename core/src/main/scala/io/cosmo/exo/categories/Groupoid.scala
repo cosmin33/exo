@@ -10,7 +10,7 @@ object Groupoid {
   type Aux[->[_, _], C[_]] = Groupoid[->] { type TC[a] = C[a] }
   type AuxT[->[_, _]] = Aux[->, Trivial.T1]
   def apply[->[_,_]: Groupoid]: Groupoid[->] = the[Groupoid[->]]
-  
+
   trait Proto[->[_, _], TC[_]] extends Groupoid[->] with Subcat.Proto[->, TC]
 
   def isoIso[->[_,_], A, B](implicit G: Groupoid[->]): (A -> B) <=> Iso[->, A, B] =

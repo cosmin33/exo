@@ -1,6 +1,8 @@
 package io.cosmo.exo
 
-import io.cosmo.exo.categories.{Cartesian, Ccc, HasTerminalObject}
+import io.cosmo
+import io.cosmo.exo
+import io.cosmo.exo.categories.{Cartesian, Ccc, Cocartesian, HasTerminalObject}
 import io.cosmo.exo.categories.functors.Exo
 import io.cosmo.exo.evidence._
 
@@ -55,10 +57,10 @@ object foralls {
   object ForallModule extends ForallSyntax
   trait ForallSyntax {
     implicit final class Ops[F[_]](val f: ∀[F]) {
-      def of[A]: F[A]    = Forall.specialize(f)
+      def of[A]: F[A]    = ∀.specialize(f)
       def apply[A]: F[A] = of[A]
-      def lift[G[_]]: ∀[λ[x => F[G[x]]]] = ∀.of[λ[ᵒ => F[G[ᵒ]]]](of)
-      def const[A](a: A): ∀[λ[x => A]] = ∀.of[λ[x => A]].apply(a)
+      def lift[G[_]]: ∀[λ[α => F[G[α]]]] = ∀.of[λ[α => F[G[α]]]](of)
+      def const[A](a: A): ∀[λ[α => A]]   = ∀.of[λ[α => A]].apply(a)
     }
 
     implicit class FunctionKOps[F[_], G[_]](val trans: F ~> G) {
@@ -74,69 +76,74 @@ object foralls {
     }
 
     // https://nokyotsu.com/qscripts/2014/07/distribution-of-quantifiers-over-logic-connectives.html
-    //////////////////////////// ⨂
-    /** ∀ distributes over Tuple2 */
-    def fnPdTo_[->[_,_], ⨂[_,_], F[_], G[_]](implicit
-      cc: Cartesian[->, ⨂]
-    ): ∀[λ[x => F[x] ⨂ G[x]]] -> (∀[F] ⨂ ∀[G]) = {
-      //f => (∀.of[F].fromH(t => f.apply[t.T]._1), ∀.of[G].fromH(t => f.apply[t.T]._2))
-      def p1[x]: F[x] ⨂ G[x] -> F[x] = cc.fst[F[x], G[x]]
-      def p2[x]: F[x] ⨂ G[x] -> G[x] = cc.snd[F[x], G[x]]
-      ???
-    }
-
-    def fnPdTo[F[_], G[_]]: ∀[λ[x => (F[x], G[x])]] => (∀[F], ∀[G]) =
-      f => (∀.of[F].fromH(t => f.apply[t.T]._1), ∀.of[G].fromH(t => f.apply[t.T]._2))
-    def fnPdFr[F[_], G[_]]: ((∀[F], ∀[G])) => ∀[λ[x => (F[x], G[x])]] =
-    {case (f, g) => ∀.of[λ[x => (F[x], G[x])]].fromH(t => (f[t.T], g[t.T]))}
-    def isoDistribTuple[F[_], G[_]]: ∀[λ[x => (F[x], G[x])]] <=> (∀[F], ∀[G]) = Iso.unsafe(fnPdTo, fnPdFr)
-
-    //////////////////////// ⨁
-    /** ∀ distributes over \/ (one way only) */
-    def fnCdFr[F[_], G[_]]: (∀[F] \/ ∀[G]) => ∀[λ[x => F[x] \/ G[x]]] =
-      e => ∀.of[λ[x => F[x] \/ G[x]]].fromH(t => e.fold(_.apply[t.T].left, _.apply[t.T].right))
-
     ////////////////////////
     /** ∀ kinda distributes over => */
-    def fnDistTo_[->[_,_], |->[_,_], ⨂[_,_], A, F[_]](implicit
-      T: HasTerminalObject[->],
-      cc: Cartesian[->, ⨂],
-      ccc: Ccc.AuxPH[->, ⨂, |->],
-      E: Exo.Cov[->, F],
+    def isoDistribFnToGen[->[_,_], ->#[_], A, F[_]](implicit
+      ccc: Ccc.AuxTC[->, ->#],
+      E : Exo.Cov[->, A -> *],
+      tc: ->#[A]
     ): ∀[λ[x => A -> F[x]]] => (A -> ∀[F]) = { faf =>
-      def f1[x]: A -> F[x] = faf.apply[x]
-      def ap[x]: ((A |-> F[x]) ⨂ A) -> F[x] = ccc.apply[A, F[x]]
-      def cz[x]: A |-> F[x] -> (A |-> F[x]) = ccc.curry[A |-> F[x], A, F[x]](ap[x])
-      //def sf[x]: (A |-> x) => (x |-> A) => x |-> x = ccc.homCov[x].map[A, x](_)
-      //def sd[x]: (A |-> F[A]) => (x |-> A) => x |-> F[A] = ccc.homCov[x].map[A, F[A]](_)
-      def ff: A -> F[A] = f1[A]
-      ccc.homProfunctor.rightMap[A, F[A], ∀[F]](/* F[A] |-> ∀[F] */???)
-      //def adf[x, y, z] = ccc.homProfunctor.
+      // faf => a => ∀.of[F].fromH(t => faf.apply[t.T].apply(a))
+      def mrr[x, y]: (x -> y) => (A -> x) => (A -> y) = E.map[x, y]
+      def brr[x]: A -> F[x] = faf[x]
+      val aa: A -> A = ccc.id[A]
+      def mr1[y]: (A -> y) => (A -> A) => (A -> y) = mrr[A, y]
 
-      //def mr[x] = E.map()
-      //def cu[x] = ccc.curry[A -> F[x], A, x]
+      //E.map[A]
 
       ???
     }
 
-    def fnDistTo1[A, F[_]]: ∀[λ[x => A => F[x]]] => A => ∀[F] = {
-      faf => {
-        a => {
-          def yy[x]: A => F[x] = faf.apply[x]
-          def xx[x]: F[x] = faf.apply[x](a)
-          ∀.of[F].from(xx)
-        }
-      }
-    }
+    def isoDistribFn[A, F[_]]: ∀[λ[x => A => F[x]]] <=> (A => ∀[F]) =
+      Iso.unsafe(
+        faf => a => ∀.of[F].fromH(t => faf.apply[t.T].apply(a)),
+        aff => ∀.of[λ[x => A => F[x]]](a => aff(a).apply)
+      )
 
-    def fnDistTo[A, F[_]]: ∀[λ[x => A => F[x]]] => A => ∀[F] =
-      faf => a => ∀.of[F](faf.apply.apply(a))
-    def fnDistFrom[A, F[_]]: (A => ∀[F]) => ∀[λ[x => A => F[x]]] =
-      afa => ∀.of[λ[x => A => F[x]]](a => afa(a).apply)
-    def isoDistribFn[A, F[_]]: ∀[λ[x => A => F[x]]] <=> (A => ∀[F]) = Iso.unsafe(fnDistTo, fnDistFrom)
+//    def isoDistribFn[A, F[_]]: ∀[λ[x => A => F[x]]] <=> (A => ∀[F]) =
+//      Iso.unsafe(faf => a => ∀.of[F](faf.apply.apply(a)),
+//        aff => ∀.of[λ[x => A => F[x]]](a => aff(a).apply))
 
     def fnLowerFunk[F[_], G[_]](fg: F  ~> G): ∀[F]  => ∀[G] = fg.$(_)
     def fnLowerIsok[F[_], G[_]](fg: F <~> G): ∀[F] <=> ∀[G] = Iso.unsafe(fg.to.$(_), fg.from.$(_))
+
+    //////////////////////////// ⨂
+    /** ∀ distributes over Tuple2 */
+    def fnDistribCartesianTo[F[_], G[_], ⨂[_,_]](implicit
+      cc: Cartesian[* => *, ⨂]
+    ): ∀[λ[x => F[x] ⨂ G[x]]] => (∀[F] ⨂ ∀[G]) =
+      cc.&&&(f => ∀.of[F].fromH(t => cc.fst(f[t.T])), f => ∀.of[G].fromH(t => cc.snd(f[t.T])))
+
+    def fnDistribCartesianFrom[F[_], G[_], ⨂[_,_]](implicit
+      cc: Cartesian[* => *, ⨂]
+    ): (∀[F] ⨂ ∀[G]) => ∀[λ[x => F[x] ⨂ G[x]]] =
+      fg => ∀.of[λ[x => F[x] ⨂ G[x]]].fromH(t => cc.bifunctor.bimap[∀[F], F[t.T], ∀[G], G[t.T]](_[t.T], _[t.T])(fg))
+
+    def isoDistributeCartesian[F[_], G[_], ⨂[_,_]](implicit
+      cc: Cartesian[* => *, ⨂]
+    ): ∀[λ[x => F[x] ⨂ G[x]]] <=> (∀[F] ⨂ ∀[G]) = Iso.unsafe(fnDistribCartesianTo, fnDistribCartesianFrom)
+
+    // these are no longer needed because they are a specific type (for Tuple2) of those above
+    def fnDistribTuple2To[F[_], G[_]]: ∀[λ[x => (F[x], G[x])]] => (∀[F], ∀[G]) =
+      f => (∀.of[F].fromH(t => f.apply[t.T]._1), ∀.of[G].fromH(t => f.apply[t.T]._2))
+    def fnDistribTuple2From[F[_], G[_]]: ((∀[F], ∀[G])) => ∀[λ[x => (F[x], G[x])]] =
+      {case (f, g) => ∀.of[λ[x => (F[x], G[x])]].fromH(t => (f[t.T], g[t.T]))}
+    def isoDistribTuple[F[_], G[_]]: ∀[λ[x => (F[x], G[x])]] <=> (∀[F], ∀[G]) =
+      Iso.unsafe(fnDistribTuple2To, fnDistribTuple2From)
+
+    //////////////////////// ⨁
+    /** ∀ distributes over \/ (one way only) */
+    def fnDistributeCocartesian[F[_], G[_], ⨁[_,_]](implicit
+      cc: Cocartesian[* => *, ⨁]
+    ): (∀[F] ⨁ ∀[G]) => ∀[λ[x => F[x] ⨁ G[x]]] = { fun =>
+      def f1[x]: ∀[F] => F[x] ⨁ G[x] = f => cc.fst[F[x], G[x]](f[x])
+      def f2[x]: ∀[G] => F[x] ⨁ G[x] = f => cc.snd[F[x], G[x]](f[x])
+      ∀.of[λ[x => F[x] ⨁ G[x]]].fromH(t => cc.&&&(f1[t.T], f2[t.T])(fun))
+    }
+
+    // these are no longer needed because they are a specific type (for \/) of those above
+    def fnDistribDisj[F[_], G[_]]: (∀[F] \/ ∀[G]) => ∀[λ[x => F[x] \/ G[x]]] =
+      e => ∀.of[λ[x => F[x] \/ G[x]]].fromH(t => e.fold(_.apply[t.T].left, _.apply[t.T].right))
 
     ////////////////////////
     /** ∀ is commutative */
@@ -146,6 +153,12 @@ object foralls {
       ab => ∀.of[λ[a => ∀[F[a, *]]]].fromH(a => ∀.of[F[a.T, *]].fromH(b => ab[b.T][a.T]))
     def isoCommute[F[_,_]]: ∀[λ[a => ∀[λ[b => F[a, b]]]]] <=> ∀[λ[b => ∀[λ[a => F[a, b]]]]] =
       Iso.unsafe(commute1[F], commute2[F])
+    def isoLift2[F[_,_]]: ∀[λ[a => ∀[λ[b => F[a, b]]]]] <=> ∀∀[F] = {
+      Iso.unsafe(
+        ab => ∀∀.of[F].fromH(t => ab[t.T1][t.T2]),
+        f  => ∀.of[λ[a => ∀[F[a, *]]]].fromH(a => ∀.of[F[a.T, *]].fromH(b => f[a.T, b.T]))
+      )
+    }
 
     ////////////////////////
   }
@@ -475,6 +488,48 @@ object foralls {
     def of[Alg[_[_],_,_]]: MkForallK11[Alg] = new MkForallK11Impl[Alg]
   }
 
+  private[exo] sealed trait ForallK211Module {
+    type ForallK211[Alg[_[_,_],_,_]]
+
+    trait Prototype[Alg[_[_,_],_,_]] {
+      def apply[F[_,_], A, B]: Alg[F, A, B]
+      final def make: ForallK211[Alg] = from(this)
+    }
+
+    def specialize[Alg[_[_,_],_,_], F[_,_], A, B](v: ForallK211[Alg]): Alg[F, A, B]
+    def instantiation[Alg[_[_,_],_,_], F[_,_], A, B]: ForallK211[Alg] <~< Alg[F, A, B]
+    def monotonicity[A1[_[_,_],_,_], A2[_[_,_],_,_]](ev: ForallK211[λ[(f[_,_],a,b) => A1[f,a,b] <~< A2[f,a,b]]]): ForallK211[A1] <~< ForallK211[A2]
+    def from[Alg[_[_,_],_,_]](p: Prototype[Alg]): ForallK211[Alg]
+    def of[Alg[_[_,_],_,_]]: MkForallK211[Alg]
+    def mk[x](implicit u: Unapply[x]): MkForallK211[u.A] = of[u.A]
+
+    trait MkForallK211[Alg[_[_,_],_,_]] extends Any {
+      type T[_,_]
+      type X
+      type Y
+      def from (ft: Alg[T, X, Y]): ForallK211[Alg]
+      def apply(ft: Alg[T, X, Y]): ForallK211[Alg] = from(ft)
+    }
+
+    trait Unapply[X] { type A[_[_,_],_,_] }
+    object Unapply {
+      implicit def unapply[B[_[_,_],_,_]]: Unapply[ForallK211[B]] { type A[f[_,_],a,b] = B[f,a,b] } =
+                                       new Unapply[ForallK211[B]] { type A[f[_,_],a,b] = B[f,a,b] }
+    }
+  }
+
+  private[exo] object ForallK211Impl extends ForallK211Module {
+    type AnyP[x,y] = Any
+    type ForallK211[A[_[_,_],_,_]] = A[AnyP, Any, Any]
+
+    def specialize[Alg[_[_,_],_,_], F[_,_], A, B](f: ForallK211[Alg]): Alg[F, A, B] = f.asInstanceOf[Alg[F, A, B]]
+    def instantiation[Alg[_[_,_],_,_], F[_,_], A, B]: ForallK211[Alg] <~< Alg[F, A, B] = As.refl[Any].asInstanceOf
+    def monotonicity[A1[_[_,_],_,_], A2[_[_,_],_,_]](ev: ForallK211[λ[(f[_,_],a,b) => A1[f,a,b] <~< A2[f,a,b]]]
+    ): ForallK211[A1] <~< ForallK211[A2] = As.refl[Any].asInstanceOf
+    def from[Alg[_[_,_],_,_]](p: Prototype[Alg]): ForallK211[Alg] = p[Any, Any, Any]
+    def of[Alg[_[_,_],_,_]]: MkForallK211[Alg] = new MkForallK211Impl[Alg]
+  }
+
   private[exo] trait ForallKKModule {
     type ForallKBi[Bi[_[_], _[_]]]
     type ∀~∀~[Bi[_[_], _[_]]] = ForallKBi[Bi]
@@ -535,6 +590,12 @@ object foralls {
       def apply[F[_], X, Y]: Alg[F, X, Y] = of[F, X, Y]
     }
   }
+  object ForallK211Module {
+    implicit final class Ops[Alg[_[_,_],_,_]](val a: ForallK211[Alg]) {
+      def of   [F[_,_], X, Y]: Alg[F, X, Y] = ForallK211.specialize(a)
+      def apply[F[_,_], X, Y]: Alg[F, X, Y] = of[F, X, Y]
+    }
+  }
   object ForallKKModule {
     implicit final class Ops[Bi[_[_], _[_]]](val a: ∀~∀~[Bi]) {
       def of   [F[_], G[_]]: Bi[F, G] = ForallKBi.specialize(a)
@@ -570,6 +631,12 @@ object foralls {
     type X = Any
     type Y = Any
     def from(ft: Alg[T,X,Y]): ForallK11Impl.ForallK11[Alg] = ft
+  }
+  private[exo] final class MkForallK211Impl[Alg[_[_,_],_,_]](val dummy: Boolean = false) extends AnyVal with ForallK211Impl.MkForallK211[Alg] {
+    type T[a,b] = Any
+    type X = Any
+    type Y = Any
+    def from(ft: Alg[T,X,Y]): ForallK211Impl.ForallK211[Alg] = ft
   }
   private[exo] final class MkForallKKImpl[Bi[_[_], _[_]]](val dummy: Boolean = false) extends AnyVal with ForallKKImpl.MkForallKBi[Bi] {
     type T[_] = Any

@@ -13,6 +13,7 @@ trait HasTc[TC[_[_]], TF] {
 }
 object HasTc {
   type Aux[TC[_[_]], TF, F0[_]] = HasTc[TC, TF] {type F[x] = F0[x]}
+  type Aux1[TC[_[_]], F0[_]] = HasTc[TC, _] {type F[x] = F0[x]}
 
   def apply[TC[_[_]], TF](implicit h: HasTc[TC, TF]): HasTc.Aux[TC, TF, h.F] = h
 
@@ -25,10 +26,11 @@ object HasTc {
 //  implicit def isoCanonic[TC[_[_]], FF[_]]: TC[FF] <=> HasTc.Aux[TC, TypeF[FF], FF] =
 //    Iso.unsafe(HasTc.steal(_), _.instance)
 
-  def exofunc[->[_,_], TC[_[_]]](implicit
+  private def exofunc[->[_,_], TC[_[_]]](implicit
     c: Subcat.Aux[->, IsTypeF],
     ccc: Ccc.Aux[->, Tuple2, IsTypeF, Unit, ->]
-  ): Exofunctor.Aux[->, * => *, HasTc[TC, *], IsTypeF, Trivial.T1] =
+  ): Exofunctor[->, * => *, HasTc[TC, *]] =
+//  ): Exofunctor.Aux[->, * => *, HasTc[TC, *], IsTypeF, Trivial.T1] =
   new Exofunctor[->, * => *, HasTc[TC, *]] {
     type TC1[a] = IsTypeF[a]
     type TC2[a] = Trivial.T1[a]

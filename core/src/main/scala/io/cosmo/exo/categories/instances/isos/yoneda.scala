@@ -18,12 +18,13 @@ object yoneda {
   /** yoneda lemma covariant (generic category) */
   def lemmaYoIsoCov[->[_,_], ->#[_], A, F[_]](implicit
     C: Subcat.Aux[->, ->#], tc: ->#[A], E : Exo.Cov[->, F]
-  ): ∀[λ[x => (A -> x) => F[x]]] <=> F[A] =
+//  ): ((A -> *) ~> F) <=> F[A] =
+  ): ∀[λ[x => A -> x => F[x]]] <=> F[A] =
     Iso.unsafe(_[A](C.id), fa => ∀.of[λ[x => A -> x => F[x]]].from(E.map(_)(fa)))
   /** yoneda lemma contravariant (generic category) */
   def lemmaYoIsoCon[->[_,_], ->#[_], A, F[_]](implicit
     C: Subcat.Aux[->, ->#], tc: ->#[A], E : Exo.Con[->, F]
-  ): ∀[λ[x => (x -> A) => F[x]]] <=> F[A] =
+  ): ∀[λ[x => x -> A => F[x]]] <=> F[A] =
     Iso.unsafe(_[A](C.id[A]), fa => ∀.of[λ[x => x -> A => F[x]]].from(xa => E.map(Dual(xa))(fa)))
 
   def yoEmbeddingCov[->[_,_], ->#[_], A, B](implicit
@@ -79,17 +80,17 @@ object yoneda {
   /** object containing all general yoneda isomorphisms applied to Function1 */
   object function1 {
     /** yoneda lemma covariant for Function1 */
-    def lemmaYoIso[A, F[_]: Exo.CovF]: ((A => *) ~> F) <=> F[A] = yoneda.lemmaYoIsoCov
+    def lemmaYoIso[A, F[_]: Exo.CovF]: ((A => *) ~> F) <=> F[A] =   yoneda.lemmaYoIsoCov[* => *, Trivial.T1, A, F]
     /** yoneda lemma contravariant for Function1 */
-    def lemmaCoyoIso[A, F[_]: Exo.ConF]: ((* => A) ~> F) <=> F[A] = yoneda.lemmaYoIsoCon
+    def lemmaCoyoIso[A, F[_]: Exo.ConF]: ((* => A) ~> F) <=> F[A] = yoneda.lemmaYoIsoCon[* => *, Trivial.T1, A, F]
     /** yoneda embedding - covariant for Function1 */
     def yoEmbedding  [A, B]: ((A => *) ~> (B => *)) <=> (B => A) = lemmaYoIso  [A, B => *]
     /** yoneda embedding - contravariant for Function1 */
     def coyoEmbedding[A, B]: ((* => A) ~> (* => B)) <=> (A => B) = lemmaCoyoIso[A, * => B]
     /** yoneda embedding corollary 1 - covariant for Function1 */
-    def yoCorol1Cov[A, B]: ((A => *) <~> (B => *)) <=> (B <=> A) = yoneda.yoCorol1Cov
+    def yoCorol1Cov[A, B]: ((A => *) <~> (B => *)) <=> (B <=> A) = yoneda.yoCorol1Cov[* => *, Trivial.T1, A, B]
     /** yoneda embedding corollary 1 - contravariant for Function1 */
-    def yoCorol1Con[A, B]: ((* => A) <~> (* => B)) <=> (A <=> B) = yoneda.yoCorol1Con
+    def yoCorol1Con[A, B]: ((* => A) <~> (* => B)) <=> (A <=> B) = yoneda.yoCorol1Con[* => *, Trivial.T1, A, B]
   }
 
 }

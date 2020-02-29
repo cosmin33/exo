@@ -39,6 +39,9 @@ sealed abstract class IsK[F[_], G[_]] private[IsK]() { ab =>
   }
 
   final def is[A]: F[A] === G[A] = subst[λ[f[_] => F[A] === f[A]]](Is.refl[F[A]])
+
+  final def toIso: F <~> G = ∀.mk[F <~> G].from(is.toIso)
+
 }
 
 object IsK {

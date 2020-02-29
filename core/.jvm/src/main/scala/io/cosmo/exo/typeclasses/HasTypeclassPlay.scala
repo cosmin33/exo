@@ -40,10 +40,8 @@ object HasTypeclassPlay {
     Functor[List]
     HasTc[Functor, TypeF[List]]
 
-    implicit def funcList1: Exofunctor.Aux[Iso[FunK, *, *], * => *, HasTc[Functor, *], IsTypeF, Trivial.T1] =
+    implicit def funcList1: Exofunctor[Iso[FunK, *, *], * => *, HasTc[Functor, *]] =
       new Exofunctor[Iso[FunK, *, *], * => *, HasTc[Functor, *]] {
-        type TC1[a] = IsTypeF[a]
-        type TC2[a] = Trivial.T1[a]
         def C = implicitly
         def D = implicitly
         def map[A, B](f: Iso[FunK, A, B]): HasTc[Functor, A] => HasTc[Functor, B] = { ha =>

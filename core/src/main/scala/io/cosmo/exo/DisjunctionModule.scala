@@ -2,8 +2,10 @@ package io.cosmo.exo
 
 import cats.Bifunctor
 import cats.implicits._
+import io.cosmo.exo.categories.Associative
 import io.cosmo.exo.evidence.{===, =~~=, IsK2}
 import io.estatico.newtype.Coercible
+import shapeless.the
 
 trait DisjunctionModule {
   type Type [L, R]
@@ -51,6 +53,8 @@ object DisjunctionModule extends DisjunctionModule01 {
   }
 
   implicit val co: Coercible[∀∀[Either], ∀∀[\/]] = Coercible.instance
+
+  implicit val iso: Either <~~> \/ = \/.leibniz.toIso
 
   implicit def primary[A, B](implicit a: A): A \/ B = -\/(a)
 }

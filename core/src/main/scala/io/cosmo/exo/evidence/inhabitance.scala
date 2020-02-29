@@ -248,8 +248,8 @@ object inhabitance {
     }
   }
   object SingletonOf {
-    private[this] final class Witness[A, B]
-    (proof: (A => Void) => Void,
+    private[this] final class Witness[A, B](
+      proof: (A => Void) => Void,
       val conforms: A <~< B,
       val isProposition: Proposition[A]
     ) extends SingletonOf[A, B] {

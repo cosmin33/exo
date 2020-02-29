@@ -10,6 +10,8 @@ trait Distributive[->[_, _]] extends Subcat[->] {
   type ⨁[_, _]
   def cartesian: Cartesian.Aux[->, ⨂, TC, ProductId]
   def cocartesian: Cartesian.Aux[Dual[->,*,*], ⨁, TC, SumId]
+
+  /** (A, (B \/ C) => (A, B) \/ (A, C) */
   def distribute[A, B, C]: ⨂[A, ⨁[B, C]] -> ⨁[⨂[A, B], ⨂[A, C]]
 }
 object Distributive {

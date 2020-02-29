@@ -36,7 +36,7 @@ object FunK {
     def apply[A](fa: F[A]): G[A] = unwrap.of[A](fa)
   }
 
-  implicit def isoCanonic[F[_], G[_]]: FunK[TypeF[F], TypeF[G]] <=> ~>[F, G] =
+  implicit def isoCanonic[F[_], G[_]]: FunK[TypeF[F], TypeF[G]] <=> (F ~> G) =
     Iso.unsafe(faUnwrap[F, G], faWrap[F, G])
 
   implicit def isoKIso[F[_], G[_]]: Iso[FunK, TypeF[F], TypeF[G]] <=> (F <~> G) =

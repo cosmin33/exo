@@ -4,10 +4,11 @@ import cats.data.State
 import cats.evidence.===
 import cats.free.Free
 import cats.free.Free._
-import cats.{Monad, ~>}
+import cats.{Functor, Monad, ~>}
 import cats.syntax._
 import io.cosmo.exo._
 import io.cosmo.exo.syntax._
+import cats.implicits._
 
 object CatsPlay {
 
@@ -17,6 +18,48 @@ object CatsPlay {
     case class Lit(i: Int)           extends Expr
     case class Add(l: Expr, r: Expr) extends Expr
     case class Mul(l: Expr, r: Expr) extends Expr
+
+    def exprFoldR[Z](e: Expr)(lit: Int => Z)(add: (Z, Z) => Z)(mul: (Z, Z) => Z): Z = e match {
+      case Lit(i) => lit(i)
+      case Add(l, r) => add(exprFoldR(l)(lit)(add)(mul), exprFoldR(r)(lit)(add)(mul))
+      case Mul(l, r) => mul(exprFoldR(l)(lit)(add)(mul), exprFoldR(r)(lit)(add)(mul))
+    }
+    // type: ∀(z) Expr => (Int => z) => ((z, z) => z) -> ((z, z) => z) => z
+    // is eqv: (notation: "+" is Either)
+
+    //*Signature functor:
+    // ∀(z) Expr => ((Int + (z, z) + (z, z)) => z) => z
+
+    // F Algebra
+    sealed trait ExprF[+Z]
+    case class LitF(i: Int) extends ExprF[Nothing]
+    case class AddF[Z](l: Z, r: Z) extends ExprF[Z]
+    case class MulF[Z](l: Z, r: Z) extends ExprF[Z]
+    //*Signature functor:
+    // ∀(z) Expr => (ExprF(z) => z) => z
+    implicit def exprffunctor: Functor[ExprF] = ???
+
+    def exprFoldRS[Z](e: Expr)(algebra: ExprF[Z] => Z): Z = e match {
+      case Lit(i) =>    algebra(LitF(i))
+      case Add(l, r) => algebra(AddF(exprFoldRS(l)(algebra), exprFoldRS(r)(algebra)))
+      case Mul(l, r) => algebra(MulF(exprFoldRS(l)(algebra), exprFoldRS(r)(algebra)))
+    }
+
+    def project(expr: Expr): ExprF[Expr] = expr match {
+      case Lit(i) =>    LitF(i)
+      case Add(l, r) => AddF(l, r)
+      case Mul(l, r) => MulF(l, r)
+    }
+    def embed(expr: ExprF[Expr]): Expr = expr match {
+      case LitF(i) =>    Lit(i)
+      case AddF(l, r) => Add(l, r)
+      case MulF(l, r) => Mul(l, r)
+    }
+    def isoRecursionSchemes: Expr <=> ExprF[Expr] = Iso.unsafe(project, embed)
+
+    // rewrite foldRS
+    def exprFoldRS1[Z](e: Expr)(algebra: ExprF[Z] => Z): Z =
+      algebra(project(e).map(subtree => exprFoldRS1(subtree)(algebra)))
 
     // Final tagless
     trait ExprA[Z] {
@@ -45,6 +88,24 @@ object CatsPlay {
 
     // Free algebra:
     type Alg[G[_]] = ∀[λ[a => ExprA[a] => G[a]]]
+
+    trait ExprC[Z] {
+      def lit(i: Int): Z
+      def add(l: Z, r: Z): Z
+      def mul(l: Z, r: Z): Z
+    }
+    object ExprC {
+      def apply[Z](implicit Z: ExprC[Z]): ExprC[Z] = Z
+    }
+    def lit[Z: ExprC](i: Int): Z = ExprC[Z].lit(i)
+    def add[Z: ExprC](l: Z, r: Z): Z = ExprC[Z].add(l, r)
+    def mul[Z: ExprC](l: Z, r: Z): Z = ExprC[Z].mul(l, r)
+
+    def foldFT[Z: ExprC](expr: Expr): Z = expr match {
+      case Lit(i) =>    lit(i)
+      case Add(l, r) => add(foldFT(l), foldFT(r))
+      case Mul(l, r) => mul(foldFT(l), foldFT(r))
+    }
 
     // Free monad
     locally {

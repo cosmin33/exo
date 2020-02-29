@@ -1,16 +1,18 @@
 package io.cosmo.exo.categories
 
 import cats.implicits._
+import io.cosmo.exo
 import io.cosmo.exo._
+import io.cosmo.exo.categories.Cartesian.Aux
 import io.cosmo.exo.categories.Trivial.T1
-import io.cosmo.exo.categories.functors.{Endobifunctor, Exobifunctor}
+import io.cosmo.exo.categories.functors.{Exobifunctor}
 
 import scala.{:: => _}
 
 trait Associative[->[_, _], ⊙[_, _]] {
   type TC[_]
   def C: Subcat.Aux[->, TC]
-  def bifunctor: Endobifunctor.Aux[->, TC, ⊙]
+  def bifunctor: Endobifunctor[->, ⊙]
 
   def associate  [X, Y, Z]: ⊙[⊙[X, Y], Z] -> ⊙[X, ⊙[Y, Z]]
   def diassociate[X, Y, Z]: ⊙[X, ⊙[Y, Z]] -> ⊙[⊙[X, Y], Z]
@@ -25,7 +27,7 @@ object Associative extends AssociativeImplicits {
 
   def fromIso[->[_,_], ⊙[_,_], Tc[_]](i: ∀∀∀[λ[(a,b,c) => Iso[->, ⊙[⊙[a, b], c], ⊙[a, ⊙[b, c]]]]])(implicit
     cat: Subcat.Aux[->, Tc],
-    bif: Endobifunctor.Aux[->, Tc, ⊙]
+    bif: Endobifunctor[->, ⊙]
   ): Associative.Aux[->, ⊙, Tc] = new Associative[->, ⊙] {
     type TC[a] = Tc[a]
     val C = cat
@@ -61,16 +63,15 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
 
   implicit def impCartesianFn1Tuple: Cartesian.Aux[Function1, Tuple2, Trivial.T1, Unit] = cartesianFn1Tuple
 
+  def cartesianFn1Conj: Cartesian.Aux[* => *, /\, T1, Unit] =
+    /\.leibniz.subst[Cartesian.Aux[* => *, *[_,_], Trivial.T1, Unit]](cartesianFn1Tuple)
+
   val cocartesianFn1Disj: Cartesian.Aux[Opp[* => *]#l, \/, Trivial.T1, Void] =
       new Cartesian.Proto[Opp[* => *]#l, \/, Trivial.T1, Void] {
         def C: Subcat.AuxT[Opp[* => *]#l] = Semicategory.function1OppCat
         def bifunctor = Exobifunctor.oppEndobifunctor
-        def diassociate[X, Y, Z]: (X \/ Y \/ Z) => (X \/ (Y \/ Z)) =
-          _.fold(xy => xy.fold(_.left[Y \/ Z], _.left[Z].right[X]),
-                  z => z.right[Y].right[X])
-        def associate  [X, Y, Z]: (X \/ (Y \/ Z)) => (X \/ Y \/ Z) =
-          _.fold(x => x.left[Y].left[Z],
-                yz => yz.fold(_.right[X].left[Z], _.right[X \/ Y]))
+        def diassociate[X, Y, Z]: (X \/ Y \/ Z) => (X \/ (Y \/ Z)) = _.fold(_.fold(_.left[Y \/ Z], _.left[Z].right[X]), _.right[Y].right[X])
+        def associate  [X, Y, Z]: (X \/ (Y \/ Z)) => (X \/ Y \/ Z) = _.fold(_.left[Y].left[Z], _.fold(_.right[X].left[Z], _.right[X \/ Y]))
         def braid[A, B]: (B \/ A) => (A \/ B) = _.fold(_.right, _.left)
         def coidr[A]: (A \/ Void) => A = _.fold[A](identity, identity)
         def coidl[A]: (Void \/ A) => A = _.fold[A](identity, identity)
@@ -87,8 +88,11 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
   def cocartesianFn1Either: Cartesian.Aux[Opp[* => *]#l, Either, Trivial.T1, Void] =
     \/.leibniz.flip.subst[Cartesian.Aux[Opp[* => *]#l, *[_,_], Trivial.T1, Void]](cocartesianFn1Disj)
 
-  implicit def cocartesianFn1EitherDual: Cartesian.Aux[Dual[* => *,*,*], Either, Trivial.T1, Void] =
+  def cocartesianFn1EitherDual: Cartesian.Aux[Dual[* => *,*,*], Either, Trivial.T1, Void] =
     Dual.leibniz[* => *].subst[Cartesian.Aux[*[_,_], Either, Trivial.T1, Void]](cocartesianFn1Either)
+
+  implicit def cocartesianFn1DisjDual: Cartesian.Aux[Dual[* => *,*,*], \/, Trivial.T1, Void] =
+    Dual.leibniz[* => *].subst[Cartesian.Aux[*[_,_], \/, Trivial.T1, Void]](cocartesianFn1Disj)
 
 
 }

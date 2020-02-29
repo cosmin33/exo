@@ -2,7 +2,7 @@ package io.cosmo.exo
 
 import cats.Semigroup
 import cats.implicits._
-import io.cosmo.exo.Iso.HasIso
+import io.cosmo.exo.Iso.{HasIso}
 import io.cosmo.exo.categories.conversions.CatsInstances._
 import io.cosmo.exo.typeclasses.TypeF
 import org.scalatest.funsuite.AnyFunSuite
@@ -51,6 +51,7 @@ class IsoTests extends AnyFunSuite with Matchers {
     val lv1: List <~> Vector = implicitly[<~>[List, Vector]]
     //val lv2: List <~> Vector = TypeF[List].isoWith[Vector]
     //assert(lv1 == lv2)
+
 
     println("done")
   }

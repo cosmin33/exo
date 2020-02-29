@@ -1,7 +1,9 @@
 package io.cosmo.exo.categories.functors
 
-trait Pointed[->[_,_], F[_]] extends Endofunctor.ProtoA[->, F] {
-  def point[A](implicit A: TC1[A], FA: TC1[F[A]]): A -> F[A]
+import io.cosmo.exo.categories.Endofunctor
+
+trait Pointed[->[_,_], F[_]] extends Endofunctor[->, F] {
+  def point[A]: A -> F[A]
 }
 
 object Pointed {

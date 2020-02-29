@@ -2,6 +2,7 @@ package io.cosmo.exo.categories
 
 import io.cosmo.exo._
 import io.cosmo.exo.evidence._
+import io.estatico.newtype.macros.newtype
 
 import scala.language.experimental.macros
 
@@ -55,10 +56,10 @@ trait SubcategorySyntax {
 
     def curry[X, Y, Z, C0[_], P[_, _], PI, E[_, _]](f: P[X, Y] -> Z)(implicit
       C: Ccc.Aux[->, P, C0, PI, E]
-    ): X -> E[Y, Z] = C.curry(f)
+    ): X -> E[Y, Z] = C.uncurry(f)
 
     def uncurry[X, Y, Z, C0[_], P[_, _], PI, E[_, _]](f: X -> E[Y, Z])(implicit
       C: Ccc.Aux[->, P, C0, PI, E]
-    ): P[X, Y] -> Z = C.uncurry(f)
+    ): P[X, Y] -> Z = C.curry(f)
   }
 }

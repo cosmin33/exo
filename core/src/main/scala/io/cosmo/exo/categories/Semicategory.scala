@@ -15,6 +15,9 @@ trait Semicategory[->[_, _]] {
 object Semicategory extends SemicategoryImplicits {
   def apply[->[_,_]](implicit S: Semicategory[->]): Semicategory[->] = S
 
+  def oppSemicategory[->[_,_]](src: Semicategory[->]): Semicategory[Opp[->]#l] =
+    new SemicategoryHelpers.OppSemicategory[->] { val op = src }
+
   def function1OppCat: Subcat.AuxT[Opp[* => *]#l] = Subcat.oppCategory(function1)
 }
 
@@ -41,10 +44,10 @@ trait SemicategoryImplicits03 {
   implicit def function1Initial: HasInitialObject.Aux[* => *, Trivial.T1, Void] = function1Class
 }
 
-object SemicategoryHelpers {
-  private[categories] val function1Class = new Function1Class {}
-  private[categories] val leibnizClass = new LeibnizGroupoidClass {}
-  private[categories] val liskovClass = new LiskovCatClass {}
+private[categories] object SemicategoryHelpers {
+  val function1Class = new Function1Class {}
+  val leibnizClass = new LeibnizGroupoidClass {}
+  val liskovClass = new LiskovCatClass {}
 
   trait LeibnizGroupoidClass extends Groupoid.Proto[===, Trivial.T1] with Concrete.Proto[===, Trivial.T1] {
     override def id[A](implicit A: Trivial.T1[A]): A === A = Is.refl[A]
@@ -80,6 +83,11 @@ object SemicategoryHelpers {
     override def andThen[X, Y, Z](ab: Y -> X, bc: Z -> Y): Z -> X = op.andThen(bc, ab)
   }
 
+  trait OppSemicategory[->[_,_]] extends Semicategory[Opp[->]#l] {
+    protected def op: Semicategory[->]
+    override def andThen[X, Y, Z](ab: Y -> X, bc: Z -> Y): Z -> X = op.andThen(bc, ab)
+  }
+
   trait Function1Class
     extends HasTerminalObject[* => *]
       with HasInitialObject[* => *]
@@ -100,8 +108,8 @@ object SemicategoryHelpers {
     def id[A](implicit A: TC[A]): A => A = identity
     def andThen[A, B, C](ab: A => B, bc: B => C): A => C = bc.compose(ab)
     def apply[A, B]: ((A => B, A)) => B = { case (ab, a) => ab(a) }
-    def curry[X, Y, Z](f: ((X, Y)) => Z): X => (Y => Z) = x => y => f((x, y))
-    def uncurry[X, Y, Z](f: X => (Y => Z)): ⊙[X, Y] => Z = { case (x, y) => f(x)(y) }
+    def uncurry[X, Y, Z](f: ((X, Y)) => Z): X => (Y => Z) = x => y => f((x, y))
+    def curry[X, Y, Z](f: X => (Y => Z)): ⊙[X, Y] => Z = { case (x, y) => f(x)(y) }
     def terminal: Trivial.T1[Terminal] = Trivial.trivialInstance
     def terminate[A](implicit A: Trivial.T1[A]): A => Terminal = _ => ()
     def initial: Trivial.T1[Nothing] = Trivial.trivialInstance
