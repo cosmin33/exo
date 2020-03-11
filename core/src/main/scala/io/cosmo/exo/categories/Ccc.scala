@@ -4,27 +4,19 @@ import io.cosmo.exo._
 import io.cosmo.exo.categories.functors._
 
 trait Ccc[->[_, _]] extends Subcat[->] {
-  type Hom[_, _]
+  type |->[_, _] // Hom functor
 
   type ⊙[_, _] // product
   type ProductId
   def cartesian: Cartesian.Aux[->, ⊙, TC, ProductId]
 
-  private type |->[a,b] = Hom[a,b]
-
-  // TODO: de implementat (in toate instantele)
-  def homProfunctor: Exobifunctor[Dual[Hom,*,*], Hom, * => *, Hom] = ???
-  //def homCov[A]: Exo.Cov[Hom, A Hom *] = ???
-  //def homCon[B]: Exo.Con[Hom, * Hom B] = ???
-
   def apply[A, B]: ⊙[A |-> B, A] -> B
 
-  private def apExperiment1[A, B]: (A |-> B) -> (A |-> B) = uncurry(apply)
-  private def apExperiment2[A, B](in: ProductId -> (A |-> B)): A -> B = andThen(cartesian.coidl[A], curry(in))
-  // apply obtained uncurrying the identity of Hom (but I have to ask for the typeclass)
-  private def curryId  [A, B](implicit tc: TC[A |-> B]): ⊙[A |-> B, A] -> B = curry(id[A |-> B])
-  private def uncurryId[A, B](implicit tc: TC[⊙[A, B]]): A -> (B |-> (A ⊙ B)) = uncurry(id[⊙[A, B]])
-
+//  private def apExperiment1[A, B]: (A |-> B) -> (A |-> B) = uncurry(apply)
+//  private def apExperiment2[A, B](in: ProductId -> (A |-> B)): A -> B = andThen(cartesian.coidl[A], curry(in))
+//  // apply obtained uncurrying the identity of Hom (but I have to ask for the typeclass)
+//  private def curryId  [A, B](implicit tc: TC[A |-> B]): ⊙[A |-> B, A] -> B = curry(id[A |-> B])
+//  private def uncurryId[A, B](implicit tc: TC[⊙[A, B]]): A -> (B |-> (A ⊙ B)) = uncurry(id[⊙[A, B]])
 
   def curry  [A, B, C](f: A -> (B |-> C)): ⊙[A, B] -> C
   def uncurry[A, B, C](f: ⊙[A, B] -> C): A -> (B |-> C)
@@ -34,8 +26,8 @@ trait Ccc[->[_, _]] extends Subcat[->] {
 }
 
 object Ccc {
-  type Aux[->[_, _], P[_, _], ->#[_], PI, E[_, _]] = Ccc[->] {
-    type Hom[A, B] = E[A, B]
+  type Aux[->[_, _], ->#[_], P[_, _], PI, E[_, _]] = Ccc[->] {
+    type |->[A, B] = E[A, B]
     type ⊙[A, B] = P[A, B]
     type TC[x] = ->#[x]
     type ProductId = PI
@@ -55,7 +47,7 @@ object Ccc {
 
   trait Proto[->[_, _], P[_, _], ->#[_], PI, E[_, _]] extends Ccc[->] with Subcat.Proto[->, ->#] {
     override type TC[a] = ->#[a]
-    type Hom[A, B] = E[A, B]
+    type |->[A, B] = E[A, B]
     type ⊙[A, B] = P[A, B]
     type ProductId = PI
   }

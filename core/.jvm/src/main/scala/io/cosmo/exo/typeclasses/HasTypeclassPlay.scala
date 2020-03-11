@@ -16,6 +16,7 @@ object HasTypeclassPlay {
 
   def main(args: Array[String]): Unit = {
     val ltov = ∀.mk[List ~> Vector].from(_.toVector)
+    val xx = ltov[Int](List(1, 2))
     val vtol = ∀.mk[Vector ~> List].from(_.toList)
 
     val ll: FunK[TypeF[List], TypeF[Vector]] = FunK(ltov)
@@ -37,7 +38,7 @@ object HasTypeclassPlay {
     println(jj.to(List(7, 8)))
 
     Functor[List]
-    HasTc[Functor, TypeF[List]]
+    HasTc[Functor, List]
 
     implicit def funcList1: Exofunctor[Iso[FunK, *, *], * => *, HasTc[Functor, *]] =
       new Exofunctor[Iso[FunK, *, *], * => *, HasTc[Functor, *]] {

@@ -2,7 +2,7 @@ package io.cosmo.exo
 
 import cats.Semigroup
 import cats.implicits._
-import io.cosmo.exo.Iso.{HasIso}
+import io.cosmo.exo.Iso.HasIso
 import io.cosmo.exo.categories.conversions.CatsInstances._
 import io.cosmo.exo.typeclasses.TypeF
 import org.scalatest.funsuite.AnyFunSuite

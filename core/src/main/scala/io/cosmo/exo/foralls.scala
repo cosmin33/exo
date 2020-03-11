@@ -91,7 +91,7 @@ object foralls {
       def mr1[y]: (A -> y) => (A -> A) => (A -> y) = mrr[A, y]
 
       type P[a,b] = ccc.⊙[a,b]
-      type |->[a,b] = ccc.Hom[a,b]
+      type |->[a,b] = ccc.|->[a,b]
       def aa: P[|->[A, ∀[F]], A] -> ∀[F] = ccc.apply[A, ∀[F]]
       def a1[x]: P[A |-> (A -> F[x]), A] -> (A -> F[x]) = ccc.apply[A, A -> F[x]]
 

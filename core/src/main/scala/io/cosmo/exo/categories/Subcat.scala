@@ -64,11 +64,11 @@ trait SubcategorySyntax {
     ): B -> ⊙[Y, X] = B.C.andThen(ev.subst[λ[X => B -> X]](self), B.braid[X, Y])
 
     def curry[X, Y, Z, C0[_], P[_, _], PI, E[_, _]](f: P[X, Y] -> Z)(implicit
-      C: Ccc.Aux[->, P, C0, PI, E]
+      C: Ccc.Aux[->, C0, P, PI, E]
     ): X -> E[Y, Z] = C.uncurry(f)
 
     def uncurry[X, Y, Z, C0[_], P[_, _], PI, E[_, _]](f: X -> E[Y, Z])(implicit
-      C: Ccc.Aux[->, P, C0, PI, E]
+      C: Ccc.Aux[->, C0, P, PI, E]
     ): P[X, Y] -> Z = C.curry(f)
   }
 }

@@ -2,16 +2,23 @@ package io.cosmo.exo.categories.instances
 
 import io.cosmo.exo.categories._
 import io.cosmo.exo.categories.functors._
-import ProdcatHelpers._
 import io.cosmo.exo.categories.Cartesian.Aux
 import io.cosmo.exo.evidence.=~~=
 import mouse.any._
 
+import ProdcatHelpers._
+
 trait ProdcatInstances extends ProdcatInstances01 {
-  implicit def prodcatSubcat[==>[_,_], -->[_,_], TC[_]](implicit
-    sub1: Subcat.Aux[==>, TC],
-    sub2: Subcat.Aux[-->, TC]
-  ): Subcat.Aux[Prodcat[==>, -->, *, *], TC] = new ProdcatSubcat[==>, -->, TC] {val s1 = sub1; val s2 = sub2}
+  implicit def prodcatDistributive[==>[_,_], -->[_,_], P[_,_], PI, S[_,_], SI, TC[_]](implicit
+    di1: Distributive.Aux[==>, TC, P, PI, S, SI],
+    di2: Distributive.Aux[-->, TC, P, PI, S, SI],
+  ): Distributive.Aux[Prodcat[==>, -->, *, *], TC, P, PI, S, SI] =
+    new ProdcatDistributive[==>, -->, P, PI, S, SI, TC] {val s1 = di1; val s2 = di2}
+
+  implicit def productGroupoid[==>[_,_], -->[_,_], TC[_]](implicit
+    g1: Groupoid.Aux[==>, TC],
+    g2: Groupoid.Aux[-->, TC],
+  ): Groupoid.Aux[Prodcat[==>, -->, *, *], TC] = new ProductGroupoid[==>, -->, TC] {val s1 = g1; val s2 = g2}
 
   implicit def prodcatEndoBifunctor[==>[_,_], -->[_,_], Bi[_,_]](implicit
     bi1: Endobifunctor[==>, Bi],
@@ -26,10 +33,10 @@ trait ProdcatInstances extends ProdcatInstances01 {
 }
 
 trait ProdcatInstances01 extends ProdcatInstances02 {
-  implicit def prodcatSemicat[==>[_,_], -->[_,_]](implicit
-    semi1: Semicategory[==>],
-    semi2: Semicategory[-->]
-  ): Semicategory[Prodcat[==>, -->, *, *]] = new ProdcatSemicat[==>, -->] {val s1 = semi1; val s2 = semi2}
+  implicit def prodcatCcc[==>[_,_], -->[_,_], TC[_], P[_,_], PI, E[_,_]](implicit
+    cc1: Ccc.Aux[==>, TC, P, PI, E],
+    cc2: Ccc.Aux[-->, TC, P, PI, E],
+  ): Ccc.Aux[Prodcat[==>, -->, *, *], TC, P, PI, E] = new ProductCcc[==>, -->, TC, P, PI, E] {val s1 = cc1; val s2 = cc2}
 
   implicit def prodcatMonoidal[==>[_,_], -->[_,_], P[_,_], TC[_], I](implicit
     m1: Monoidal.Aux[==>, P, TC, I],
@@ -46,6 +53,11 @@ trait ProdcatInstances02 extends ProdcatInstances03 {
 }
 
 trait ProdcatInstances03 extends ProdcatInstances04 {
+  implicit def prodcatSubcat[==>[_,_], -->[_,_], TC[_]](implicit
+    sub1: Subcat.Aux[==>, TC],
+    sub2: Subcat.Aux[-->, TC]
+  ): Subcat.Aux[Prodcat[==>, -->, *, *], TC] = new ProdcatSubcat[==>, -->, TC] {val s1 = sub1; val s2 = sub2}
+
   implicit def prodcatBraided[==>[_,_], -->[_,_], P[_,_], TC[_]](implicit
     b1: Braided.Aux[==>, P, TC],
     b2: Braided.Aux[-->, P, TC],
@@ -53,6 +65,11 @@ trait ProdcatInstances03 extends ProdcatInstances04 {
 }
 
 trait ProdcatInstances04 {
+  implicit def prodcatSemicat[==>[_,_], -->[_,_]](implicit
+    semi1: Semicategory[==>],
+    semi2: Semicategory[-->]
+  ): Semicategory[Prodcat[==>, -->, *, *]] = new ProdcatSemicat[==>, -->] {val s1 = semi1; val s2 = semi2}
+
   implicit def prodcatAssociative[==>[_,_], -->[_,_], P[_,_], TC[_]](implicit
     as1: Associative.Aux[==>, P, TC],
     as2: Associative.Aux[-->, P, TC],
@@ -78,7 +95,9 @@ private[instances] object ProdcatHelpers {
   trait ProdcatEndoBifunctor[==>[_,_], -->[_,_], Bi[_,_]] extends Endobifunctor[Prodcat[==>, -->, *, *], Bi] {
     protected def eb1: Endobifunctor[==>, Bi]
     protected def eb2: Endobifunctor[-->, Bi]
-    val L, R, C = prodcatSemicat(eb1.L, eb2.R)
+    def L = prodcatSemicat(eb1.L, eb2.R)
+    def R = prodcatSemicat(eb1.L, eb2.R)
+    def C = prodcatSemicat(eb1.L, eb2.R)
     def leftMap [A, B, Z](fn: (A ==> Z, A --> Z)) = (eb1.leftMap(fn._1), eb2.leftMap(fn._2))
     def rightMap[A, B, Z](fn: (B ==> Z, B --> Z)) = (eb1.rightMap(fn._1), eb2.rightMap(fn._2))
   }
@@ -128,22 +147,46 @@ private[instances] object ProdcatHelpers {
     def &&&[X, Y, Z](f: (X ==> Y, X --> Y), g: (X ==> Z, X --> Z)) = (a1.&&&(f._1, g._1), a2.&&&(f._2, g._2))
   }
 
-  trait ProdcatDistributive[==>[_,_], -->[_,_], P[_,_], PI, S[_,_], TC0[_], SI]
+  trait ProdcatDistributive[==>[_,_], -->[_,_], P[_,_], PI, S[_,_], SI, TC0[_]]
     extends ProdcatSubcat[==>, -->, TC0]
     with Distributive[Prodcat[==>, -->, *, *]]
   {
-    protected def d1: Distributive.Aux[==>, TC0, P, PI, S, SI]
-    protected def d2: Distributive.Aux[-->, TC0, P, PI, S, SI]
+    protected def s1: Distributive.Aux[==>, TC0, P, PI, S, SI]
+    protected def s2: Distributive.Aux[-->, TC0, P, PI, S, SI]
     type ProductId = PI
     type ⨂[a, b] = P[a, b]
     type SumId = SI
     type ⨁[a, b] = S[a, b]
     def cartesian: Cartesian.Aux[Prodcat[==>, -->, *, *], P, TC0, PI] =
-      prodcatCartesian[==>, -->, P, TC0, PI](d1.cartesian, d2.cartesian)
+      prodcatCartesian[==>, -->, P, TC0, PI](s1.cartesian, s2.cartesian)
     def cocartesian: Cocartesian.Aux[Prodcat[==>, -->, *, *], S, TC0, SI] =
-        prodcatCartesian(d1.cocartesian, d2.cocartesian) |>
-          Prodcat.travDual[==>, -->].subst[Cartesian.Aux[*[_,_], S, TC0, SI]]
-    def distribute[A, B, C] = (d1.distribute, d2.distribute)
+        prodcatCartesian(s1.cocartesian, s2.cocartesian) |>
+          Prodcat.traverseDualEq[==>, -->].subst[Cartesian.Aux[*[_,_], S, TC0, SI]]
+    def distribute[A, B, C] = (s1.distribute, s2.distribute)
+  }
+
+  trait ProductCcc[==>[_,_], -->[_,_], TC0[_], P[_,_], PI, E[_,_]]
+    extends ProdcatSubcat[==>, -->, TC0]
+    with Ccc[Prodcat[==>, -->, *, *]]
+  {
+    protected def s1: Ccc.Aux[==>, TC0, P, PI, E]
+    protected def s2: Ccc.Aux[-->, TC0, P, PI, E]
+    type |->[a, b] = E[a, b]
+    type ⊙[a, b] = P[a, b]
+    type ProductId = PI
+    def cartesian = prodcatCartesian[==>, -->, P, TC0, PI](s1.cartesian, s2.cartesian)
+    def apply[A, B]: (⊙[A |-> B, A] ==> B, ⊙[A |-> B, A] --> B) = (s1.apply, s2.apply)
+    def curry[A, B, C](f: (A ==> (B |-> C), A --> (B |-> C))) = (s1.curry[A, B, C](f._1), s2.curry[A, B, C](f._2))
+    def uncurry[A, B, C](f: (⊙[A, B] ==> C, ⊙[A, B] --> C)) = (s1.uncurry(f._1), s2.uncurry(f._2))
+  }
+
+  trait ProductGroupoid[==>[_,_], -->[_,_], TC0[_]]
+    extends ProdcatSubcat[==>, -->, TC0]
+    with Groupoid[Prodcat[==>, -->, *, *]]
+  {
+    protected def s1: Groupoid.Aux[==>, TC0]
+    protected def s2: Groupoid.Aux[-->, TC0]
+    def flip[A, B](f: (A ==> B, A --> B)) = (s1.flip(f._1), s2.flip(f._2))
   }
 
 }

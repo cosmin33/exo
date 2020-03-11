@@ -14,12 +14,7 @@ package object categories extends ProdcatInstances with categories.syntax {
   /** alias for Tuple2Bi */
   type Prodcat[==>[_,_], -->[_,_], A, B] = (A ==> B, A --> B)
   object Prodcat {
-    def traverseDual[==>[_,_], -->[_,_], A, B]: Prodcat[Dual[==>,*,*], Dual[-->,*,*], A, B] === Dual[Prodcat[==>,-->,*,*], A, B] =
-      Dual.leibniz[==>].flip.lower[Prodcat[*[_,_], Dual[-->,*,*], A, B]] andThen
-        Dual.leibniz[-->].flip.lower[Prodcat[Opp[==>]#l, *[_,_], A, B]] andThen
-        Dual.is[Prodcat[==>,-->,*,*], A, B]
-
-    def travDual[==>[_,_], -->[_,_]]: Prodcat[Dual[==>,*,*], Dual[-->,*,*], *, *] =~~= Dual[Prodcat[==>,-->,*,*], *, *] =
+    def traverseDualEq[==>[_,_], -->[_,_]]: Prodcat[Dual[==>,*,*], Dual[-->,*,*], *, *] =~~= Dual[Prodcat[==>,-->,*,*], *, *] =
       Dual.leibniz[==>].subst[λ[f[_,_] => Prodcat[f, Opp[-->]#l, *, *] =~~= Opp[Prodcat[==>,-->,*,*]]#l]](=~~=.refl) |>
         Dual.leibniz[-->].subst[λ[f[_,_] => Prodcat[Dual[==>,*,*], f, *, *] =~~= Opp[Prodcat[==>, -->, *, *]]#l]] |>
         Dual.leibniz[Prodcat[==>,-->,*,*]].subst

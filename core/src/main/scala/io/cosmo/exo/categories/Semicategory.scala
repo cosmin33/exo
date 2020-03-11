@@ -32,7 +32,8 @@ trait SemicategoryImplicits extends SemicategoryImplicits01 {
       ab.flatMap {case (a, b) => bc.get(b).map(c => (a, c))}
   }
   implicit def liskov: Concrete.AuxT[<~<] = liskovClass
-  implicit def function1: Ccc.Aux[* => *, (*, *), Trivial.T1, Unit, * => *] = function1Class
+  implicit def function1: Ccc.Aux[* => *, Trivial.T1, (*, *), Unit, * => *] = function1Class
+
   implicit def leibnizGroupoid: Groupoid.AuxT[===] = leibnizClass
   implicit def injSubcat: Subcat.Aux[Inject, Trivial.T1] = injSubcatClass
 }
@@ -116,7 +117,7 @@ private[categories] object SemicategoryHelpers {
     override type ⨁[a, b] = Either[a, b]
     override type SumId = Void
     override type TC[a] = Trivial.T1[a]
-    override type Hom[a,b] = a => b
+    override type |->[a,b] = a => b
     override type ⊙[a,b] = (a, b)
     def cartesian = Associative.cartesianFn1Tuple
     def cocartesian = Associative.cocartesianFn1EitherDual

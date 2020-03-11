@@ -8,7 +8,6 @@ import io.cosmo.exo._
 import io.cosmo.exo.categories._
 import io.cosmo.exo.categories.conversions.CatsInstances
 import io.cosmo.exo.categories.conversions.CatsInstances._
-import io.cosmo.exo.categories.data.ProdCat
 import io.cosmo.exo.evidence.TypeHolder2
 import io.cosmo.exo.typeclasses.HasTc
 import mouse.any._
@@ -20,7 +19,7 @@ trait Exofunctor[==>[_,_], -->[_,_], F[_]] {
   def map[A, B](f: A ==> B): F[A] --> F[B]
 }
 
-object Exofunctor {
+object Exofunctor extends ExofunctorImplicits {
 
   type Cov[->[_,_], F[_]] = Exofunctor[->, * => *, F]
   /** This is isomorphic with cats.Functor */
@@ -76,7 +75,7 @@ object Exofunctor {
   implicit def catsIsoInvariant[F[_]]: Exofunctor.InvF[F] <=> Invariant[F] =
     Iso.unsafe(
       F => new Invariant[F] {def imap[A, B](fa: F[A])(f: A => B)(g: B => A): F[B] = F.map((f, Dual(g)))(fa)},
-      I => Exo.unsafe[Dicat[* => *, *, *], * => *, F].applyH(T => f => I.imap(_)(f._1)(f._2))
+      I => Exo.unsafe[Dicat[* => *, *, *], * => *, F].apply(f => I.imap(_)(f._1)(f._2))
     )
 
   implicit def catsIsoCovariant[F[_]]: Endofunctor.CovF[F] <=> Functor[F] =
@@ -133,6 +132,33 @@ object Exofunctor {
       def map[A, B](f: F[A] => B): F[A] => F[B] = _.coflatMap(f)
     }
 
+}
+
+trait ExofunctorImplicits extends ExofunctorImplicits01 {
+//  implicit def blah1[->[_,_], F[_]](implicit
+//    e: Exo.Inv[->, F]
+//  ): Exo.IsoFun[->, F] = //Exo.unsafe[Iso[->,*,*], * => *, F](i => e.map((i.to, Dual(i.from))))
+//    new Exo.IsoFun[->, F] {
+//      def C = ???
+//      def D = ???
+//      implicitly[Subcat[Iso[* => *, *, *]]]
+//      def map[A, B](f: Iso[->, A, B]) = e.map((f.to, Dual(f.from)))
+//    }
+  implicit def covToInv[->[_,_], F[_]](implicit e: Exo.Cov[->, F]): Exo.Inv[->, F] =
+    new Exo.Inv[->, F] {
+      def C: Semicategory[Dicat[->, *, *]] = prodcatSemicat(e.C, Semicategory.dualSemicategory(e.C))
+      def D: Semicategory[Function] = implicitly
+      def map[A, B](f: (A -> B, Dual[->, A, B])) = e.map(f._1)
+    }
+}
+
+trait ExofunctorImplicits01 {
+//  implicit def conToInv[->[_,_], F[_]](implicit e: Exo.Con[->, F]): Exo.Inv[->, F] =
+//    new Exo.Inv[->, F] {
+//      def C: Semicategory[Dicat[->, *, *]] = prodcatSemicat(Semicategory.dualSemicategory(e.C), e.C)
+//      def D: Semicategory[Function] = implicitly
+//      def map[A, B](f: (A -> B, Dual[->, A, B])) = e.map(f._2)
+//    }
 }
 
 object Endofunctor {

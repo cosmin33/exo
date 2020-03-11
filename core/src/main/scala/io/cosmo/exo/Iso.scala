@@ -3,7 +3,6 @@ package io.cosmo.exo
 import io.cosmo.exo.Iso.HasIso
 import io.cosmo.exo.categories.Trivial.T1
 import io.cosmo.exo.categories._
-import io.cosmo.exo.categories.data.ProdCat.DiCat
 import io.cosmo.exo.categories.functors.{Exo, Exofunctor}
 import io.cosmo.exo.evidence.{=!=, =:!=, ===, =~~=, IsK2}
 import io.cosmo.exo.internalstuff.TupleGeneric
@@ -41,8 +40,9 @@ trait Iso[->[_,_], A, B] { ab =>
   def chainK[C[_]](implicit i: HasIso[->, B, TypeF[C]]): A <-> TypeF[C] = ab.andThen(i)
 
   /** For some invariant F[_] if we have an F[A] we can obtain an F[B] using A <-> B */
-  def derive[F[_]](implicit fa: F[A], I: Exo.InvF[F], eq: -> =~~= Function1): F[B] =
-    I.map((eq(ab.to), Dual(eq(ab.from))))(fa)
+  def derive[F[_]](implicit
+    fa: F[A], I: Exo.Inv[->, F] \/ Exo.Cov[->, F] \/ Exo.Con[->, F] \/ Exo.IsoFun[->, F]
+  ): F[B] = I.fold4(_.map((ab.to, Dual(ab.from))), _.map(ab.to), _.map(Dual(ab.from)), _.map(ab))(fa)
 
   /** Typeclass derivation: having TypeF[F] <-> TypeF[G] we can obtain HasTc[TC, A] => HasTc[TC, B] */
   def deriveK[TC[_[_]]](implicit
