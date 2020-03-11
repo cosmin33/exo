@@ -12,15 +12,15 @@ object TypeHolderModule {
 }
 
 trait TypeHolder2Module {
-  type T1
-  type T2
+  type A
+  type B
 }
 
 object TypeHolder2Module {
   trait Tag extends Any
-  type Aux[X, Y] = TypeHolder2Module with Tag { type T1 = X; type T2 = Y }
+  type Aux[X, Y] = TypeHolder2Module with Tag { type A = X; type B = Y }
 
-  def apply[X, Y]: Aux[X, Y] = new TypeHolder2Module with Tag { type T1 = X; type T2 = Y }
+  def apply[X, Y]: Aux[X, Y] = new TypeHolder2Module with Tag { type A = X; type B = Y }
 }
 
 trait TypeHolder3Module {

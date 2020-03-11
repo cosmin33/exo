@@ -1,5 +1,6 @@
 package io.cosmo.exo.categories.instances.isos
 
+import cats.arrow.Category
 import cats.free.{Coyoneda, Yoneda}
 import cats.implicits._
 import cats.{Contravariant, Functor, Id}
@@ -38,18 +39,18 @@ object yoneda {
   def isoIndirectLeibniz[A, B]: ((A === *) <~> (B === *)) <=> (A === B) =
     yoCorol1Cov[===, Trivial.T1, A, B].andThen(Groupoid.isoIso[===, B, A].flip).andThen(Groupoid.isoFlip)
 
-  def yoEmbedCovTo[->[_,_], A, B, ->#[_]](fa: (A -> *) ~> (B -> *))(implicit
+  def yoEmbedCovTo[->[_,_], ->#[_], A, B](fa: (A -> *) ~> (B -> *))(implicit
     C: Subcat.Aux[->, ->#], tc: ->#[A], E: Exo.Cov[->, B -> *]
-  ): B -> A = yoEmbeddingCov.to(fa)
-  def yoEmbedConTo[->[_,_], A, B, ->#[_]](fa: (* -> A) ~> (* -> B))(implicit
+  ): B -> A = yoEmbeddingCov[->, ->#, A, B].to(fa)
+  def yoEmbedConTo[->[_,_], ->#[_], A, B](fa: (* -> A) ~> (* -> B))(implicit
     C: Subcat.Aux[->, ->#], tc: ->#[A], E: Exo.Con[->, * -> B]
-  ): A -> B = yoEmbeddingCon.to(fa)
-  def yoEmbedCovFrom[->[_,_], A, B, ->#[_]](ba: B -> A)(implicit
+  ): A -> B = yoEmbeddingCon[->, ->#, A, B].to(fa)
+  def yoEmbedCovFrom[->[_,_], ->#[_], A, B](ba: B -> A)(implicit
     C: Subcat.Aux[->, ->#], tc: ->#[A], E: Exo.Cov[->, B -> *]
-  ): (A -> *) ~> (B -> *) = yoEmbeddingCov.from(ba)
-  def yoEmbedConFrom[->[_,_], A, B, ->#[_]](ab: A -> B)(implicit
+  ): (A -> *) ~> (B -> *) = yoEmbeddingCov[->, ->#, A, B].from(ba)
+  def yoEmbedConFrom[->[_,_], ->#[_], A, B](ab: A -> B)(implicit
     C: Subcat.Aux[->, ->#], tc: ->#[A], E: Exo.Con[->, * -> B]
-  ): (* -> A) ~> (* -> B) = yoEmbeddingCon.from(ab)
+  ): (* -> A) ~> (* -> B) = yoEmbeddingCon[->, ->#, A, B].from(ab)
 
   def yoDoubleEmbed[->[_,_], ->#[_], A, B](implicit
     cat: Subcat.Aux[->, ->#],

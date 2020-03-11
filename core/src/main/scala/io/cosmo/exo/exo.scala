@@ -80,8 +80,8 @@ package object exo extends Existence with syntax {
   type IsoHK[->[_,_], A[_[_]], B[_[_]]] = ∀~[λ[f[_]  => Iso[->, A[f], B[f]]]]
 
   type <=> [A, B] = Iso[* => *, A, B]
-  type ~>  [F[_], G[_]] = Forall.Forall[λ[ᵒ => F[ᵒ] =>  G[ᵒ]]]
-  type <~> [F[_], G[_]] = Forall.Forall[λ[a => F[a] <=> G[a]]]
+  type ~>  [F[_], G[_]] = ∀[λ[α => F[α] =>  G[α]]]
+  type <~> [F[_], G[_]] = ∀[λ[α => F[α] <=> G[α]]]
   object <~> {
     def unsafe[F[_], G[_]](fg: F ~> G, gf: G ~> F): F <~> G = ∀.mk[F <~> G].fromH(t => Iso.unsafe(fg[t.T], gf[t.T]))
   }
@@ -89,7 +89,7 @@ package object exo extends Existence with syntax {
   type <~~>[F[_,_],  G[_,_]]  = ∀∀[λ[(a,b) => F[a,b] <=> G[a,b]]]
   object <~~> {
     def unsafe[F[_,_], G[_,_]](fg: F ~~> G, gf: G ~~> F): F <~~> G =
-      ∀∀.mk[F <~~> G].fromH(t => Iso.unsafe(fg[t.T1, t.T2], gf[t.T1, t.T2]))
+      ∀∀.mk[F <~~> G].fromH(t => Iso.unsafe(fg[t.A, t.B], gf[t.A, t.B]))
   }
   type ≈>  [A[_[_]], B[_[_]]] = ∀~[λ[f[_]  => A[f] =>  B[f]]]
   type <≈> [A[_[_]], B[_[_]]] = ∀~[λ[f[_]  => A[f] <=> B[f]]]

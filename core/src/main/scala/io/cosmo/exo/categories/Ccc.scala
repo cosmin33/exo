@@ -22,7 +22,8 @@ trait Ccc[->[_, _]] extends Subcat[->] {
   private def apExperiment1[A, B]: (A |-> B) -> (A |-> B) = uncurry(apply)
   private def apExperiment2[A, B](in: ProductId -> (A |-> B)): A -> B = andThen(cartesian.coidl[A], curry(in))
   // apply obtained uncurrying the identity of Hom (but I have to ask for the typeclass)
-  private def apExperiment3[A, B](implicit tc: TC[A |-> B]): ⊙[A |-> B, A] -> B = curry(id[A |-> B])
+  private def curryId  [A, B](implicit tc: TC[A |-> B]): ⊙[A |-> B, A] -> B = curry(id[A |-> B])
+  private def uncurryId[A, B](implicit tc: TC[⊙[A, B]]): A -> (B |-> (A ⊙ B)) = uncurry(id[⊙[A, B]])
 
 
   def curry  [A, B, C](f: A -> (B |-> C)): ⊙[A, B] -> C
@@ -42,6 +43,15 @@ object Ccc {
   type AuxPH[->[_,_], P[_,_], E[_,_]] = Ccc[->] {type ⊙[A, B] = P[A, B]; type Hom[A, B] = E[A, B]}
   type AuxTC[->[_,_], ->#[_]] = Ccc[->] { type TC[a] = ->#[a] }
   //type Homoiconic[->[_,_]] = InstanceOf[CccClass.Homoiconic[->]]
+
+  case class SingleOf[T, U <: {type TC[_]; type Hom[_,_]; type ⊙[_, _]; type ProductId}](
+    widen: T {type TC[_]; type Hom[_,_]; type ⊙[_, _]; type ProductId}
+  )
+  object SingleOf {
+    implicit def mkSingleOf[T <: {type TC[_]; type Hom[_,_]; type ⊙[_, _]; type ProductId}](
+      implicit t: T
+    ): SingleOf[T, t.type] = SingleOf(t)
+  }
 
   trait Proto[->[_, _], P[_, _], ->#[_], PI, E[_, _]] extends Ccc[->] with Subcat.Proto[->, ->#] {
     override type TC[a] = ->#[a]

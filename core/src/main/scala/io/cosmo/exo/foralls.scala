@@ -2,7 +2,7 @@ package io.cosmo.exo
 
 import io.cosmo
 import io.cosmo.exo
-import io.cosmo.exo.categories.{Cartesian, Ccc, Cocartesian, HasTerminalObject}
+import io.cosmo.exo.categories.{Cartesian, Ccc, Cocartesian, Dual}
 import io.cosmo.exo.categories.functors.Exo
 import io.cosmo.exo.evidence._
 
@@ -71,8 +71,8 @@ object foralls {
     }
 
     implicit class IsoKOps[F[_], G[_]](val iso: F <~> G) {
-      def to:   F ~> G = ∀.mk[F ~> G].fromH(t => iso[t.T].to)
-      def from: G ~> F = ∀.mk[G ~> F].fromH(t => iso[t.T].from)
+      def toK:   F ~> G = ∀.mk[F ~> G].fromH(t => iso[t.T].to)
+      def fromK: G ~> F = ∀.mk[G ~> F].fromH(t => iso[t.T].from)
     }
 
     // https://nokyotsu.com/qscripts/2014/07/distribution-of-quantifiers-over-logic-connectives.html
@@ -80,16 +80,27 @@ object foralls {
     /** ∀ kinda distributes over => */
     def isoDistribFnToGen[->[_,_], ->#[_], A, F[_]](implicit
       ccc: Ccc.AuxTC[->, ->#],
-      E : Exo.Cov[->, A -> *],
+      cov: Exo.Cov[->, A -> *],
+      con: Exo.Con[->, * -> A],
       tc: ->#[A]
     ): ∀[λ[x => A -> F[x]]] => (A -> ∀[F]) = { faf =>
       // faf => a => ∀.of[F].fromH(t => faf.apply[t.T].apply(a))
-      def mrr[x, y]: (x -> y) => (A -> x) => (A -> y) = E.map[x, y]
+      def mrr[x, y]: (x -> y) => (A -> x) => (A -> y) = cov.map[x, y]
       def brr[x]: A -> F[x] = faf[x]
-      val aa: A -> A = ccc.id[A]
+      val ii: A -> A = ccc.id[A]
       def mr1[y]: (A -> y) => (A -> A) => (A -> y) = mrr[A, y]
 
-      //E.map[A]
+      type P[a,b] = ccc.⊙[a,b]
+      type |->[a,b] = ccc.Hom[a,b]
+      def aa: P[|->[A, ∀[F]], A] -> ∀[F] = ccc.apply[A, ∀[F]]
+      def a1[x]: P[A |-> (A -> F[x]), A] -> (A -> F[x]) = ccc.apply[A, A -> F[x]]
+
+
+      def res: A => ∀[F] = { a =>
+
+        ???
+      }
+
 
       ???
     }
@@ -105,7 +116,7 @@ object foralls {
 //        aff => ∀.of[λ[x => A => F[x]]](a => aff(a).apply))
 
     def fnLowerFunk[F[_], G[_]](fg: F  ~> G): ∀[F]  => ∀[G] = fg.$(_)
-    def fnLowerIsok[F[_], G[_]](fg: F <~> G): ∀[F] <=> ∀[G] = Iso.unsafe(fg.to.$(_), fg.from.$(_))
+    def fnLowerIsok[F[_], G[_]](fg: F <~> G): ∀[F] <=> ∀[G] = Iso.unsafe(fg.toK.$(_), fg.fromK.$(_))
 
     //////////////////////////// ⨂
     /** ∀ distributes over Tuple2 */
@@ -138,7 +149,7 @@ object foralls {
     ): (∀[F] ⨁ ∀[G]) => ∀[λ[x => F[x] ⨁ G[x]]] = { fun =>
       def f1[x]: ∀[F] => F[x] ⨁ G[x] = f => cc.fst[F[x], G[x]](f[x])
       def f2[x]: ∀[G] => F[x] ⨁ G[x] = f => cc.snd[F[x], G[x]](f[x])
-      ∀.of[λ[x => F[x] ⨁ G[x]]].fromH(t => cc.&&&(f1[t.T], f2[t.T])(fun))
+      ∀.of[λ[x => F[x] ⨁ G[x]]].fromH(t => cc.&&&(Dual(f1[t.T]), Dual(f2[t.T]))(fun))
     }
 
     // these are no longer needed because they are a specific type (for \/) of those above
@@ -155,7 +166,7 @@ object foralls {
       Iso.unsafe(commute1[F], commute2[F])
     def isoLift2[F[_,_]]: ∀[λ[a => ∀[λ[b => F[a, b]]]]] <=> ∀∀[F] = {
       Iso.unsafe(
-        ab => ∀∀.of[F].fromH(t => ab[t.T1][t.T2]),
+        ab => ∀∀.of[F].fromH(t => ab[t.A][t.B]),
         f  => ∀.of[λ[a => ∀[F[a, *]]]].fromH(a => ∀.of[F[a.T, *]].fromH(b => f[a.T, b.T]))
       )
     }
@@ -218,8 +229,8 @@ object foralls {
     }
 
     implicit class IsoK2Ops[F[_,_], G[_,_]](val iso: F <~~> G) {
-      def to:   F ~~> G = ∀∀.mk[F ~~> G].fromH(t => iso[t.T1, t.T2].to)
-      def from: G ~~> F = ∀∀.mk[G ~~> F].fromH(t => iso[t.T1, t.T2].from)
+      def to:   F ~~> G = ∀∀.mk[F ~~> G].fromH(t => iso[t.A, t.B].to)
+      def from: G ~~> F = ∀∀.mk[G ~~> F].fromH(t => iso[t.A, t.B].from)
     }
 
   }

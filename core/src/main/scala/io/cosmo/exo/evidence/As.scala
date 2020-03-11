@@ -103,20 +103,18 @@ object As {
   implicit def liskovCovFunctor[F[_]](implicit
     ec: IsCovariant[F] \/ IsConstant[F]
   ): Exofunctor[<~<, <~<, F] =
-    Exo.unsafe(∀∀.mk[Exomap[<~<, <~<, F]].fromH(T => f => ec.fold(cv => cv(f), const => const[T.T1, T.T2].toAs)))
+    Exo.unsafe[<~<, <~<, F].applyT(T => f => ec.fold(cv => cv(f), const => const[T.A, T.B].toAs))
 
   implicit def liskovCovFunctorFn[F[_]](implicit
     ec: IsCovariant[F] \/ IsConstant[F]
   ): Exofunctor[<~<, * => *, F] =
-    Exo.unsafe(∀∀.mk[Exomap[<~<, * => *, F]].fromH(T =>
-      f => ec.fold(cv => cv(f), const => const[T.T1, T.T2].toAs).apply(_))
-    )
+    Exo.unsafe[<~<, * => *, F].applyT(T => f => ec.fold(cv => cv(f), const => const[T.A, T.B].toAs).apply(_))
 
   implicit def liskovConFunctor[F[_]](implicit
     ec: IsContravariant[F] \/ IsConstant[F]
   ): Exofunctor[Opp[<~<]#l, <~<, F] =
     new Exofunctor[Opp[<~<]#l, <~<, F] {
-      val C = Subcat.oppCategory[<~<, Triv](Semicategory.liskov)
+      val C = Subcat.oppSubcatAux[<~<, Triv](Semicategory.liskov)
       val D = Semicategory.liskov
       def map[A, B](f: B <~< A): F[A] <~< F[B] =
         ec.fold(cn => cn(f), const => const[A, B].toAs)

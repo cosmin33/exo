@@ -1,5 +1,6 @@
 package io.cosmo.exo.categories
 
+import cats.Inject
 import cats.implicits._
 import io.cosmo.exo._
 import io.cosmo.exo.categories.Trivial.T1
@@ -15,10 +16,13 @@ trait Semicategory[->[_, _]] {
 object Semicategory extends SemicategoryImplicits {
   def apply[->[_,_]](implicit S: Semicategory[->]): Semicategory[->] = S
 
+  def dualSemicategory[->[_,_]](src: Semicategory[->]): Semicategory[Dual[->, *, *]] =
+    Dual.leibniz[->].subst[Semicategory](oppSemicategory(src))
+
   def oppSemicategory[->[_,_]](src: Semicategory[->]): Semicategory[Opp[->]#l] =
     new SemicategoryHelpers.OppSemicategory[->] { val op = src }
 
-  def function1OppCat: Subcat.AuxT[Opp[* => *]#l] = Subcat.oppCategory(function1)
+  def function1OppCat: Subcat.AuxT[Opp[* => *]#l] = Subcat.oppSubcatAux(function1)
 }
 
 import io.cosmo.exo.categories.SemicategoryHelpers._
@@ -28,11 +32,12 @@ trait SemicategoryImplicits extends SemicategoryImplicits01 {
       ab.flatMap {case (a, b) => bc.get(b).map(c => (a, c))}
   }
   implicit def liskov: Concrete.AuxT[<~<] = liskovClass
-  implicit def function1: Ccc.Aux[Function1, Tuple2, Trivial.T1, Unit, Function1] = function1Class
+  implicit def function1: Ccc.Aux[* => *, (*, *), Trivial.T1, Unit, * => *] = function1Class
   implicit def leibnizGroupoid: Groupoid.AuxT[===] = leibnizClass
+  implicit def injSubcat: Subcat.Aux[Inject, Trivial.T1] = injSubcatClass
 }
 trait SemicategoryImplicits01 extends SemicategoryImplicits02 {
-  implicit def distFunc1: Distributive.Aux[* => *, Trivial.T1, Tuple2, Unit, Either, Void] = function1Class
+  implicit def distFunc1: Distributive.Aux[* => *, Trivial.T1, (*, *), Unit, Either, Void] = function1Class
   implicit def leibnizConcrete: Concrete.AuxT[===] = leibnizClass
   implicit def liskovTerminal: HasTerminalObject.Aux[<~<, Trivial.T1, Any] = liskovClass
 }
@@ -48,6 +53,16 @@ private[categories] object SemicategoryHelpers {
   val function1Class = new Function1Class {}
   val leibnizClass = new LeibnizGroupoidClass {}
   val liskovClass = new LiskovCatClass {}
+
+  val injSubcatClass: Subcat.Aux[Inject, Trivial.T1] = new Subcat[Inject] {
+    type TC[a] = Trivial.T1[a]
+    def id[A](implicit A: TC[A]): Inject[A, A] = Inject[A, A]
+    def andThen[A, B, C](ab: Inject[A, B], bc: Inject[B, C]): Inject[A, C] =
+      new Inject[A, C] {
+        val inj = ab.inj >>> bc.inj
+        val prj = bc.prj(_).flatMap(ab.prj)
+      }
+  }
 
   trait LeibnizGroupoidClass extends Groupoid.Proto[===, Trivial.T1] with Concrete.Proto[===, Trivial.T1] {
     override def id[A](implicit A: Trivial.T1[A]): A === A = Is.refl[A]

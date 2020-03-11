@@ -3,7 +3,7 @@ package io.cosmo.exo.categories.functors
 import io.cosmo.exo.categories.Trivial.{T1 => Trivial}
 import cats._
 import io.cosmo.exo._
-import io.cosmo.exo.categories.Endofunctor
+import io.cosmo.exo.categories.{Endofunctor, Subcat}
 
 trait Exomonad[->[_,_], I[_], F[_]] extends Endofunctor[->, F] {
   def I: Endofunctor[->, I]

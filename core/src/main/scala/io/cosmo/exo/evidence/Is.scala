@@ -48,11 +48,8 @@ object Is extends IsInstances {
   implicit def isoInjectivity[F[_]: IsInjective, A, B]: (F[A] === F[B]) <=> (A === B) =
     Iso.unsafe(IsInjective[F].apply(_), _.lift)
 
-  implicit def exoCov[A]: Exo.Cov[===, A === *] =
-    Exo.unsafe(∀∀.of[λ[(x,y) => (x === y) => (A === x) => (A === y)]].from(xy => xy.subst[A === *]))
-  implicit def exoCon[A]: Exo.Con[===, * === A] =
-    Exo.unsafe[Dual[===,*,*], * => *, * === A](
-      ∀∀.of[λ[(x,y) => Dual[===,x,y] => (x === A) => (y === A)]].from(yx => yx.flip.subst[* === A]))
+  implicit def exoCov[A]: Exo.Cov[===, A === *] = Exo.unsafe[===, * => *, A === *](_.subst[A === *])
+  implicit def exoCon[A]: Exo.Con[===, * === A] = Exo.unsafe[Dual[===,*,*], * => *, * === A](_.flip.subst[* === A])
 
   // de sters, e deja la groupoid
   def groupoidIso[A, B]: (A === B) <=> Iso[===, A, B] = Groupoid.isoIso

@@ -40,6 +40,7 @@ object Exobifunctor extends ExobifunctorInstances {
     bi: Exobifunctor[=>:, ->:, ~>:, ⊙]
   ): Exobifunctor[=>:, ->:, ~>:, ⊙] = bi
 
+  type Pro[->[_,_]] = Exobifunctor[Opp[* => *]#l, * => *, * => *, ->]
 
 }
 

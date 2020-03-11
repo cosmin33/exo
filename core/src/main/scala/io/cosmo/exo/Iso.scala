@@ -3,7 +3,7 @@ package io.cosmo.exo
 import io.cosmo.exo.Iso.HasIso
 import io.cosmo.exo.categories.Trivial.T1
 import io.cosmo.exo.categories._
-import io.cosmo.exo.categories.data.ProdCat.Dicat
+import io.cosmo.exo.categories.data.ProdCat.DiCat
 import io.cosmo.exo.categories.functors.{Exo, Exofunctor}
 import io.cosmo.exo.evidence.{=!=, =:!=, ===, =~~=, IsK2}
 import io.cosmo.exo.internalstuff.TupleGeneric
@@ -42,7 +42,7 @@ trait Iso[->[_,_], A, B] { ab =>
 
   /** For some invariant F[_] if we have an F[A] we can obtain an F[B] using A <-> B */
   def derive[F[_]](implicit fa: F[A], I: Exo.InvF[F], eq: -> =~~= Function1): F[B] =
-    I.map(Dicat(eq(ab.to), eq(ab.from)))(fa)
+    I.map(DiCat(eq(ab.to), eq(ab.from)))(fa)
 
   /** Typeclass derivation: having TypeF[F] <-> TypeF[G] we can obtain HasTc[TC, A] => HasTc[TC, B] */
   def deriveK[TC[_[_]]](implicit
@@ -51,7 +51,7 @@ trait Iso[->[_,_], A, B] { ab =>
       \/ Exo.Cov[->, HasTc[TC, *]]
       \/ Exo.Con[->, HasTc[TC, *]]
       \/ Exo.IsoFun[->, HasTc[TC, *]]
-  ): HasTc[TC, B] = E.fold4(_.map(Dicat(ab.to, ab.from)), _.map(ab.to), _.map(Dual(ab.from)), _.map(ab))(tc)
+  ): HasTc[TC, B] = E.fold4(_.map(DiCat(ab.to, ab.from)), _.map(ab.to), _.map(Dual(ab.from)), _.map(ab))(tc)
 
   /** From A <-> B, X <-> Y we can obtain (A ⨂ X) <-> (B ⨂ Y) if -> has a Cartesian instance with ⨂ */
   def and[⨂[_,_]] = new AndPartial[⨂]
@@ -67,7 +67,7 @@ trait Iso[->[_,_], A, B] { ab =>
   def or[⨁[_,_]] = new OrPartial[⨁]
   class OrPartial[⨁[_,_]] {
     def apply[I, J](ij: I <-> J)(implicit C: Cocartesian[->, ⨁]): ⨁[A, I] <-> ⨁[B, J] =
-      Iso.unsafe(C.pair(ab.to, ij.to), C.pair(ab.from, ij.from))(ab.cat)
+      Iso.unsafe[->, ⨁[A, I], ⨁[B, J]](C.pair(Dual(ab.to), Dual(ij.to)), C.pair(Dual(ab.from), Dual(ij.from)))(ab.cat)
   }
 
   /** From A <-> B, X <-> Y we can obtain (A \/ X) <-> (B \/ Y) if -> has a Cocartesian instance with \/ */
@@ -78,12 +78,12 @@ trait Iso[->[_,_], A, B] { ab =>
 object Iso extends IsoInstances {
   def apply[->[_,_], A, B](implicit iso: Iso[->, A, B]): Iso[->, A, B] = iso
 
-  def liftFnToIso[=>:[_,_], ->:[_,_]](iso: =>: <~~> ->:)(implicit
-    c1: Subcat[=>:], c2: Subcat[->:]
-  ): Iso[=>:,*,*] <~~> Iso[->:,*,*] =
+  def liftFnToIso[==>[_,_], -->[_,_]](iso: ==> <~~> -->)(implicit
+    c1: Subcat[==>], c2: Subcat[-->]
+  ): Iso[==>,*,*] <~~> Iso[-->,*,*] =
     <~~>.unsafe(
-      ∀∀.mk[Iso[=>:,*,*] ~~> Iso[->:,*,*]].from(i => Iso.unsafe(iso.to.exec(i.to),   iso.to.exec(i.from))),
-      ∀∀.mk[Iso[->:,*,*] ~~> Iso[=>:,*,*]].from(i => Iso.unsafe(iso.from.exec(i.to), iso.from.exec(i.from)))
+      ∀∀.mk[Iso[==>,*,*] ~~> Iso[-->,*,*]].from(i => Iso.unsafe(iso.to.exec(i.to),   iso.to.exec(i.from))),
+      ∀∀.mk[Iso[-->,*,*] ~~> Iso[==>,*,*]].from(i => Iso.unsafe(iso.from.exec(i.to), iso.from.exec(i.from)))
     )
 
   private val reflAny: Iso[* => *, Any, Any] =
@@ -113,6 +113,10 @@ object Iso extends IsoInstances {
 
   /** Isomorphism between any iso and it's flipped iso */
   def flippedIso[->[_,_], A, B]: Iso[->, A, B] <=> Iso[->, B, A] = Iso.unsafe(_.flip, _.flip)
+
+  /** Isomorphism between an iso and a tuple of 'to' and 'from' functions */
+  def isoIsoTuple[->[_,_]: Subcat, A, B]: Iso[->, A, B] <=> (A -> B, B -> A) =
+    Iso.unsafe(i => (i.to, i.from), t => Iso.unsafe(t._1, t._2))
 
   /** Any singleton is isomorphic with unit */
   implicit def isoUnitSingleton[A <: Singleton](implicit
@@ -166,8 +170,8 @@ object Iso extends IsoInstances {
     final def commute[A, B]: (A \/ B) <=> (B \/ A) = unsafe((e: A \/ B) => e.swap, (e: B \/ A) => e.swap)
     final def unitL[A]: A <=> (Void \/ A) = unsafe(a => \/-(a), _.fold((n: A) => n, identity))
     final def unitR[A]: A <=> (A \/ Void) = unsafe(a => -\/(a), _.fold(identity, (n: A) => n))
-    final def first [A, B, C](iso: A <=> C): (A \/ B) <=> (C \/ B) = iso.or_(refl[B])(Associative.cocartesianFn1Disj)
-    final def second[A, B, C](iso: B <=> C): (A \/ B) <=> (A \/ C) = refl[A].or_(iso)(Associative.cocartesianFn1Disj)
+    final def first [A, B, C](iso: A <=> C): (A \/ B) <=> (C \/ B) = iso.or_(refl[B])(Associative.cocartesianFn1DisjDual)
+    final def second[A, B, C](iso: B <=> C): (A \/ B) <=> (A \/ C) = refl[A].or_(iso)(Associative.cocartesianFn1DisjDual)
   }
 
 //  @newtype case class HasIso1[->[_,_], A, B](iso: Iso[->, A, B])
@@ -214,9 +218,9 @@ import io.cosmo.exo.IsoHelperTraits._
 
 trait IsoInstances extends IsoInstances1 {
   implicit def isoBifunctor[->[_,_], ->#[_], ⊙[_,_]](implicit
-    sub: Subcat.Aux[->, ->#], B: Endobifunctor[->, ⊙],
+    S: Subcat.Aux[->, ->#], B: Endobifunctor[->, ⊙],
   ): Endobifunctor[Iso[->, *, *], ⊙] =
-    new IsoBifunctor[->, ->#, ⊙] {val cat = sub; val bif = B; val L, R, C = Iso.isoGroupoid(cat)}
+    new IsoBifunctor[->, ->#, ⊙] {val cat = S; val bif = B; val L, R, C = Iso.isoGroupoid(S)}
 
   implicit def isoGroupoid[->[_,_], T[_]](implicit C: Subcat.Aux[->, T]
   ): Groupoid.Aux[Iso[->, *, *], T] = new IsoGroupoid[->, T] {val cat = C}
@@ -253,15 +257,11 @@ private[exo] object IsoHelperTraits {
   trait IsoBifunctor[->[_,_], ->#[_], ⊙[_,_]] extends Endobifunctor[Iso[->,*,*], ⊙] {
     def cat: Subcat.Aux[->, ->#]
     def bif: Endobifunctor[->, ⊙]
-//    val L, R, C = Iso.isoGroupoid(cat)
-//    def L = Iso.isoGroupoid(cat)
-//    def R = Iso.isoGroupoid(cat)
-//    def C = Iso.isoGroupoid(cat)
     private type <->[a,b] = Iso[->, a, b]
     override def bimap[A, X, B, Y](l: A <-> X, r: B <-> Y): ⊙[A, B] <-> ⊙[X, Y] =
       Iso.unsafe(bif.bimap(l.to, r.to), bif.bimap(l.from, r.from))(cat)
-    override def leftMap [A, B, Z](fn: A <-> Z): ⊙[A, B] <-> ⊙[Z, B] = Iso.unsafe(bif.leftMap[A, B, Z](fn.to), bif.leftMap[Z, B, A](fn.from))(cat)
-    override def rightMap[A, B, Z](fn: B <-> Z): ⊙[A, B] <-> ⊙[A, Z] = Iso.unsafe(bif.rightMap[A, B, Z](fn.to), bif.rightMap[A, Z, B](fn.from))(cat)
+    def leftMap [A, B, Z](fn: A <-> Z): ⊙[A, B] <-> ⊙[Z, B] = Iso.unsafe(bif.leftMap[A, B, Z](fn.to), bif.leftMap[Z, B, A](fn.from))(cat)
+    def rightMap[A, B, Z](fn: B <-> Z): ⊙[A, B] <-> ⊙[A, Z] = Iso.unsafe(bif.rightMap[A, B, Z](fn.to), bif.rightMap[A, Z, B](fn.from))(cat)
   }
 
   trait IsoGroupoid[->[_,_], T[_]] extends Groupoid[Iso[->, *, *]] {

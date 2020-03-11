@@ -6,10 +6,12 @@ import cats.implicits._
 import io.cosmo.exo.{<=>, Iso, Pi, SingleOf}
 import io.cosmo.exo.categories.Subcat.Aux
 import io.cosmo.exo.categories.Trivial.T1
+import io.cosmo.exo.categories.functors.Exofunctor.CovF
 import io.cosmo.exo.evidence.{<~<, ===, =~=, IsK}
 import io.cosmo.exo.typeclasses.TypeF
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.dsl.ResultOfTheTypeInvocation
 //import shapeless.Refute
 import io.cosmo.exo.categories.functors._
 
@@ -82,9 +84,8 @@ class FunctorsTests  extends AnyFunSuite with Matchers {
   implicitly[Endobifunctor[* <=> *, Tuple2]]
   implicitly[Endobifunctor[* <=> *, Either]]
 
-
-
-
+  val F: Exo.CovF[List] = implicitly[Exo.CovF[List]]
+  assert(F.map((a: Int) => a * 2)(List(1, 2, 3)) == List(2, 4, 6))
 
 
 }

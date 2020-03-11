@@ -3,7 +3,7 @@ package io.cosmo.exo
 import cats.{Id, ⊥}
 import cats.implicits._
 import io.cosmo.exo.categories.{Endofunctor, Subcat, Trivial}
-import io.cosmo.exo.categories.functors.{Endofunctor, Endomap, Exofunctor, Exomap}
+import io.cosmo.exo.categories.functors.{Endofunctor, Exofunctor}
 import io.cosmo.exo.evidence._
 import io.cosmo.exo.evidence.variance._
 import shapeless.{LowPriority, Refute, the}
