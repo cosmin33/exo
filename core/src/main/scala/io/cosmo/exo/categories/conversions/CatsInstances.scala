@@ -14,7 +14,7 @@ import CatsInstancesTraits._
 
 object CatsInstances extends CatsInstances01 {
   implicit def sub2cat[->[_,_]](implicit lp: LowPriority, s: Subcat.Aux[->, Trivial.T1]): Category[->] = new CategoryFromSubcat[->] { val S = s }
-  implicit def cat2sub[->[_,_]](implicit c: Category[->]): Subcat.Aux[->, Trivial.T1] = new SubcatFromCategory[->] { val C = c }
+  implicit def cat2sub[->[_,_]](implicit lp: LowPriority, c: Category[->]): Subcat.Aux[->, Trivial.T1] = new SubcatFromCategory[->] { val C = c }
 
   implicit def exo2cov[F[_]](implicit lp: LowPriority, F: Endofunctor.CovF[F]): Functor[F] = Exofunctor.catsIsoCovariant[F].to(F)
   implicit def cov2exo[F[_]](implicit F: Functor[F]): Endofunctor.CovF[F] = Exofunctor.catsIsoCovariant[F].from(F)

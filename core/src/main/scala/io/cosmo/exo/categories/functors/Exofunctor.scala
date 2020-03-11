@@ -1,5 +1,6 @@
 package io.cosmo.exo.categories.functors
 
+import cats.arrow.Category
 import cats.data.{Cokleisli, Kleisli}
 import cats.implicits._
 import cats.{CoflatMap, Contravariant, FlatMap, Functor, FunctorFilter, Invariant, Monad, Traverse, TraverseFilter}
@@ -8,7 +9,6 @@ import io.cosmo.exo.categories._
 import io.cosmo.exo.categories.conversions.CatsInstances
 import io.cosmo.exo.categories.conversions.CatsInstances._
 import io.cosmo.exo.categories.data.ProdCat
-import io.cosmo.exo.categories.data.ProdCat.DiCat
 import io.cosmo.exo.evidence.TypeHolder2
 import io.cosmo.exo.typeclasses.HasTc
 import mouse.any._
@@ -30,7 +30,7 @@ object Exofunctor {
   /** This is isomorphic with cats.Contravariant */
   type ConF[F[_]] = Con[* => *, F]
 
-  type Inv[->[_,_], F[_]] = Exofunctor[DiCat[->,*,*], * => *, F]
+  type Inv[->[_,_], F[_]] = Exofunctor[Dicat[->,*,*], * => *, F]
   /** This is isomorphic with cats.Invariant */
   type InvF[F[_]] = Inv[* => *, F]
 
@@ -61,7 +61,7 @@ object Exofunctor {
       val D = c2
       def map[A, B](f: A ==> B): F[A] --> F[B] = fn.asInstanceOf[(A ==> B) => (F[A] --> F[B])](f)
     }
-    def applyT(f: TypeHolder2[X, Y] => (X ==> Y) => F[X] --> F[Y])(implicit
+    def applyH(f: TypeHolder2[X, Y] => (X ==> Y) => F[X] --> F[Y])(implicit
       c1: Semicategory[==>],
       c2: Semicategory[-->],
     ): Exofunctor[==>, -->, F] = apply(f(TypeHolder2[X, Y]))
@@ -75,8 +75,8 @@ object Exofunctor {
 
   implicit def catsIsoInvariant[F[_]]: Exofunctor.InvF[F] <=> Invariant[F] =
     Iso.unsafe(
-      F => new Invariant[F] {def imap[A, B](fa: F[A])(f: A => B)(g: B => A): F[B] = F.map(DiCat(f, g))(fa)},
-      I => Exo.unsafe[DiCat[* => *, *, *], * => *, F](f => I.imap(_)(f.first)(f.second))
+      F => new Invariant[F] {def imap[A, B](fa: F[A])(f: A => B)(g: B => A): F[B] = F.map((f, Dual(g)))(fa)},
+      I => Exo.unsafe[Dicat[* => *, *, *], * => *, F].applyH(T => f => I.imap(_)(f._1)(f._2))
     )
 
   implicit def catsIsoCovariant[F[_]]: Endofunctor.CovF[F] <=> Functor[F] =

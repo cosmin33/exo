@@ -11,7 +11,8 @@ sealed trait DualModule {
 }
 
 object DualModule extends DualInstances {
-  implicit class DualOps[->[_,_], A, B](private val d: Dual[->, A, B]) extends AnyVal {
+  implicit class DualOps[->[_,_], A, B](private val self: Dual[->, A, B]) extends AnyVal {
+    //def toFn: B -> A = Dual.leibniz[->].flip(self)
   }
 
   implicit def conversion[->[_,_], A, B](ab: B -> A): Dual[->, A, B] = Dual(ab)

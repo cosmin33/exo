@@ -42,7 +42,7 @@ trait Iso[->[_,_], A, B] { ab =>
 
   /** For some invariant F[_] if we have an F[A] we can obtain an F[B] using A <-> B */
   def derive[F[_]](implicit fa: F[A], I: Exo.InvF[F], eq: -> =~~= Function1): F[B] =
-    I.map(DiCat(eq(ab.to), eq(ab.from)))(fa)
+    I.map((eq(ab.to), Dual(eq(ab.from))))(fa)
 
   /** Typeclass derivation: having TypeF[F] <-> TypeF[G] we can obtain HasTc[TC, A] => HasTc[TC, B] */
   def deriveK[TC[_[_]]](implicit
@@ -51,7 +51,7 @@ trait Iso[->[_,_], A, B] { ab =>
       \/ Exo.Cov[->, HasTc[TC, *]]
       \/ Exo.Con[->, HasTc[TC, *]]
       \/ Exo.IsoFun[->, HasTc[TC, *]]
-  ): HasTc[TC, B] = E.fold4(_.map(DiCat(ab.to, ab.from)), _.map(ab.to), _.map(Dual(ab.from)), _.map(ab))(tc)
+  ): HasTc[TC, B] = E.fold4(_.map((ab.to, Dual(ab.from))), _.map(ab.to), _.map(Dual(ab.from)), _.map(ab))(tc)
 
   /** From A <-> B, X <-> Y we can obtain (A ⨂ X) <-> (B ⨂ Y) if -> has a Cartesian instance with ⨂ */
   def and[⨂[_,_]] = new AndPartial[⨂]
@@ -71,7 +71,7 @@ trait Iso[->[_,_], A, B] { ab =>
   }
 
   /** From A <-> B, X <-> Y we can obtain (A \/ X) <-> (B \/ Y) if -> has a Cocartesian instance with \/ */
-  def or_[I, J](ij: I <-> J)(implicit C: Cocartesian[->, \/]): \/[A, I] <-> \/[B, J] = or[\/](ij)
+  def or_[I, J](ij: I <-> J)(implicit C: Cocartesian[->, \/]): (A \/ I) <-> (B \/ J) = or[\/](ij)
 
 }
 

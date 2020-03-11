@@ -103,12 +103,12 @@ object As {
   implicit def liskovCovFunctor[F[_]](implicit
     ec: IsCovariant[F] \/ IsConstant[F]
   ): Exofunctor[<~<, <~<, F] =
-    Exo.unsafe[<~<, <~<, F].applyT(T => f => ec.fold(cv => cv(f), const => const[T.A, T.B].toAs))
+    Exo.unsafe[<~<, <~<, F].applyH(T => f => ec.fold(cv => cv(f), const => const[T.A, T.B].toAs))
 
   implicit def liskovCovFunctorFn[F[_]](implicit
     ec: IsCovariant[F] \/ IsConstant[F]
   ): Exofunctor[<~<, * => *, F] =
-    Exo.unsafe[<~<, * => *, F].applyT(T => f => ec.fold(cv => cv(f), const => const[T.A, T.B].toAs).apply(_))
+    Exo.unsafe[<~<, * => *, F].applyH(T => f => ec.fold(cv => cv(f), const => const[T.A, T.B].toAs).apply(_))
 
   implicit def liskovConFunctor[F[_]](implicit
     ec: IsContravariant[F] \/ IsConstant[F]

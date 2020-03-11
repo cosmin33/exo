@@ -23,7 +23,7 @@ object Cartesian extends CartesianInstances with CartesianSyntax {
 }
 
 object Cocartesian {
-  type Aux[->[_, _], ⨂[_, _], TC0[_], I] = Cocartesian[Dual[->, *, *], ⨂] { type TC[a] = TC0[a]; type Id = I }
+  type Aux[->[_, _], ⨂[_, _], TC0[_], I] = Cocartesian[->, ⨂] { type TC[a] = TC0[a]; type Id = I }
 }
 
 trait CartesianSyntax {
