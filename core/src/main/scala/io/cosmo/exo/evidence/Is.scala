@@ -51,9 +51,6 @@ object Is extends IsInstances {
   implicit def exoCov[A]: Exo.Cov[===, A === *] = Exo.unsafe[===, * => *, A === *](_.subst[A === *])
   implicit def exoCon[A]: Exo.Con[===, * === A] = Exo.unsafe[Dual[===,*,*], * => *, * === A](_.flip.subst[* === A])
 
-  // de sters, e deja la groupoid
-  def groupoidIso[A, B]: (A === B) <=> Iso[===, A, B] = Groupoid.isoIso
-
   implicit def isBifunctor[P[_,_]]: Endobifunctor[===, P] = new Endobifunctor[===, P] {
     type TCL[a] = Trivial.T1[a]
     type TCR[a] = Trivial.T1[a]
