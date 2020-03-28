@@ -1,5 +1,6 @@
 package io.cosmo.exo
 
+import cats.arrow.FunctionK
 import io.cosmo.exo.categories.{Dual, Opp, Subcat}
 import io.cosmo.exo.evidence.{===, =~=, Is, IsK2}
 import io.cosmo.exo.typeclasses.{IsTypeF, TypeF}
@@ -67,5 +68,20 @@ object FunK {
             .andThen(bc.instance.apply))
       }
     }
+
+  type VoidK[x] = Nothing
+  type UnitK[x] = Unit
+  type TupK[F[_], G[_], x] = (F[x], G[x])
+  type EitK[F[_], G[_], x] = Either[F[x], G[x]]
+
+  def vvv[F[_]]: VoidK ~> F = ∀.mk[VoidK ~> F].from(identity)
+  def uuu[F[_]]: F ~> UnitK = ∀.mk[F ~> UnitK].from(_ => ())
+
+  def vv[F[_]]: FunctionK[VoidK, F] = new FunctionK[VoidK, F] {
+    def apply[A](fa: VoidK[A]): F[A] = fa
+}
+  def uu[F[_]]: FunctionK[F, UnitK] = new FunctionK[F, UnitK] {
+    def apply[A](fa: F[A]): UnitK[A] = ()
+  }
 
 }

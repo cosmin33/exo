@@ -36,11 +36,11 @@ object Ccc {
   type AuxTC[->[_,_], ->#[_]] = Ccc[->] { type TC[a] = ->#[a] }
   //type Homoiconic[->[_,_]] = InstanceOf[CccClass.Homoiconic[->]]
 
-  case class SingleOf[T, U <: {type TC[_]; type Hom[_,_]; type ⊙[_, _]; type ProductId}](
-    widen: T {type TC[_]; type Hom[_,_]; type ⊙[_, _]; type ProductId}
+  case class SingleOf[T, U <: {type TC[_]; type |->[_,_]; type ⊙[_, _]; type ProductId}](
+    widen: T {type TC[_]; type |->[_,_]; type ⊙[_, _]; type ProductId}
   )
   object SingleOf {
-    implicit def mkSingleOf[T <: {type TC[_]; type Hom[_,_]; type ⊙[_, _]; type ProductId}](
+    implicit def mkSingleOf[T <: {type TC[_]; type |->[_,_]; type ⊙[_, _]; type ProductId}](
       implicit t: T
     ): SingleOf[T, t.type] = SingleOf(t)
   }

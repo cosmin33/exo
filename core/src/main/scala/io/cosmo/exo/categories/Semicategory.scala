@@ -4,6 +4,7 @@ import cats.Inject
 import cats.implicits._
 import io.cosmo.exo._
 import io.cosmo.exo.categories.Trivial.T1
+import io.cosmo.exo.categories.functors._
 import io.cosmo.exo.evidence._
 import shapeless.the
 
@@ -15,14 +16,6 @@ trait Semicategory[->[_, _]] {
 
 object Semicategory extends SemicategoryImplicits {
   def apply[->[_,_]](implicit S: Semicategory[->]): Semicategory[->] = S
-
-  def dualSemicategory[->[_,_]](src: Semicategory[->]): Semicategory[Dual[->, *, *]] =
-    Dual.leibniz[->].subst[Semicategory](oppSemicategory(src))
-
-  def oppSemicategory[->[_,_]](src: Semicategory[->]): Semicategory[Opp[->]#l] =
-    new SemicategoryHelpers.OppSemicategory[->] { val op = src }
-
-  def function1OppCat: Subcat.AuxT[Opp[* => *]#l] = Subcat.oppSubcatAux(function1)
 }
 
 import io.cosmo.exo.categories.SemicategoryHelpers._

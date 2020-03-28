@@ -29,10 +29,10 @@ object HasTc {
     ccc: Ccc.Aux[->, IsTypeF, (*, *), Unit, ->]
   ): Exofunctor[->, * => *, HasTc[TC, *]] =
     new Exofunctor[->, * => *, HasTc[TC, *]] {
-      type TC1[a] = IsTypeF[a]
-      type TC2[a] = Trivial.T1[a]
-      def C: Subcat.Aux[->, IsTypeF] = c
-      def D = the[Subcat.Aux[* => *, Trivial.T1]]
+//      type TC1[a] = IsTypeF[a]
+//      type TC2[a] = Trivial.T1[a]
+//      def C: Subcat.Aux[->, IsTypeF] = c
+//      def D = the[Subcat.Aux[* => *, Trivial.T1]]
       def map[A, B](f: A -> B): HasTc[TC, A] => HasTc[TC, B] = ???
     }
 

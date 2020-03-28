@@ -2,7 +2,7 @@ package io.cosmo.exo.evidence
 
 import io.cosmo.exo._
 import io.cosmo.exo.categories.functors.{Endofunctor, Exofunctor}
-import io.cosmo.exo.categories.{Endofunctor, Opp, Semicategory, Subcat, Trivial}
+import io.cosmo.exo.categories.{DualModule, Endofunctor, Opp, Semicategory, Subcat, Trivial}
 import io.cosmo.exo.categories.Trivial.{T1 => Triv}
 import io.cosmo.exo.categories.functors._
 import io.cosmo.exo.evidence.variance._
@@ -114,7 +114,7 @@ object As {
     ec: IsContravariant[F] \/ IsConstant[F]
   ): Exofunctor[Opp[<~<]#l, <~<, F] =
     new Exofunctor[Opp[<~<]#l, <~<, F] {
-      val C = Subcat.oppSubcatAux[<~<, Triv](Semicategory.liskov)
+      val C = DualModule.oppSubcat[<~<, Triv](Semicategory.liskov)
       val D = Semicategory.liskov
       def map[A, B](f: B <~< A): F[A] <~< F[B] =
         ec.fold(cn => cn(f), const => const[A, B].toAs)

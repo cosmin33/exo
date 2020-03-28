@@ -5,28 +5,37 @@ import io.cosmo.exo.categories._
 import io.estatico.newtype.Coercible
 import cats.implicits._
 import cats.syntax._
+import mouse.any._
 
-trait Exobifunctor[=>:[_, _], ->:[_, _], ~>:[_, _], Bi[_, _]] {
-//  type TCL[_]
-//  def L : Subcat.Aux[=>:, TCL]
-  def L : Semicategory[=>:]
+trait Exobifunctor[==>[_, _], -->[_, _], >->[_, _], Bi[_, _]] { self =>
+  def L : Semicategory[==>]
+  def R : Semicategory[-->]
+  def C : Semicategory[>->]
 
-//  type TCR[_]
-//  def R : Subcat.Aux[->:, TCR]
-  def R : Semicategory[->:]
-
-//  type TC[_]
-//  def C : Subcat.Aux[~>:, TC]
-  def C : Semicategory[~>:]
-
-  def bimap[A, X, B, Y](left: A =>: X, right: B ->: Y): Bi[A, B] ~>: Bi[X, Y] =
+  def bimap[A, X, B, Y](left: A ==> X, right: B --> Y): Bi[A, B] >-> Bi[X, Y] =
       C.andThen(leftMap[A, B, X](left), rightMap[X, B, Y](right))
 
-  def leftMap [A, B, Z](fn: A =>: Z): Bi[A, B] ~>: Bi[Z, B] //bimap(fn, R.id[B])
-  def rightMap[A, B, Z](fn: B ->: Z): Bi[A, B] ~>: Bi[A, Z] //bimap(L.id[A], fn)
+  def leftMap [A, B, Z](fn: A ==> Z): Bi[A, B] >-> Bi[Z, B] //bimap(fn, R.id[B])
+  def rightMap[A, B, Z](fn: B --> Z): Bi[A, B] >-> Bi[A, Z] //bimap(L.id[A], fn)
+
 }
 
 object Exobifunctor extends ExobifunctorInstances {
+
+  type EndoPro[->[_,_], B[_,_]] = Exobifunctor[Dual[->,*,*], ->, ->, B]
+  type Endo[->[_,_], B[_,_]] = Exobifunctor[->, ->, ->, B]
+
+  implicit class ExobifunctorOps[==>[_,_], >->[_,_], F[_,_]](val self: Exobifunctor[==>, ==>, >->, F]) extends AnyVal {
+    def compose[G[_,_]](G: Exobifunctor[==>, ==>, ==>, G]): Exobifunctor[==>, ==>, >->, λ[(α, β) => F[G[α, β], G[α, β]]]] =
+      new Exobifunctor[==>, ==>, >->, λ[(α, β) => F[G[α, β], G[α, β]]]] {
+        val L = self.L
+        val R = self.R
+        val C = self.C
+        override def bimap[A, X, B, Y](left: A ==> X, right: B ==> Y) = G.bimap(left, right) |> (i => self.bimap(i, i))
+        def leftMap [A, B, Z](fn: A ==> Z) = G.leftMap (fn) |> ((i: G[A, B] ==> G[Z, B]) => self.bimap(i, i))
+        def rightMap[A, B, Z](fn: B ==> Z) = G.rightMap(fn) |> ((i: G[A, B] ==> G[A, Z]) => self.bimap(i, i))
+      }
+  }
 
   implicit def coercible[->[_,_], P[_,_], R[_,_]](implicit co: Coercible[∀∀[P], ∀∀[R]])
   : Coercible[Endobifunctor[->, P], Endobifunctor[->, R]] = Coercible.instance
@@ -44,27 +53,11 @@ object Exobifunctor extends ExobifunctorInstances {
 
 }
 
-trait ExobifunctorInstances {
+object Endobifunctor {
+  def apply[->[_,_], Bi[_,_]](implicit e: Endobifunctor[->, Bi]): Endobifunctor[->, Bi] = e
+}
 
-  /**
-   * (endo)Endobifunctor is equal to the same Endobifunctor of the opposite category. I don't know hot to prove that
-   *   as to obtain a leibniz so I'll just derive it for now...
-   */
-  def oppEndobifunctor[->[_, _], Bi[_, _]](implicit
-    c: Semicategory[->],
-    source: Endobifunctor[->, Bi],
-  ): Endobifunctor[Opp[->]#l, Bi] = new Endobifunctor[Opp[->]#l, Bi] {
-    val L, R, C = Semicategory.oppSemicategory(c)
-    override def bimap[LX, LY, RX, RY](left: LY -> LX, right: RY -> RX): Bi[LY, RY] -> Bi[LX, RX] =
-      source.bimap[LY, LX, RY, RX](left, right)
-    def leftMap [A, B, Z](fn: Z -> A): Bi[Z, B] -> Bi[A, B] = source.leftMap(fn)
-    def rightMap[A, B, Z](fn: Z -> B): Bi[A, Z] -> Bi[A, B] = source.rightMap(fn)
-  }
-  implicit def dualEndobifunctor[->[_, _], Bi[_, _]](implicit
-    c: Semicategory[->],
-    source: Endobifunctor[->, Bi],
-  ): Endobifunctor[Dual[->,*,*], Bi] =
-    Dual.leibniz[->].subst[Endobifunctor[*[_,_], Bi]](oppEndobifunctor[->, Bi])
+trait ExobifunctorInstances {
 
   implicit def tuple2Endobifunctor: Endobifunctor[* => *, Tuple2] =
     new Endobifunctor[* => *, Tuple2] {
@@ -74,11 +67,6 @@ trait ExobifunctorInstances {
       def leftMap [A, B, Z](fn: A => Z): ((A, B)) => (Z, B) = { case (a, b) => (fn(a), b) }
       def rightMap[A, B, Z](fn: B => Z): ((A, B)) => (A, Z) = { case (a, b) => (a, fn(b)) }
     }
-
-  def tuple2OppEndobifunctor: Endobifunctor[Opp[* => *]#l, Tuple2] =
-    oppEndobifunctor[* => *, Tuple2](Semicategory[* => *], tuple2Endobifunctor)
-  def tuple2DualEndobifunctor: Endobifunctor[Dual[* => *,*,*], Tuple2] =
-    dualEndobifunctor[* => *, Tuple2](Subcat[* => *], tuple2Endobifunctor)
 
   implicit def eitherEndoBifunctor: Endobifunctor[* => *, Either] =
     new Endobifunctor[* => *, Either] {
@@ -90,11 +78,5 @@ trait ExobifunctorInstances {
       def rightMap[A, B, Z](fn: B => Z): Either[A, B] => Either[A, Z] =
         _.fold(a => a.asLeft, b => fn(b).asRight)
     }
-
-  def eitherDualEndoBifunctor: Endobifunctor[Dual[* => *,*,*], Either] =
-    dualEndobifunctor[* => *, Either](Semicategory[* => *], eitherEndoBifunctor)
-
-  def eitherOppEndoBifunctor: Endobifunctor[Opp[* => *]#l, Either] =
-    oppEndobifunctor[* => *, Either](Semicategory[* => *], eitherEndoBifunctor)
 
 }

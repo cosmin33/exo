@@ -1,14 +1,13 @@
 package io.cosmo.exo
 
 import io.cosmo.exo.Iso.HasIso
-import io.cosmo.exo.categories.Trivial.T1
 import io.cosmo.exo.categories._
-import io.cosmo.exo.categories.functors.{Exo, Exofunctor}
-import io.cosmo.exo.evidence.{=!=, =:!=, ===, =~~=, IsK2}
+import io.cosmo.exo.categories.functors.Exo
+import io.cosmo.exo.evidence.{=:!=, =~~=}
 import io.cosmo.exo.internalstuff.TupleGeneric
-import io.cosmo.exo.typeclasses.{HasTc, IsTypeF, TypeF}
+import io.cosmo.exo.typeclasses.{HasTc, TypeF}
 import io.estatico.newtype.macros.newtype
-import shapeless.{Generic, HList, OrElse, the}
+import shapeless.Generic
 
 trait Iso[->[_,_], A, B] { ab =>
   def cat: Subcat[->]
@@ -40,18 +39,10 @@ trait Iso[->[_,_], A, B] { ab =>
   def chainK[C[_]](implicit i: HasIso[->, B, TypeF[C]]): A <-> TypeF[C] = ab.andThen(i)
 
   /** For some invariant F[_] if we have an F[A] we can obtain an F[B] using A <-> B */
-  def derive[F[_]](implicit
-    fa: F[A], I: Exo.Inv[->, F] \/ Exo.Cov[->, F] \/ Exo.Con[->, F] \/ Exo.IsoFun[->, F]
-  ): F[B] = I.fold4(_.map((ab.to, Dual(ab.from))), _.map(ab.to), _.map(Dual(ab.from)), _.map(ab))(fa)
+  def derive[F[_]](implicit fa: F[A], I: Exo.IsoFun[->, F]): F[B] = I.map(ab)(fa)
 
   /** Typeclass derivation: having TypeF[F] <-> TypeF[G] we can obtain HasTc[TC, A] => HasTc[TC, B] */
-  def deriveK[TC[_[_]]](implicit
-    tc: HasTc[TC, A],
-    E: Exo.Inv[->, HasTc[TC, *]]
-      \/ Exo.Cov[->, HasTc[TC, *]]
-      \/ Exo.Con[->, HasTc[TC, *]]
-      \/ Exo.IsoFun[->, HasTc[TC, *]]
-  ): HasTc[TC, B] = E.fold4(_.map((ab.to, Dual(ab.from))), _.map(ab.to), _.map(Dual(ab.from)), _.map(ab))(tc)
+  def deriveK[TC[_[_]]](implicit tc: HasTc[TC, A], E: Exo.IsoFun[->, HasTc[TC, *]]): HasTc[TC, B] = E.map(ab)(tc)
 
   /** From A <-> B, X <-> Y we can obtain (A ⨂ X) <-> (B ⨂ Y) if -> has a Cartesian instance with ⨂ */
   def and[⨂[_,_]] = new AndPartial[⨂]
@@ -130,7 +121,7 @@ object Iso extends IsoInstances {
 
   def isoUnitToA[A]:     (Unit => A) <=> A         = Iso.unsafe(_(()), a => _ => a)
   def isoAToUnit[A]:     (A => Unit) <=> Unit      = Iso.unsafe(_ => (), _ => _ => ())
-  def isoVoidUnitU[A]:   (Void => A) <=> Unit      = Iso.unsafe(_ => (), _ => a => a)
+  def isoVoidToA[A]:   (Void => A) <=> Unit      = Iso.unsafe(_ => (), _ => a => a)
   def isoVoidUnit[A, B]: (A => Unit) <=> (Void => B) = Iso.unsafe(_ => v => v, _ => _ => ())
 
   def isoTerminalInitial[->[_,_], T, I, A, TC[_]](implicit
@@ -226,30 +217,26 @@ trait IsoInstances extends IsoInstances1 {
   ): Groupoid.Aux[Iso[->, *, *], T] = new IsoGroupoid[->, T] {val cat = C}
 
   implicit def isoAssoc[->[_,_], ⊙[_,_], T[_]](implicit
-    c: Subcat.Aux[->, T],
     a: Associative.Aux[->, ⊙, T],
     b: Endobifunctor[->, ⊙],
-  ): Associative[Iso[->, *, *], ⊙] = new IsoAssoc[->, T, ⊙] {val cat = c; val A = a; val bif = b}
+  ): Associative.Aux[Iso[->, *, *], ⊙, T] = new IsoAssoc[->, T, ⊙] {val A = a; val bif = b}
 }
 trait IsoInstances1 extends IsoInstances2 {
   implicit def isoBraided[->[_,_], ⊙[_,_], T[_]](implicit
-    c: Subcat.Aux[->, T],
     a: Braided.Aux[->, ⊙, T],
     b: Endobifunctor[->, ⊙],
-  ): Braided.Aux[Iso[->, *, *], ⊙, T] = new IsoBraided[->, ⊙, T] {val cat = c; val A = a; val bif = b}
+  ): Braided.Aux[Iso[->, *, *], ⊙, T] = new IsoBraided[->, ⊙, T] {val A = a; val bif = b}
 
   implicit def isoMonoidal[->[_,_], ⊙[_,_], T[_], I](implicit
-    c: Subcat.Aux[->, T],
     a: Monoidal.Aux[->, ⊙, T, I],
     b: Endobifunctor[->, ⊙],
-  ): Monoidal.Aux[Iso[->, *, *], ⊙, T, I] = new IsoMonoidal[->, ⊙, T, I] {val cat = c; val A = a; val bif = b}
+  ): Monoidal.Aux[Iso[->, *, *], ⊙, T, I] = new IsoMonoidal[->, ⊙, T, I] {val A = a; val bif = b}
 }
 trait IsoInstances2 {
   implicit def isoSymmetric[->[_,_], ⊙[_,_], T[_]](implicit
-    c: Subcat.Aux[->, T],
     a: Symmetric.Aux[->, ⊙, T],
     b: Endobifunctor[->, ⊙],
-  ): Symmetric.Aux[Iso[->, *, *], ⊙, T] = new IsoSymmetric[->, ⊙, T] {val cat = c; val A = a; val bif = b}
+  ): Symmetric.Aux[Iso[->, *, *], ⊙, T] = new IsoSymmetric[->, ⊙, T] {val A = a; val bif = b}
 }
 
 private[exo] object IsoHelperTraits {
@@ -275,19 +262,18 @@ private[exo] object IsoHelperTraits {
   }
 
   trait IsoAssoc[->[_,_], T[_], ⊙[_,_]] extends Associative[Iso[->, *, *], ⊙] {
-    def cat: Subcat.Aux[->, T]
     def A: Associative.Aux[->, ⊙, T]
     def bif: Endobifunctor[->, ⊙]
     type TC[a] = T[a]
-    def C = Iso.isoGroupoid(cat)
-    def bifunctor = Iso.isoBifunctor(cat, bif)
-    def associate[X, Y, Z]  : Iso[->, X ⊙ Y ⊙ Z, X ⊙ (Y ⊙ Z)] = Iso.unsafe(A.associate[X, Y, Z], A.diassociate[X, Y, Z])(cat)
-    def diassociate[X, Y, Z]: Iso[->, X ⊙ (Y ⊙ Z), X ⊙ Y ⊙ Z] = Iso.unsafe(A.diassociate[X, Y, Z], A.associate[X, Y, Z])(cat)
+    def C = Iso.isoGroupoid(A.C)
+    def bifunctor = Iso.isoBifunctor(A.C, bif)
+    def associate[X, Y, Z]  : Iso[->, X ⊙ Y ⊙ Z, X ⊙ (Y ⊙ Z)] = Iso.unsafe(A.associate[X, Y, Z], A.diassociate[X, Y, Z])(A.C)
+    def diassociate[X, Y, Z]: Iso[->, X ⊙ (Y ⊙ Z), X ⊙ Y ⊙ Z] = Iso.unsafe(A.diassociate[X, Y, Z], A.associate[X, Y, Z])(A.C)
   }
 
   trait IsoBraided[->[_,_], ⊙[_,_], T[_]] extends Braided[Iso[->, *, *], ⊙] with IsoAssoc[->, T, ⊙] {
     def A: Braided.Aux[->, ⊙, T]
-    def braid[A, B]: Iso[->, A ⊙ B, B ⊙ A] = Iso.unsafe(A.braid[A, B], A.braid[B, A])(cat)
+    def braid[A, B]: Iso[->, A ⊙ B, B ⊙ A] = Iso.unsafe(A.braid[A, B], A.braid[B, A])(A.C)
   }
 
   trait IsoSymmetric[->[_,_], ⊙[_,_], T[_]] extends Symmetric[Iso[->, *, *], ⊙] with IsoBraided[->, ⊙, T] {
@@ -297,10 +283,10 @@ private[exo] object IsoHelperTraits {
   trait IsoMonoidal[->[_,_], ⊙[_,_], T[_], I] extends Monoidal[Iso[->, *, *], ⊙] with IsoAssoc[->, T, ⊙] {
     def A: Monoidal.Aux[->, ⊙, T, I]
     type Id = I
-    def idl[A]:   Iso[->, I ⊙ A, A  ] = Iso.unsafe(A.idl[A], A.coidl[A])(cat)
-    def coidl[A]: Iso[->,   A, I ⊙ A] = Iso.unsafe(A.coidl[A], A.idl[A])(cat)
-    def idr[A]:   Iso[->, A ⊙ I, A  ] = Iso.unsafe(A.idr[A], A.coidr[A])(cat)
-    def coidr[A]: Iso[->,   A, A ⊙ I] = Iso.unsafe(A.coidr[A], A.idr[A])(cat)
+    def idl[A]:   Iso[->, I ⊙ A, A  ] = Iso.unsafe(A.idl[A], A.coidl[A])(A.C)
+    def coidl[A]: Iso[->,   A, I ⊙ A] = Iso.unsafe(A.coidl[A], A.idl[A])(A.C)
+    def idr[A]:   Iso[->, A ⊙ I, A  ] = Iso.unsafe(A.idr[A], A.coidr[A])(A.C)
+    def coidr[A]: Iso[->,   A, A ⊙ I] = Iso.unsafe(A.coidr[A], A.idr[A])(A.C)
   }
 
 }

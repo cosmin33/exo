@@ -18,7 +18,7 @@ object Distributive {
   type Aux[==>[_, _], =>#[_], P[_, _], PI, S[_, _], SI] = Distributive[==>] {
     type TC[a] = =>#[a]
     type ProductId = PI; type ⨂[A, B] = P[A, B]
-    type SumId = SI;     type ⨁[A, B] = S[A, B]
+    type SumId     = SI; type ⨁[A, B] = S[A, B]
   }
   type AuxTC[==>[_,_], =>#[_]] = Distributive[==>] {type TC[a] = =>#[a]}
 
@@ -46,15 +46,14 @@ object Distributive {
   def unsafe[->[_,_], ⨂[_,_], ⨁[_,_], ->#[_], PI, SI](
     ft: ∀∀∀[λ[(a,b,c) => ⨂[a, ⨁[b, c]] -> ⨁[⨂[a, b], ⨂[a, c]]]]
   )(implicit
-    cat: Subcat.Aux[->, ->#],
     CP: Cartesian.Aux[->, ⨂, ->#, PI],
     CS: Cartesian.Aux[Dual[->,*,*], ⨁, ->#, SI],
   ): Distributive.Aux[->, ->#, ⨂, PI, ⨁, SI] =
     new Distributive.Proto[->, ->#, ⨂, PI, ⨁, SI] {
       def cartesian = CP
       def cocartesian = CS
-      def id[A](implicit A: ->#[A]) = cat.id[A]
-      def andThen[A, B, C](ab: A -> B, bc: B -> C) = cat.andThen(ab, bc)
+      def id[A](implicit A: ->#[A]) = CP.C.id[A]
+      def andThen[A, B, C](ab: A -> B, bc: B -> C) = CP.C.andThen(ab, bc)
       def distribute[A, B, C] = ft[A, B, C]
     }
 

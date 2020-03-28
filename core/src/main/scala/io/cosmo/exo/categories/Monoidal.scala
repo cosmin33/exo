@@ -1,6 +1,7 @@
 package io.cosmo.exo.categories
 
 import io.cosmo.exo._
+import io.cosmo.exo.categories.instances.MonoidalInstances
 
 trait Monoidal[->[_, _], ⊙[_, _]] extends Associative[->, ⊙] {
   type Id
@@ -16,35 +17,20 @@ trait Monoidal[->[_, _], ⊙[_, _]] extends Associative[->, ⊙] {
   def isoIdR[A]: ⊙[A, Id] <-> A = Iso.unsafe(idr[A], coidr[A])(C)
 }
 
-object Monoidal {
+object Monoidal extends MonoidalInstances {
+  def apply[->[_, _], ⊙[_, _]](implicit M: Monoidal[->, ⊙]): Monoidal[->, ⊙] = M
   type Aux  [->[_, _], ⊙[_, _], TC0[_], I] = Monoidal[->, ⊙] { type TC[a] = TC0[a]; type Id = I }
   type AuxI [->[_, _], ⊙[_, _], I]         = Monoidal[->, ⊙] { type Id = I }
   type AuxTC[->[_, _], ⊙[_, _], TC0[_]]    = Monoidal[->, ⊙] { type TC[a] = TC0[a] }
-
   type AuxT [->[_, _], ⊙[_, _]] = AuxTC[->, ⊙, Trivial.T1]
 
-  trait Proto[->[_, _], ⊙[_, _], TC0[_], I] extends Monoidal[->, ⊙] { type TC[a] = TC0[a]; type Id = I }
+  /** Prototype for easily creating a Monoidal if you already have an Associative */
+  abstract class ProtoAssociative[->[_, _], ⊙[_, _], TC0[_]](A: Associative.Aux[->, ⊙, TC0]) extends Monoidal[->, ⊙] {
+    type TC[a] = TC0[a]
+    val C: Subcat.Aux[->, TC0] = A.C
+    val bifunctor = A.bifunctor
+    def associate  [X, Y, Z] = A.associate
+    def diassociate[X, Y, Z] = A.diassociate
+  }
 
 }
-
-trait HMonoidal[->[_,_], HList, :::[_, _] <: HList, Nil <: HList] {
-  def idn [H]: (H ::: Nil) -> H
-  def coid[H]: H -> (H ::: Nil)
-}
-
-trait MonoidalInstances {
-
-}
-
-//trait MonoidalK[->[_[_],_[_]], ⊙[_[_],_[_],_]] extends AssociativeK[->, ⊙] {
-//  type Id[_]
-//  def idl  [F[_]]: ⊙[Id, F, *] -> F
-//  def idr  [F[_]]: ⊙[F, Id, *] -> F
-//  def coidl[F[_]]: F -> ⊙[F, Id, *]
-//  def coidr[F[_]]: F -> ⊙[Id, F, *]
-//}
-//object MonoidalK {
-//  trait Aux[->[_[_],_[_]], ⊙[_[_],_[_],_], TC0[_[_]], I[_]] extends MonoidalK[->, ⊙] with AssociativeK.Aux[->, ⊙, TC0] {
-//    type Id[⭐] = I[⭐]
-//  }
-//}

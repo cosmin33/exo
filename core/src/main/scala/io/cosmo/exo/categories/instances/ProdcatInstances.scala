@@ -15,12 +15,7 @@ trait ProdcatInstances extends ProdcatInstances01 {
   ): Distributive.Aux[Prodcat[==>, -->, *, *], TC, P, PI, S, SI] =
     new ProdcatDistributive[==>, -->, P, PI, S, SI, TC] {val s1 = di1; val s2 = di2}
 
-  implicit def productGroupoid[==>[_,_], -->[_,_], TC[_]](implicit
-    g1: Groupoid.Aux[==>, TC],
-    g2: Groupoid.Aux[-->, TC],
-  ): Groupoid.Aux[Prodcat[==>, -->, *, *], TC] = new ProductGroupoid[==>, -->, TC] {val s1 = g1; val s2 = g2}
-
-  implicit def prodcatEndoBifunctor[==>[_,_], -->[_,_], Bi[_,_]](implicit
+  implicit def prodcatEndobifunctor[==>[_,_], -->[_,_], Bi[_,_]](implicit
     bi1: Endobifunctor[==>, Bi],
     bi2: Endobifunctor[-->, Bi],
   ): Endobifunctor[Prodcat[==>, -->, *, *], Bi] = new ProdcatEndoBifunctor[==>, -->, Bi] {val eb1 = bi1; val eb2 = bi2}
@@ -33,10 +28,10 @@ trait ProdcatInstances extends ProdcatInstances01 {
 }
 
 trait ProdcatInstances01 extends ProdcatInstances02 {
-  implicit def prodcatCcc[==>[_,_], -->[_,_], TC[_], P[_,_], PI, E[_,_]](implicit
-    cc1: Ccc.Aux[==>, TC, P, PI, E],
-    cc2: Ccc.Aux[-->, TC, P, PI, E],
-  ): Ccc.Aux[Prodcat[==>, -->, *, *], TC, P, PI, E] = new ProductCcc[==>, -->, TC, P, PI, E] {val s1 = cc1; val s2 = cc2}
+  implicit def productGroupoid[==>[_,_], -->[_,_], TC[_]](implicit
+    g1: Groupoid.Aux[==>, TC],
+    g2: Groupoid.Aux[-->, TC],
+  ): Groupoid.Aux[Prodcat[==>, -->, *, *], TC] = new ProdcatGroupoid[==>, -->, TC] {val s1 = g1; val s2 = g2}
 
   implicit def prodcatMonoidal[==>[_,_], -->[_,_], P[_,_], TC[_], I](implicit
     m1: Monoidal.Aux[==>, P, TC, I],
@@ -45,6 +40,11 @@ trait ProdcatInstances01 extends ProdcatInstances02 {
 }
 
 trait ProdcatInstances02 extends ProdcatInstances03 {
+  implicit def prodcatCcc[==>[_,_], -->[_,_], TC[_], P[_,_], PI, E[_,_]](implicit
+    cc1: Ccc.Aux[==>, TC, P, PI, E],
+    cc2: Ccc.Aux[-->, TC, P, PI, E],
+  ): Ccc.Aux[Prodcat[==>, -->, *, *], TC, P, PI, E] = new ProdcatCcc[==>, -->, TC, P, PI, E] {val s1 = cc1; val s2 = cc2}
+
   implicit def prodcatSymmetric[==>[_,_], -->[_,_], P[_,_], TC[_]](implicit
     b1: Symmetric.Aux[==>, P, TC],
     b2: Symmetric.Aux[-->, P, TC],
@@ -53,10 +53,10 @@ trait ProdcatInstances02 extends ProdcatInstances03 {
 }
 
 trait ProdcatInstances03 extends ProdcatInstances04 {
-  implicit def prodcatSubcat[==>[_,_], -->[_,_], TC[_]](implicit
-    sub1: Subcat.Aux[==>, TC],
-    sub2: Subcat.Aux[-->, TC]
-  ): Subcat.Aux[Prodcat[==>, -->, *, *], TC] = new ProdcatSubcat[==>, -->, TC] {val s1 = sub1; val s2 = sub2}
+  implicit def prodcatHasInitialObject[==>[_,_], -->[_,_], C[_], I](implicit
+    t1: HasInitialObject.Aux[==>, C, I],
+    t2: HasInitialObject.Aux[-->, C, I],
+  ): HasInitialObject.Aux[Prodcat[==>, -->, *, *], C, I] = new ProdcatHasInit[==>, -->, C, I] {val s1 = t1; val s2 = t2}
 
   implicit def prodcatBraided[==>[_,_], -->[_,_], P[_,_], TC[_]](implicit
     b1: Braided.Aux[==>, P, TC],
@@ -64,16 +64,34 @@ trait ProdcatInstances03 extends ProdcatInstances04 {
   ): Braided.Aux[Prodcat[==>, -->, *, *], P, TC] = new ProdcatBraided[==>, -->, P, TC] {val a1 = b1; val a2 = b2}
 }
 
-trait ProdcatInstances04 {
-  implicit def prodcatSemicat[==>[_,_], -->[_,_]](implicit
-    semi1: Semicategory[==>],
-    semi2: Semicategory[-->]
-  ): Semicategory[Prodcat[==>, -->, *, *]] = new ProdcatSemicat[==>, -->] {val s1 = semi1; val s2 = semi2}
+trait ProdcatInstances04 extends ProdcatInstances05 {
+  implicit def prodcatHasTerminalObject[==>[_,_], -->[_,_], C[_], T](implicit
+    t1: HasTerminalObject.Aux[==>, C, T],
+    t2: HasTerminalObject.Aux[-->, C, T],
+  ): HasTerminalObject.Aux[Prodcat[==>, -->, *, *], C, T] = new ProdcatHasTerm[==>, -->, C, T] {val s1 = t1; val s2 = t2}
 
   implicit def prodcatAssociative[==>[_,_], -->[_,_], P[_,_], TC[_]](implicit
     as1: Associative.Aux[==>, P, TC],
     as2: Associative.Aux[-->, P, TC],
   ): Associative.Aux[Prodcat[==>, -->, *, *], P, TC] = new ProdcatAssociative[==>, -->, P, TC] {val a1 = as1; val a2 = as2}
+}
+
+trait ProdcatInstances05 extends ProdcatInstances06 {
+  implicit def prodcatSubcat[==>[_,_], -->[_,_], TC[_]](implicit
+    sub1: Subcat.Aux[==>, TC],
+    sub2: Subcat.Aux[-->, TC]
+  ): Subcat.Aux[Prodcat[==>, -->, *, *], TC] = new ProdcatSubcat[==>, -->, TC] {val s1 = sub1; val s2 = sub2}
+}
+
+trait ProdcatInstances06 extends ProdcatInstances07 {
+  implicit def prodcatSemicat[==>[_,_], -->[_,_]](implicit
+    semi1: Semicategory[==>],
+    semi2: Semicategory[-->]
+  ): Semicategory[Prodcat[==>, -->, *, *]] = new ProdcatSemicat[==>, -->] {val s1 = semi1; val s2 = semi2}
+}
+
+trait ProdcatInstances07 {
+
 }
 
 private[instances] object ProdcatHelpers {
@@ -107,7 +125,7 @@ private[instances] object ProdcatHelpers {
     protected def a2: Associative.Aux[-->, P, TC0]
     type TC[a] = TC0[a]
     def C = prodcatSubcat[==>, -->, TC0](a1.C, a2.C)
-    def bifunctor = prodcatEndoBifunctor(a1.bifunctor, a2.bifunctor)
+    def bifunctor = prodcatEndobifunctor(a1.bifunctor, a2.bifunctor)
     def associate  [X, Y, Z] = (a1.associate, a2.associate)
     def diassociate[X, Y, Z] = (a1.diassociate, a2.diassociate)
   }
@@ -165,7 +183,7 @@ private[instances] object ProdcatHelpers {
     def distribute[A, B, C] = (s1.distribute, s2.distribute)
   }
 
-  trait ProductCcc[==>[_,_], -->[_,_], TC0[_], P[_,_], PI, E[_,_]]
+  trait ProdcatCcc[==>[_,_], -->[_,_], TC0[_], P[_,_], PI, E[_,_]]
     extends ProdcatSubcat[==>, -->, TC0]
     with Ccc[Prodcat[==>, -->, *, *]]
   {
@@ -180,7 +198,7 @@ private[instances] object ProdcatHelpers {
     def uncurry[A, B, C](f: (⊙[A, B] ==> C, ⊙[A, B] --> C)) = (s1.uncurry(f._1), s2.uncurry(f._2))
   }
 
-  trait ProductGroupoid[==>[_,_], -->[_,_], TC0[_]]
+  trait ProdcatGroupoid[==>[_,_], -->[_,_], TC0[_]]
     extends ProdcatSubcat[==>, -->, TC0]
     with Groupoid[Prodcat[==>, -->, *, *]]
   {
@@ -188,5 +206,28 @@ private[instances] object ProdcatHelpers {
     protected def s2: Groupoid.Aux[-->, TC0]
     def flip[A, B](f: (A ==> B, A --> B)) = (s1.flip(f._1), s2.flip(f._2))
   }
+
+  trait ProdcatHasInit[==>[_,_], -->[_,_], C[_], I]
+    extends ProdcatSubcat[==>, -->, C]
+    with HasInitialObject[Prodcat[==>, -->, *, *]]
+  {
+    protected def s1: HasInitialObject.Aux[==>, C, I]
+    protected def s2: HasInitialObject.Aux[-->, C, I]
+    type Initial = I
+    def initial: C[I] = s1.initial
+    def initiate[A](implicit A: C[A]): (I ==> A, I --> A) = (s1.initiate, s2.initiate)
+  }
+
+  trait ProdcatHasTerm[==>[_,_], -->[_,_], C[_], T]
+    extends ProdcatSubcat[==>, -->, C]
+    with HasTerminalObject[Prodcat[==>, -->, *, *]]
+  {
+    protected def s1: HasTerminalObject.Aux[==>, C, T]
+    protected def s2: HasTerminalObject.Aux[-->, C, T]
+    type Terminal = T
+    def terminal = s1.terminal
+    def terminate[A](implicit A: C[A]) = (s1.terminate, s2.terminate)
+  }
+
 
 }

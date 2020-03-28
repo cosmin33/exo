@@ -15,7 +15,7 @@ import scala.language.reflectiveCalls
 object HasTypeclassPlay {
 
   def main(args: Array[String]): Unit = {
-    val ltov = ∀.mk[List ~> Vector].from(_.toVector)
+    val ltov: List ~> Vector = ∀.mk[List ~> Vector].from(_.toVector)
     val xx = ltov[Int](List(1, 2))
     val vtol = ∀.mk[Vector ~> List].from(_.toList)
 
@@ -42,8 +42,6 @@ object HasTypeclassPlay {
 
     implicit def funcList1: Exofunctor[Iso[FunK, *, *], * => *, HasTc[Functor, *]] =
       new Exofunctor[Iso[FunK, *, *], * => *, HasTc[Functor, *]] {
-        def C = implicitly
-        def D = implicitly
         def map[A, B](f: Iso[FunK, A, B]): HasTc[Functor, A] => HasTc[Functor, B] = { ha =>
           val ab: FunK[A, B] = f.to
           val ba: FunK[B, A] = f.from

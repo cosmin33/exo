@@ -30,7 +30,7 @@ object KleisModule {
       type TC[a] = cc.TC[a]
       type Id = term.Terminal
 
-      override def &&&[X, Y, Z](f: X -> F[Y], g: X -> F[Z]): X -> F[⨂[Y, Z]] = {
+      override def &&&[X, Y, Z](f: X -> F[Y], g: X -> F[Z]): X -> F[Y ⨂ Z] = {
         val x: X -> (F[Y] ⨂ F[Z]) = cc.&&&(f, g)
 
         ???

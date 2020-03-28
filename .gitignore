@@ -10,6 +10,7 @@ atlassian-ide-plugin.xml
 .idea/httpRequests
 dist/*
 target/
+target*/
 lib_managed/
 src_managed/
 project/boot/
