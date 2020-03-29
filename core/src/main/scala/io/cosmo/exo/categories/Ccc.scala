@@ -3,14 +3,14 @@ package io.cosmo.exo.categories
 import io.cosmo.exo._
 import io.cosmo.exo.categories.functors._
 
-trait Ccc[->[_, _]] extends Subcat[->] {
-  type |->[_, _] // Hom functor
+trait Ccc[-->[_, _]] extends Subcat[-->] {
+  type |->[_, _] // Hom objects representation
 
   type ⊙[_, _] // product
   type ProductId
-  def cartesian: Cartesian.Aux[->, ⊙, TC, ProductId]
+  def cartesian: Cartesian.Aux[-->, ⊙, TC, ProductId]
 
-  def apply[A, B]: ⊙[A |-> B, A] -> B
+  def apply[A, B]: ⊙[A |-> B, A] --> B
 
 //  private def apExperiment1[A, B]: (A |-> B) -> (A |-> B) = uncurry(apply)
 //  private def apExperiment2[A, B](in: ProductId -> (A |-> B)): A -> B = andThen(cartesian.coidl[A], curry(in))
@@ -18,11 +18,25 @@ trait Ccc[->[_, _]] extends Subcat[->] {
 //  private def curryId  [A, B](implicit tc: TC[A |-> B]): ⊙[A |-> B, A] -> B = curry(id[A |-> B])
 //  private def uncurryId[A, B](implicit tc: TC[⊙[A, B]]): A -> (B |-> (A ⊙ B)) = uncurry(id[⊙[A, B]])
 
-  def curry  [A, B, C](f: A -> (B |-> C)): ⊙[A, B] -> C
-  def uncurry[A, B, C](f: ⊙[A, B] -> C): A -> (B |-> C)
+  def curry[A, B, C](f: ⊙[A, B] --> C): A --> (B |-> C)
+  def uncurry  [A, B, C](f: A --> (B |-> C)): ⊙[A, B] --> C
+
+  def const[A, B, C](f: B --> C): A --> (B |-> C) = curry(andThen(cartesian.snd[A, B], f))
+  def unconst[A, B](in: ProductId --> (A |-> B)): A --> B = andThen(cartesian.coidl[A], uncurry(in))
+
+  def precmp[A, B, C](f: A --> B): (C |-> A) --> (C |-> B) = curry(andThen(apply[C, A], f))
+  def postcmp[A, B, C](f: A --> B)(implicit tc: TC[B |-> C]): (B |-> C) --> (A |-> C) =
+    curry(andThen(cartesian.split(id[B |-> C], f), apply[B, C]))
+
+  // (Y -> Z) ⊙ Y => Z because:
+  // ((X ⊙ Y) -> Z) ⊙ X <=> (X -> (Y -> Z)) ⊙ X => Y -> Z
+
+  // Cartesian Closed Functor:
+  // F(B -> A) => F(B) -> F(A)
+  // F(B -> A) ⊙ F(B) <=> F((B -> A) ⊙ B) -> F(A)
 
   /** Adjunction between ⊙[*, B] and B |-> * */
-  def isoClosedAdjunction[A, B, C]: (⊙[A, B] -> C) <=> (A -> (B |-> C)) = Iso.unsafe(uncurry, curry)
+  def isoClosedAdjunction[A, B, C]: (⊙[A, B] --> C) <=> (A --> (B |-> C)) = Iso.unsafe(curry, uncurry)
 }
 
 object Ccc {

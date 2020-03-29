@@ -69,8 +69,6 @@ object FunK {
       }
     }
 
-  type VoidK[x] = Nothing
-  type UnitK[x] = Unit
   type TupK[F[_], G[_], x] = (F[x], G[x])
   type EitK[F[_], G[_], x] = Either[F[x], G[x]]
 
@@ -79,7 +77,7 @@ object FunK {
 
   def vv[F[_]]: FunctionK[VoidK, F] = new FunctionK[VoidK, F] {
     def apply[A](fa: VoidK[A]): F[A] = fa
-}
+  }
   def uu[F[_]]: FunctionK[F, UnitK] = new FunctionK[F, UnitK] {
     def apply[A](fa: F[A]): UnitK[A] = ()
   }

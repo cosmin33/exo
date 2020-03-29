@@ -63,11 +63,11 @@ object foralls {
       def const[A](a: A): ∀[λ[α => A]]   = ∀.of[λ[α => A]].apply(a)
     }
 
-    implicit class FunctionKOps[F[_], G[_]](val trans: F ~> G) {
+    implicit class FunctionKOps[F[_], G[_]](val fn: F ~> G) {
       def $(f: ∀[F]): ∀[G] = ∀.of[G](exec(f.apply))
-      def exec[A](fa: F[A]): G[A] = trans[A](fa)
-      def andThen[H[_]](fn2: G ~> H): F ~> H = ∀.mk[F ~> H].from(trans.apply.andThen(fn2.apply))
-      def andThen_[H[_], I[_]](fn2: H ~> I)(implicit eq: G =~= H): F ~> I = eq.subst(trans).andThen(fn2)
+      def exec[A](fa: F[A]): G[A] = fn[A](fa)
+      def andThen[H[_]](fn2: G ~> H): F ~> H = ∀.mk[F ~> H].from(fn.apply.andThen(fn2.apply))
+      def andThen_[H[_], I[_]](fn2: H ~> I)(implicit eq: G =~= H): F ~> I = eq.subst(fn).andThen(fn2)
     }
 
     implicit class IsoKOps[F[_], G[_]](val iso: F <~> G) {
@@ -77,49 +77,26 @@ object foralls {
 
     // https://nokyotsu.com/qscripts/2014/07/distribution-of-quantifiers-over-logic-connectives.html
     ////////////////////////
-    /** ∀ kinda distributes over => */
-    def isoDistribFnToGen[->[_,_], ->#[_], A, F[_]](implicit
-      ccc: Ccc.AuxTC[->, ->#],
-      cov: Exo.Cov[->, A -> *],
-      con: Exo.Con[->, * -> A],
-      tc: ->#[A]
-    ): ∀[λ[x => A -> F[x]]] => (A -> ∀[F]) = { faf =>
-      // faf => a => ∀.of[F].fromH(t => faf.apply[t.T].apply(a))
-      def mrr[x, y]: (x -> y) => (A -> x) => (A -> y) = cov.map[x, y]
-      def brr[x]: A -> F[x] = faf[x]
-      val ii: A -> A = ccc.id[A]
-      def mr1[y]: (A -> y) => (A -> A) => (A -> y) = mrr[A, y]
-
-      type P[a,b] = ccc.⊙[a,b]
-      type |->[a,b] = ccc.|->[a,b]
-      def aa: P[|->[A, ∀[F]], A] -> ∀[F] = ccc.apply[A, ∀[F]]
-      def a1[x]: P[A |-> (A -> F[x]), A] -> (A -> F[x]) = ccc.apply[A, A -> F[x]]
-
-
-      def res: A => ∀[F] = { a =>
-
-        ???
-      }
-
-
-      ???
-    }
-
     def isoDistribFn[A, F[_]]: ∀[λ[x => A => F[x]]] <=> (A => ∀[F]) =
       Iso.unsafe(
         faf => a => ∀.of[F].fromH(t => faf.apply[t.T].apply(a)),
         aff => ∀.of[λ[x => A => F[x]]](a => aff(a).apply)
       )
 
-//    def isoDistribFn[A, F[_]]: ∀[λ[x => A => F[x]]] <=> (A => ∀[F]) =
-//      Iso.unsafe(faf => a => ∀.of[F](faf.apply.apply(a)),
-//        aff => ∀.of[λ[x => A => F[x]]](a => aff(a).apply))
-
     def fnLowerFunk[F[_], G[_]](fg: F  ~> G): ∀[F]  => ∀[G] = fg.$(_)
     def fnLowerIsok[F[_], G[_]](fg: F <~> G): ∀[F] <=> ∀[G] = Iso.unsafe(fg.toK.$(_), fg.fromK.$(_))
 
     //////////////////////////// ⨂
     /** ∀ distributes over Tuple2 */
+    def fnDistribCartesianToG[->[_,_], F[_], G[_], ⨂[_,_]](implicit
+      cc: Cartesian[->, ⨂]
+    ): ∀[λ[x => F[x] ⨂ G[x]]] -> (∀[F] ⨂ ∀[G]) = {
+
+      //val o1 = ∀.of[F].fromH(t => cc.fst(f[t.T]))
+
+      ???
+    }
+
     def fnDistribCartesianTo[F[_], G[_], ⨂[_,_]](implicit
       cc: Cartesian[* => *, ⨂]
     ): ∀[λ[x => F[x] ⨂ G[x]]] => (∀[F] ⨂ ∀[G]) =
@@ -629,7 +606,7 @@ object foralls {
     def from(ft: Alg[T]): ForallHKImpl.ForallHK[Alg] = ft
   }
   private[exo] final class MkForallK1Impl[Alg[_[_],_]](val dummy: Boolean = false) extends AnyVal with ForallK1Impl.MkForallK1[Alg] {
-    type T[α] = α => Any
+    type T[α] = Any
     type X = Any
     def from(ft: Alg[T,X]): ForallK1Impl.ForallK1[Alg] = ft
   }

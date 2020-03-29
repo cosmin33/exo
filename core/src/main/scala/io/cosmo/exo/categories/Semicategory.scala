@@ -6,6 +6,7 @@ import io.cosmo.exo._
 import io.cosmo.exo.categories.Trivial.T1
 import io.cosmo.exo.categories.functors._
 import io.cosmo.exo.evidence._
+import io.cosmo.exo.typeclasses.{IsTypeF, TypeF}
 import shapeless.the
 
 
@@ -117,14 +118,57 @@ private[categories] object SemicategoryHelpers {
     def id[A](implicit A: TC[A]): A => A = identity
     def andThen[A, B, C](ab: A => B, bc: B => C): A => C = bc.compose(ab)
     def apply[A, B]: ((A => B, A)) => B = { case (ab, a) => ab(a) }
-    def uncurry[X, Y, Z](f: ((X, Y)) => Z): X => (Y => Z) = x => y => f((x, y))
-    def curry[X, Y, Z](f: X => (Y => Z)): ⊙[X, Y] => Z = { case (x, y) => f(x)(y) }
+    def curry[X, Y, Z](f: ((X, Y)) => Z): X => (Y => Z) = x => y => f((x, y))
+    def uncurry[X, Y, Z](f: X => (Y => Z)): ⊙[X, Y] => Z = { case (x, y) => f(x)(y) }
     def terminal: Trivial.T1[Terminal] = Trivial.trivialInstance
     def terminate[A](implicit A: Trivial.T1[A]): A => Terminal = _ => ()
     def initial: Trivial.T1[Nothing] = Trivial.trivialInstance
-    def initiate[A](implicit A: Trivial.T1[A]): Nothing => A = sys.error("obtained everything from nothing!")
+    def initiate[A](implicit A: Trivial.T1[A]): Nothing => A = identity
     def distribute[A, B, C]: A ⨂ (B ⨁ C) => A ⨂ B ⨁ (A ⨂ C) =
       { case (a, e) => e.fold((a, _).asLeft, (a, _).asRight) }
   }
+
+  trait FunKClass
+    extends HasTerminalObject[FunK]
+    with HasInitialObject[FunK]
+    with Ccc[FunK]
+    with Distributive[FunK]
+  {
+    override type Terminal = TypeF[UnitK]
+    override type Initial = TypeF[VoidK]
+    override type ⨂[a, b] = (a, b)
+    override type ProductId = TypeF[UnitK]
+    override type ⨁[a, b] = Either[a, b]
+    override type SumId = TypeF[VoidK]
+    override type TC[a] = IsTypeF[a]
+    override type |->[a, b] = FunK[a, b]
+    override type ⊙[a, b] = (a, b)
+    def terminal = IsTypeF[UnitK]
+    def terminate[A](implicit A: IsTypeF[A]): FunK[A, TypeF[UnitK]] = {
+      val ff: A.Type ~> UnitK = ∀.mk[A.Type ~> UnitK].from(_ => ())
+      A.is.subst[FunK[*, TypeF[UnitK]]](FunK[A.Type, UnitK](ff))
+    }
+    def initial = IsTypeF[VoidK]
+    def initiate[A](implicit A: IsTypeF[A]): FunK[TypeF[VoidK], A] = {
+      val ff: VoidK ~> A.Type = ∀.mk[VoidK ~> A.Type].from(identity)
+      A.is.subst[FunK[TypeF[VoidK], *]](FunK[VoidK, A.Type](ff))
+    }
+    def id[A](implicit A: TC[A]): FunK[A, A] =
+      Is.lift2[FunK](A.is, A.is)(FunK(∀.mk[A.Type ~> A.Type].from(a => a)))
+    def andThen[A, B, C](ab: FunK[A, B], bc: FunK[B, C])  = {
+//      val fab: ab.TypeA ~> ab.TypeB = ab.instance
+//      val fbc: bc.TypeA ~> bc.TypeB = bc.instance
+//      val ff = fab.andThen(fbc)
+      ???
+    }
+    def apply[A, B]: FunK[(FunK[A, B], A), B] = ???
+    def uncurry[A, B, C](f: FunK[A, B |-> C]): FunK[(A, B), C] = ???
+    def curry[A, B, C](f: FunK[A ⊙ B, C]): FunK[A, FunK[B, C]] = ???
+    def cartesian: Cartesian.Aux[FunK, Tuple2, IsTypeF, TypeF[UnitK]] = ???
+    def cocartesian: Cartesian.Aux[Dual[FunK,*,*], Either, IsTypeF, TypeF[VoidK]] = ???
+    def distribute[A, B, C]: FunK[(A, Either[B, C]), Either[(A, B), (A, C)]] = ???
+  }
+
+
 }
 

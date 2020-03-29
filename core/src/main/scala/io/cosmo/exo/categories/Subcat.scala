@@ -52,10 +52,10 @@ trait SubcategorySyntax {
 
     def curry[X, Y, Z, C0[_], P[_, _], PI, E[_, _]](f: P[X, Y] -> Z)(implicit
       C: Ccc.Aux[->, C0, P, PI, E]
-    ): X -> E[Y, Z] = C.uncurry(f)
+    ): X -> E[Y, Z] = C.curry(f)
 
     def uncurry[X, Y, Z, C0[_], P[_, _], PI, E[_, _]](f: X -> E[Y, Z])(implicit
       C: Ccc.Aux[->, C0, P, PI, E]
-    ): P[X, Y] -> Z = C.curry(f)
+    ): P[X, Y] -> Z = C.uncurry(f)
   }
 }

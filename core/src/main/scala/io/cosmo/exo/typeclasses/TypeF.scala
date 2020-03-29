@@ -16,8 +16,7 @@ object TypeF {
 
   implicit def impl: ForallK[TypeF] = forall
 
-  /** TypeF is injective so
-   *   if two TypeF's are equal then the types contained are equal. */
+  /** TypeF is injective, so if two TypeF's are equal then the types contained are equal. */
   def injectivity[F[_], G[_]](ev: TypeF[F] === TypeF[G]): F =~= G = Unsafe.isK[F, G]
 }
 
@@ -26,15 +25,13 @@ trait IsTypeF[A] {
   def is: TypeF[Type] === A
 }
 object IsTypeF {
+  def apply[F[_]]: IsTypeF[TypeF[F]] = impl[F]
   type Aux[A, F[_]] = IsTypeF[A] {type Type[a] = F[a]}
 
-  val forall = ForallK.of[λ[k[_] => IsTypeF[TypeF[k]]]](new IsTypeFImpl)
-  private final class IsTypeFImpl[F[_]] extends IsTypeF[TypeF[F]] {
+  implicit def impl[F[_]]: IsTypeF[TypeF[F]] = new IsTypeF[TypeF[F]] {
     type Type[a] = F[a]
     def is = Is.refl
   }
-
-  implicit def impl[K[_]]: IsTypeF[TypeF[K]] = forall[K]
 
   type FF[F[_], a] = IsTypeF[TypeF[F]]#Type[a]
 

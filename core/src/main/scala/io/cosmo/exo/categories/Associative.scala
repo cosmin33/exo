@@ -18,6 +18,8 @@ trait Associative[->[_, _], ⊙[_, _]] {
   def associate  [X, Y, Z]: ⊙[⊙[X, Y], Z] -> ⊙[X, ⊙[Y, Z]]
   def diassociate[X, Y, Z]: ⊙[X, ⊙[Y, Z]] -> ⊙[⊙[X, Y], Z]
 
+  def split[A, B, X, Y](f: A -> B, g: X -> Y): ⊙[A, X] -> ⊙[B, Y] = bifunctor.bimap(f, g)
+
   private type <->[a, b] = Iso[->, a, b]
   def isoAssociate[X, Y, Z]: ⊙[⊙[X, Y], Z] <-> ⊙[X, ⊙[Y, Z]] = Iso.unsafe(associate[X,Y,Z], diassociate[X,Y,Z])(C)
 }
@@ -58,7 +60,7 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
         def snd[A, B]: (A, B) -> B = { case (_, b) => b }
         def &&&[X, Y, Z](f: X -> Y, g: X -> Z): X -> (Y, Z) = x => (f(x), g(x))
         def diag[A]: A -> (A, A) = a => (a, a)
-        override def pair[A, B, X, Y](f: A => B, g: X => Y): ((A, X)) => (B, Y) =
+        override def split[A, B, X, Y](f: A => B, g: X => Y): ((A, X)) => (B, Y) =
           {case (a, x) => (f(a), g(x))} // override for performance
       }
 
@@ -83,7 +85,7 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
         def diag[A]: (A \/ A) => A = _.fold[A](identity, identity)
         def &&&[X, Y, Z](f: Y => X, g: Z => X): (Y \/ Z) => X = _.fold(f, g)
         //// overrides for performance
-        override def pair[A, B, X, Y](f: B => A, g: Y => X): (B \/ Y) => (A \/ X) = _.fold(f(_).left, g(_).right)
+        override def split[A, B, X, Y](f: B => A, g: Y => X): (B \/ Y) => (A \/ X) = _.fold(f(_).left, g(_).right)
       }
 
   def cocartesianFn1Either: Cartesian.Aux[Opp[* => *]#l, Either, Trivial.T1, Void] =
@@ -203,27 +205,3 @@ trait AssociativeImplicits01 extends AssociativeImplicits02 {
 }
 trait AssociativeImplicits02 {
 }
-
-//trait HAssociative[->[_,_], HList, :::[_, _ <: HList] <: HList, Nil <: HList] {
-//  type TC[_]
-//  def C: Category.Aux[->, TC]
-//  //def bifunctor: Bifunctor.Endo[:::, ->, TC]
-//
-//  def associate  [X, Y, Z]: :::[:::[X, Y], Z] -> :::[X, :::[Y, Z]]
-//  def diassociate[X, Y, Z]: :::[X, :::[Y, Z]] -> :::[:::[X, Y], Z]
-//
-//}
-
-//trait AssociativeK[->[_[_],_[_]], ⊙[_[_],_[_],_]] {
-//  type TC[_[_]]
-//  def C: CategoryK.Aux[->, TC]
-//  def bifunctor: BifunctorK.Aux1[⊙, ->, TC]
-//
-//  def associate  [X[_], Y[_], Z[_]]: ⊙[⊙[X, Y, ?], Z, ?] -> ⊙[X, ⊙[Y, Z, ?], ?]
-//  def diassociate[X[_], Y[_], Z[_]]: ⊙[X, ⊙[Y, Z, ?], ?] -> ⊙[⊙[X, Y, ?], Z, ?]
-//}
-//object AssociativeK {
-//  trait Aux[->[_[_],_[_]], ⊙[_[_],_[_],_], TC0[_[_]]] extends AssociativeK[->, ⊙] {
-//    type TC[f[_]] = TC0[f]
-//  }
-//}

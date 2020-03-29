@@ -17,3 +17,4 @@ project/boot/
 project/plugins/project/
 .cache
 .lib/
+.bloop/

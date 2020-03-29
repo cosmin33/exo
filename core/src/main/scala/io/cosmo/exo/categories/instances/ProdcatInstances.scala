@@ -194,8 +194,8 @@ private[instances] object ProdcatHelpers {
     type ProductId = PI
     def cartesian = prodcatCartesian[==>, -->, P, TC0, PI](s1.cartesian, s2.cartesian)
     def apply[A, B]: (⊙[A |-> B, A] ==> B, ⊙[A |-> B, A] --> B) = (s1.apply, s2.apply)
-    def curry[A, B, C](f: (A ==> (B |-> C), A --> (B |-> C))) = (s1.curry[A, B, C](f._1), s2.curry[A, B, C](f._2))
-    def uncurry[A, B, C](f: (⊙[A, B] ==> C, ⊙[A, B] --> C)) = (s1.uncurry(f._1), s2.uncurry(f._2))
+    def uncurry[A, B, C](f: (A ==> (B |-> C), A --> (B |-> C))) = (s1.uncurry[A, B, C](f._1), s2.uncurry[A, B, C](f._2))
+    def curry[A, B, C](f: (⊙[A, B] ==> C, ⊙[A, B] --> C)) = (s1.curry(f._1), s2.curry(f._2))
   }
 
   trait ProdcatGroupoid[==>[_,_], -->[_,_], TC0[_]]

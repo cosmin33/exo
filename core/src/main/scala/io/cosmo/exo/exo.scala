@@ -65,7 +65,11 @@ package object exo extends Existence with syntax {
   type /\[L, R] = Conjunction[L, R]
   val (/\): Conjunction.type = Conjunction
 
-  type Any1[α]       = α => Any
+  type VoidK[x] = Nothing
+  type UnitK[x] = Unit
+
+  //type Any1[α]       = α => Any
+  type Any1[α]       = Any
   type Any2[f[_]]    = Any1[Any1[Any]]
 
   // morphisms and isomorphisms

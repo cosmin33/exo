@@ -48,7 +48,7 @@ trait Iso[->[_,_], A, B] { ab =>
   def and[⨂[_,_]] = new AndPartial[⨂]
   class AndPartial[⨂[_,_]] {
     def apply[I, J](ij: I <-> J)(implicit C: Cartesian[->, ⨂]): ⨂[A, I] <-> ⨂[B, J] =
-      Iso.unsafe(C.pair(ab.to, ij.to), C.pair(ab.from, ij.from))(C.C)
+      Iso.unsafe(C.split(ab.to, ij.to), C.split(ab.from, ij.from))(C.C)
   }
 
   /** From A <-> B, X <-> Y we can obtain (A, X) <-> (B, Y) if -> has a Cartesian instance with Tuple2 */
@@ -58,7 +58,7 @@ trait Iso[->[_,_], A, B] { ab =>
   def or[⨁[_,_]] = new OrPartial[⨁]
   class OrPartial[⨁[_,_]] {
     def apply[I, J](ij: I <-> J)(implicit C: Cocartesian[->, ⨁]): ⨁[A, I] <-> ⨁[B, J] =
-      Iso.unsafe[->, ⨁[A, I], ⨁[B, J]](C.pair(Dual(ab.to), Dual(ij.to)), C.pair(Dual(ab.from), Dual(ij.from)))(ab.cat)
+      Iso.unsafe[->, ⨁[A, I], ⨁[B, J]](C.split(Dual(ab.to), Dual(ij.to)), C.split(Dual(ab.from), Dual(ij.from)))(ab.cat)
   }
 
   /** From A <-> B, X <-> Y we can obtain (A \/ X) <-> (B \/ Y) if -> has a Cocartesian instance with \/ */
