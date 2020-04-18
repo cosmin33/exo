@@ -5,20 +5,19 @@ inThisBuild(Seq(
   organization := "io.cosmo",
   scalaVersion := "2.13.0",
   version := "0.0.1-SNAPSHOT",
-  crossScalaVersions := Seq("2.13.0"),
+  crossScalaVersions := Seq("2.13.1", "2.13.0"),
 ))
 
 lazy val versionOf = new {
   val simulacrum = "0.19.0"
-  val mouse = "0.23"
+  val mouse = "0.24"
   val monix = "3.1.0"
-  val cats = "2.0.0"
-  val scalaz = "7.2.29"
+  val cats = "2.1.1"
   val shapeless = "2.3.3"
-  val scalaCheck = "1.14.2"
-  val scalaCheckCats = "0.2.0"
-  val scalatest = "3.2.0-M1"
+  val scalaCheck = "1.14.3"
+  val scalatest = "3.3.0-SNAP2"
   val estaticoNewtype = "0.4.3"
+//  val estaticoNewtype = "0.4.4-SNAPSHOT"
 }
 
 lazy val commonSettings = Seq(
@@ -33,7 +32,7 @@ lazy val commonSettings = Seq(
     Resolver.typesafeIvyRepo("releasesIvy"),
     Resolver.sonatypeRepo("snapshots")
   ),
-  addCompilerPlugin("org.typelevel" % "kind-projector" % "0.10.3" cross CrossVersion.binary),
+  addCompilerPlugin("org.typelevel" % "kind-projector" % "0.11.0" cross CrossVersion.full),
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
   addCompilerPlugin("com.github.tomasmikula" %% "pascal" % "0.3.5"),
   scalacOptions ++= Seq(
@@ -73,15 +72,10 @@ lazy val commonSettings = Seq(
     "org.typelevel"        %%% "mouse"               % versionOf.mouse,
     "com.github.mpilquist" %%% "simulacrum"          % versionOf.simulacrum,
     "org.typelevel"        %%% "cats-core"           % versionOf.cats,
-//    "org.typelevel"        %%% "cats-effect"         % versionOf.catsEffect,
     "org.typelevel"        %%% "cats-free"           % versionOf.cats,
     "org.typelevel"        %%% "alleycats-core"      % versionOf.cats,
-//    "org.typelevel"        %%% "cats-effect"         % versionOf.catsEffect,
     "io.monix"             %%% "monix"               % versionOf.monix,
-//    "org.scalaz"           %%% "scalaz-core"         % versionOf.scalaz,
-    "com.github.alexarchambault" %%% "scalacheck-shapeless_1.14" % "1.2.3",
     "io.estatico"          %%% "newtype"             % versionOf.estaticoNewtype,
-    "io.chrisdavenport"    %%% "cats-scalacheck"     % versionOf.scalaCheckCats, // % Test,
     "org.scalatest"        %%% "scalatest"           % versionOf.scalatest % Test,
     "org.scalacheck"       %%% "scalacheck"          % versionOf.scalaCheck % Test,
     "com.chuusai"          %%% "shapeless"           % versionOf.shapeless,
