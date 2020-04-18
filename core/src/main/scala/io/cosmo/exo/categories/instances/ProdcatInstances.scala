@@ -193,7 +193,7 @@ private[instances] object ProdcatHelpers {
     type ⊙[a, b] = P[a, b]
     type ProductId = PI
     def cartesian = prodcatCartesian[==>, -->, P, TC0, PI](s1.cartesian, s2.cartesian)
-    def apply[A, B]: (⊙[A |-> B, A] ==> B, ⊙[A |-> B, A] --> B) = (s1.apply, s2.apply)
+    override def apply[A, B]: (⊙[A |-> B, A] ==> B, ⊙[A |-> B, A] --> B) = (s1.apply, s2.apply)
     def uncurry[A, B, C](f: (A ==> (B |-> C), A --> (B |-> C))) = (s1.uncurry[A, B, C](f._1), s2.uncurry[A, B, C](f._2))
     def curry[A, B, C](f: (⊙[A, B] ==> C, ⊙[A, B] --> C)) = (s1.curry(f._1), s2.curry(f._2))
   }

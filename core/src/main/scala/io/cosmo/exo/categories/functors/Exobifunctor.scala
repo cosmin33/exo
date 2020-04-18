@@ -59,6 +59,20 @@ object Endobifunctor {
 
 trait ExobifunctorInstances {
 
+  implicit def dicatToIso[==>[_, _], -->[_, _], >->[_, _], Bi[_, _], TC[_]](
+    E: Exobifunctor[Dicat[==>,*,*], Dicat[-->,*,*], >->, Bi]
+  )(implicit
+    S1: Subcat.Aux[==>, TC],
+    S2: Subcat.Aux[-->, TC],
+  ): Exobifunctor[Iso[==>,*,*], Iso[-->,*,*], >->, Bi] =
+    new Exobifunctor[Iso[==>,*,*], Iso[-->,*,*], >->, Bi] {
+      def L = Iso.isoGroupoid(S1)
+      def R = Iso.isoGroupoid(S2)
+      def C = E.C
+      def leftMap [A, B, Z](fn: Iso[==>, A, Z]) = E.leftMap (Dicat[==>, A, Z](fn.to, fn.from))
+      def rightMap[A, B, Z](fn: Iso[-->, B, Z]) = E.rightMap(Dicat[-->, B, Z](fn.to, fn.from))
+    }
+
   implicit def tuple2Endobifunctor: Endobifunctor[* => *, Tuple2] =
     new Endobifunctor[* => *, Tuple2] {
       val L, R, C = Semicategory[* => *]

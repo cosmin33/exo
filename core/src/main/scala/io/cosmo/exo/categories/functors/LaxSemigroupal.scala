@@ -1,6 +1,7 @@
 package io.cosmo.exo.categories.functors
 
 import cats._
+import cats.implicits._
 import io.cosmo.exo.categories._
 import io.cosmo.exo._
 
@@ -65,20 +66,6 @@ trait LaxSemigroupalInstances03 extends LaxSemigroupalInstances04 {
 }
 
 trait LaxSemigroupalInstances04 extends LaxSemigroupalInstances05 {
-//  implicit def invToIso[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], =>#[_], F[_]](implicit
-//    l: LaxSemigroupal.Aux[Dicat[==>,*,*], ⊙=, -->, ⊙-, =>#, F]
-//  ): LaxSemigroupal.Aux[Iso[==>,*,*], ⊙=, -->, ⊙-, =>#, F] =
-//    new LaxSemigroupal[Iso[==>,*,*], ⊙=, -->, ⊙-, F] {
-//      type TC[a] = =>#[a]
-//      def M1 = {
-//        val x: Associative.Aux[Iso[==>,*,*], ⊙=, =>#] = Iso.isoAssoc(l.M1, l.M1.bifunctor)
-//        ???
-//      }
-//      def M2 = l.M2
-//      def map[A, B](i: Iso[==>, A, B]) = l.map((i.to, Dual(i.from)))
-//      def product[A, B]: (F[A] ⊙- F[B]) => F[A ⊙= B] = ???
-//    }
-
 }
 
 trait LaxSemigroupalInstances05 {
@@ -114,6 +101,7 @@ private object LaxSemigroupalHelpers {
   trait ImportMonoidal[F[_]] extends ImportSemigroupal[F] {
     protected def F: InvariantMonoidal[F]
     type I = Unit
+    def id: I => F[I] = F.point(_)
     override def M2: Monoidal.Aux[* => *, (*, *), λ[a => Trivial.T1[F[a]]], F[Unit]] =
       new Monoidal.ProtoAssociative[* => *, (*, *), λ[a => Trivial.T1[F[a]]]](Associative[* => *, (*, *)]) {
         type Id = F[Unit]

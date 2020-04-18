@@ -2,7 +2,6 @@ package io.cosmo.exo.categories
 
 import cats.{Monoid, Semigroup}
 import io.cosmo.exo.{<=>, Iso}
-import io.cosmo.exo.categories.CMonoid.unsafe
 
 trait CSemigroup[->[_,_], ⊙[_,_], A] {
   type TC[_]

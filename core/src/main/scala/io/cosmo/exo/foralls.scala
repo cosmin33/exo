@@ -24,6 +24,7 @@ object foralls {
     def from[F[_]](p: Prototype[F]): ∀[F]
     def of[F[_]]: MkForall[F]
     def mk[X](implicit u: Unapply[X]): MkForall[u.F] = of[u.F]
+    def const[A](a: A): ∀[λ[α => A]]
 
     trait MkForall[F[_]] extends Any {
       type T
@@ -38,7 +39,7 @@ object foralls {
     }
   }
 
-  private[exo] object ForallImpl extends ForallModule with ForallSyntax {
+  private[exo] object ForallImpl extends ForallModule {
     type Forall[F[_]] = F[Any]
 
     def specialize[F[_], A](f: ∀[F]): F[A]    = f.asInstanceOf[F[A]]
@@ -47,6 +48,7 @@ object foralls {
     def monotonicity[F[_], G[_]](ev: ∀[λ[α => F[α] <~< G[α]]]): ∀[F] <~< ∀[G] = As.refl[Any].asInstanceOf[∀[F] <~< ∀[G]]
     def from[F[_]](p: Prototype[F]): ∀[F]     = p[Any]
     def of[F[_]]: MkForall[F] = new MkForallImpl[F]
+    def const[A](a: A): ∀[λ[α => A]] = of[λ[α => A]].from(a)
   }
 
   private[exo] final class MkForallImpl[F[_]](val dummy: Boolean = false) extends AnyVal with ForallImpl.MkForall[F] {
@@ -59,15 +61,14 @@ object foralls {
     implicit final class Ops[F[_]](val f: ∀[F]) {
       def of[A]: F[A]    = ∀.specialize(f)
       def apply[A]: F[A] = of[A]
-      def lift[G[_]]: ∀[λ[α => F[G[α]]]] = ∀.of[λ[α => F[G[α]]]](of)
-      def const[A](a: A): ∀[λ[α => A]]   = ∀.of[λ[α => A]].apply(a)
+      def lift[G[_]]: ∀[λ[α => F[G[α]]]] = ∀.of[λ[α => F[G[α]]]].from(of)
     }
 
     implicit class FunctionKOps[F[_], G[_]](val fn: F ~> G) {
-      def $(f: ∀[F]): ∀[G] = ∀.of[G](exec(f.apply))
-      def exec[A](fa: F[A]): G[A] = fn[A](fa)
+      def $(f: ∀[F]): ∀[G] = ∀.of[G].from(exec(f.apply))
+      def exec[A](fa: F[A]): G[A] = fn.apply[A](fa)
       def andThen[H[_]](fn2: G ~> H): F ~> H = ∀.mk[F ~> H].from(fn.apply.andThen(fn2.apply))
-      def andThen_[H[_], I[_]](fn2: H ~> I)(implicit eq: G =~= H): F ~> I = eq.subst(fn).andThen(fn2)
+      def andThen_[H[_], I[_]](fn2: H ~> I)(implicit eq: G =~= H): F ~> I = eq.subst[F ~> *[_]](fn).andThen(fn2)
     }
 
     implicit class IsoKOps[F[_], G[_]](val iso: F <~> G) {
@@ -80,7 +81,7 @@ object foralls {
     def isoDistribFn[A, F[_]]: ∀[λ[x => A => F[x]]] <=> (A => ∀[F]) =
       Iso.unsafe(
         faf => a => ∀.of[F].fromH(t => faf.apply[t.T].apply(a)),
-        aff => ∀.of[λ[x => A => F[x]]](a => aff(a).apply)
+        aff => ∀.of[λ[x => A => F[x]]].from(a => aff(a).apply)
       )
 
     def fnLowerFunk[F[_], G[_]](fg: F  ~> G): ∀[F]  => ∀[G] = fg.$(_)

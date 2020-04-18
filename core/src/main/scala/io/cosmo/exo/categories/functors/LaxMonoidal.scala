@@ -8,10 +8,11 @@ import io.cosmo.exo.evidence.{=~=, =~~=}
 
 /** https://ncatlab.org/nlab/show/monoidal+functor */
 trait LaxMonoidal[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends LaxSemigroupal[==>, ⊙=, -->, ⊙-, F] { self =>
-  type TC[_]
   type I
   def M1: Monoidal.Aux[==>, ⊙=, TC, I]
   def M2: Monoidal.Aux[-->, ⊙-, λ[a => TC[F[a]]], F[I]]
+
+  def id: I => F[I]
 
   def preserveMonoid[M](ma: CMonoid.Aux[==>, ⊙=, TC, I, M])(implicit
     E: Exo.Con[* => *, * --> F[M]]

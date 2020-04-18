@@ -64,7 +64,7 @@ object Is extends IsInstances {
   private final class Refl[A]() extends Is[A, A] {
     def subst[F[_]](fa: F[A]): F[A] = fa
   }
-  private val refl_ : ∀[Refl] = ∀.of[Refl](new Refl())
+  private val refl_ : ∀[Refl] = ∀.of[Refl].from(new Refl())
 
   implicit def refl[A]: A === A = refl_[A]
 

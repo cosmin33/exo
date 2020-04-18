@@ -117,7 +117,7 @@ private[categories] object SemicategoryHelpers {
     def cocartesian = Associative.cocartesianFn1EitherDual
     def id[A](implicit A: TC[A]): A => A = identity
     def andThen[A, B, C](ab: A => B, bc: B => C): A => C = bc.compose(ab)
-    def apply[A, B]: ((A => B, A)) => B = { case (ab, a) => ab(a) }
+    override def apply[A, B]: ((A => B, A)) => B = { case (ab, a) => ab(a) }
     def curry[X, Y, Z](f: ((X, Y)) => Z): X => (Y => Z) = x => y => f((x, y))
     def uncurry[X, Y, Z](f: X => (Y => Z)): ⊙[X, Y] => Z = { case (x, y) => f(x)(y) }
     def terminal: Trivial.T1[Terminal] = Trivial.trivialInstance
@@ -161,7 +161,7 @@ private[categories] object SemicategoryHelpers {
 //      val ff = fab.andThen(fbc)
       ???
     }
-    def apply[A, B]: FunK[(FunK[A, B], A), B] = ???
+    override def apply[A, B]: FunK[(FunK[A, B], A), B] = ???
     def uncurry[A, B, C](f: FunK[A, B |-> C]): FunK[(A, B), C] = ???
     def curry[A, B, C](f: FunK[A ⊙ B, C]): FunK[A, FunK[B, C]] = ???
     def cartesian: Cartesian.Aux[FunK, Tuple2, IsTypeF, TypeF[UnitK]] = ???

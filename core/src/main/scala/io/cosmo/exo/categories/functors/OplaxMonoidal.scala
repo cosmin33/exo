@@ -1,14 +1,18 @@
 package io.cosmo.exo.categories.functors
 
-import io.cosmo.exo.categories.{Dual, Monoidal}
+import io.cosmo.exo.categories.{CMonoid, Dual, Monoidal}
 
 /** https://ncatlab.org/nlab/show/oplax+monoidal+functor */
-trait OplaxMonoidal[==>[_,_], ⊙[_,_], -->[_,_], ∪[_,_], F[_]] extends Exofunctor[Dual[==>,*,*], Dual[-->,*,*], F] {
-  def M1: Monoidal[==>, ⊙]
-  def M2: Monoidal[-->, ∪]
+trait OplaxMonoidal[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends OplaxSemigroupal[==>, ⊙=, -->, ⊙-, F] {
+  type I
+  def M1: Monoidal.Aux[Dual[==>,*,*], ⊙=, TC, I]
+  def M2: Monoidal.Aux[Dual[-->,*,*], ⊙-, λ[a => TC[F[a]]], F[I]]
 
-  def product[A, B]: F[A ⊙ B] => (F[A] ∪ F[B])
+  def opId: F[I] => I
 
-  def opmap2[A, B, C](fn: C ==> (A ⊙ B))(implicit E: Exo.Cov[* => *, F[C] --> *]): F[C] --> (F[A] ∪ F[B]) =
-    E.map(product[A, B])(map[A ⊙ B, C](Dual(fn)).toFn)
+  def preserveComonoid[M](ma: CMonoid.Aux[Dual[==>,*,*], ⊙=, TC, I, M])(implicit
+    E: Exo.Cov[* => *, F[M] --> *]
+  ): CMonoid.Aux[Dual[-->,*,*], ⊙-, λ[a => TC[F[a]]], F[I], F[M]] =
+    CMonoid.unsafe(map(ma.id), Dual(E.map(opProduct[M, M])(map(ma.op))))(M2)
+
 }

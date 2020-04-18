@@ -94,6 +94,7 @@ object Iso extends IsoInstances {
   /** create an isomorphism given the two complementary functions as long as you promise to uphold the iso laws */
   def unsafe[->[_,_], A, B](ab: A -> B, ba: B -> A)(implicit C: Subcat[->]): Iso[->, A, B] =
     new Iso[->, A, B] {val (cat, to, from) = (C, ab, ba)}
+  //def unsafe[->[_,_], A, B](pair: (A -> B, B -> A))(implicit C: Subcat[->]): Iso[->, A, B] = unsafe(pair._1, pair._2)
 
   /** Isomorphism between a case class and a tuple of the proper arity (using shapeless) */
   def forCaseClass[S <: Product](implicit ev: TupleGeneric[S]): Iso[* => *, S, ev.Repr] =
