@@ -27,9 +27,8 @@ object InstanceOfModule {
 }
 
 /////////////////////////////////////////////////////////////////////////
-
+// Experimental hierarchical InstanceOf
 /////////////////////////////////////////////////////////////////////////
-
 object IofModule {
   type Iof[H, A <: H] = IofModule[Any with H]#Type[A]
   @inline final def instOf[H] = new IosHelper[H]; class IosHelper[H](val d: Boolean = true) extends AnyVal {
