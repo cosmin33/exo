@@ -2,7 +2,7 @@ package io.cosmo.exo.categories.data
 
 import cats.{Id, Monad}
 import io.cosmo.exo.categories.Subcat.Aux
-import io.cosmo.exo.categories.{Cartesian, Endobifunctor, HasTerminalObject, Kleis, Opp, Subcat}
+import io.cosmo.exo.categories.{Cartesian, Endobifunctor, Terminal, Kleis, Opp, Subcat}
 import io.cosmo.exo.evidence.{===, Is}
 import io.cosmo.exo.categories.functors._
 
@@ -21,7 +21,7 @@ object KleisModule {
 
   def kleisCartesian[->[_,_], ⨂[_,_], F[_], Term](implicit
     cc: Cartesian[->, ⨂],
-    term: HasTerminalObject.AuxTerm[->, Term],
+    term: Terminal.AuxTerm[->, Term],
     mon: Exomonad[* => *, Id, F],
     bif: Endobifunctor[* => *, ⨂],
     pro: Exobifunctor.Pro[->],

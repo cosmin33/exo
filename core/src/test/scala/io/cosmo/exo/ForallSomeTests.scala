@@ -2,7 +2,7 @@ package io.cosmo.exo
 
 import cats.data.Kleisli
 import io.cosmo.exo.categories.Trivial.T1
-import io.cosmo.exo.categories.{Cartesian, Ccc, HasTerminalObject}
+import io.cosmo.exo.categories.{Cartesian, Ccc, Terminal}
 import io.cosmo.exo.evidence.Inhabited
 import io.cosmo.exo.syntax._
 import org.scalatest.funsuite.AnyFunSuite

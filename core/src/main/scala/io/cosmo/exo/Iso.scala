@@ -126,20 +126,20 @@ object Iso extends IsoInstances {
   def isoVoidUnit[A, B]: (A => Unit) <=> (Void => B) = Iso.unsafe(_ => v => v, _ => _ => ())
 
   def isoTerminalInitial[->[_,_], T, I, A, TC[_]](implicit
-    T: HasTerminalObject.Aux[->, TC, T],
-    I: HasInitialObject.Aux[->, TC, I],
+    T: Terminal.Aux[->, TC, T],
+    I: Initial.Aux[->, TC, I],
     TC: TC[A]
   ): (A -> T) <=> (I -> A) = Iso.unsafe(_ => I.initiate, _ => T.terminate)
 
   def isoTerminalUnit[->[_,_], T, A, TC[_]](implicit
     cat: Subcat.Aux[->, TC],
-    T: HasTerminalObject.Aux[->, TC, T],
+    T: Terminal.Aux[->, TC, T],
     tca: TC[A],
   ): (A -> T) <=> (T -> T) = Iso.unsafe(_ => cat.id[T](T.terminal), _ => T.terminate)
 
   def isoInitialUnit[->[_,_], I, A, TC[_]](implicit
     cat: Subcat.Aux[->, TC],
-    I: HasInitialObject.Aux[->, TC, I],
+    I: Initial.Aux[->, TC, I],
     tca: TC[A],
   ): (I -> A) <=> (I -> I) = Iso.unsafe(_ => cat.id[I](I.initial), _ => I.initiate)
 

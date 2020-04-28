@@ -34,14 +34,14 @@ trait SemicategoryImplicits extends SemicategoryImplicits01 {
 trait SemicategoryImplicits01 extends SemicategoryImplicits02 {
   implicit def distFunc1: Distributive.Aux[* => *, Trivial.T1, (*, *), Unit, Either, Void] = function1Class
   implicit def leibnizConcrete: Concrete.AuxT[===] = leibnizClass
-  implicit def liskovTerminal: HasTerminalObject.Aux[<~<, Trivial.T1, Any] = liskovClass
+  implicit def liskovTerminal: Terminal.Aux[<~<, Trivial.T1, Any] = liskovClass
 }
 trait SemicategoryImplicits02 extends SemicategoryImplicits03 {
-  implicit def function1Terminal: HasTerminalObject.Aux[* => *, Trivial.T1, Unit] = function1Class
-  implicit def liskovInitial: HasInitialObject.Aux[<~<, Trivial.T1, Void] = liskovClass
+  implicit def function1Terminal: Terminal.Aux[* => *, Trivial.T1, Unit] = function1Class
+  implicit def liskovInitial: Initial.Aux[<~<, Trivial.T1, Void] = liskovClass
 }
 trait SemicategoryImplicits03 {
-  implicit def function1Initial: HasInitialObject.Aux[* => *, Trivial.T1, Void] = function1Class
+  implicit def function1Initial: Initial.Aux[* => *, Trivial.T1, Void] = function1Class
 }
 
 private[categories] object SemicategoryHelpers {
@@ -69,8 +69,8 @@ private[categories] object SemicategoryHelpers {
 
   trait LiskovCatClass
     extends Concrete[<~<]
-      with HasInitialObject[<~<]
-      with HasTerminalObject[<~<]
+      with Initial[<~<]
+      with Terminal[<~<]
   {
     override type Initial = Void
     override type Terminal = Any
@@ -99,8 +99,8 @@ private[categories] object SemicategoryHelpers {
   }
 
   trait Function1Class
-    extends HasTerminalObject[* => *]
-      with HasInitialObject[* => *]
+    extends Terminal[* => *]
+      with Initial[* => *]
       with Ccc[* => *]
       with Distributive[* => *]
   {
@@ -129,8 +129,8 @@ private[categories] object SemicategoryHelpers {
   }
 
   trait FunKClass
-    extends HasTerminalObject[FunK]
-    with HasInitialObject[FunK]
+    extends Terminal[FunK]
+    with Initial[FunK]
     with Ccc[FunK]
     with Distributive[FunK]
   {

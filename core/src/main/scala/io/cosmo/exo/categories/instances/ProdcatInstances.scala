@@ -54,9 +54,9 @@ trait ProdcatInstances02 extends ProdcatInstances03 {
 
 trait ProdcatInstances03 extends ProdcatInstances04 {
   implicit def prodcatHasInitialObject[==>[_,_], -->[_,_], C[_], I](implicit
-    t1: HasInitialObject.Aux[==>, C, I],
-    t2: HasInitialObject.Aux[-->, C, I],
-  ): HasInitialObject.Aux[Prodcat[==>, -->, *, *], C, I] = new ProdcatHasInit[==>, -->, C, I] {val s1 = t1; val s2 = t2}
+    t1: Initial.Aux[==>, C, I],
+    t2: Initial.Aux[-->, C, I],
+  ): Initial.Aux[Prodcat[==>, -->, *, *], C, I] = new ProdcatInit[==>, -->, C, I] {val s1 = t1; val s2 = t2}
 
   implicit def prodcatBraided[==>[_,_], -->[_,_], P[_,_], TC[_]](implicit
     b1: Braided.Aux[==>, P, TC],
@@ -66,9 +66,9 @@ trait ProdcatInstances03 extends ProdcatInstances04 {
 
 trait ProdcatInstances04 extends ProdcatInstances05 {
   implicit def prodcatHasTerminalObject[==>[_,_], -->[_,_], C[_], T](implicit
-    t1: HasTerminalObject.Aux[==>, C, T],
-    t2: HasTerminalObject.Aux[-->, C, T],
-  ): HasTerminalObject.Aux[Prodcat[==>, -->, *, *], C, T] = new ProdcatHasTerm[==>, -->, C, T] {val s1 = t1; val s2 = t2}
+    t1: Terminal.Aux[==>, C, T],
+    t2: Terminal.Aux[-->, C, T],
+  ): Terminal.Aux[Prodcat[==>, -->, *, *], C, T] = new ProdcatTerm[==>, -->, C, T] {val s1 = t1; val s2 = t2}
 
   implicit def prodcatAssociative[==>[_,_], -->[_,_], P[_,_], TC[_]](implicit
     as1: Associative.Aux[==>, P, TC],
@@ -207,23 +207,23 @@ private[instances] object ProdcatHelpers {
     def flip[A, B](f: (A ==> B, A --> B)) = (s1.flip(f._1), s2.flip(f._2))
   }
 
-  trait ProdcatHasInit[==>[_,_], -->[_,_], C[_], I]
+  trait ProdcatInit[==>[_,_], -->[_,_], C[_], I]
     extends ProdcatSubcat[==>, -->, C]
-    with HasInitialObject[Prodcat[==>, -->, *, *]]
+    with Initial[Prodcat[==>, -->, *, *]]
   {
-    protected def s1: HasInitialObject.Aux[==>, C, I]
-    protected def s2: HasInitialObject.Aux[-->, C, I]
+    protected def s1: Initial.Aux[==>, C, I]
+    protected def s2: Initial.Aux[-->, C, I]
     type Initial = I
     def initial: C[I] = s1.initial
     def initiate[A](implicit A: C[A]): (I ==> A, I --> A) = (s1.initiate, s2.initiate)
   }
 
-  trait ProdcatHasTerm[==>[_,_], -->[_,_], C[_], T]
+  trait ProdcatTerm[==>[_,_], -->[_,_], C[_], T]
     extends ProdcatSubcat[==>, -->, C]
-    with HasTerminalObject[Prodcat[==>, -->, *, *]]
+    with Terminal[Prodcat[==>, -->, *, *]]
   {
-    protected def s1: HasTerminalObject.Aux[==>, C, T]
-    protected def s2: HasTerminalObject.Aux[-->, C, T]
+    protected def s1: Terminal.Aux[==>, C, T]
+    protected def s2: Terminal.Aux[-->, C, T]
     type Terminal = T
     def terminal = s1.terminal
     def terminate[A](implicit A: C[A]) = (s1.terminate, s2.terminate)

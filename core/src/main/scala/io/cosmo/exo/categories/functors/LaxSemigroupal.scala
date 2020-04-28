@@ -122,6 +122,5 @@ private object LaxSemigroupalHelpers {
     def F: InvariantMonoidal[F]
   }
 
-  trait InvToIso[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]]
 
 }
