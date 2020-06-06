@@ -13,8 +13,14 @@ trait LaxSemigroupal[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends Exo
 
   def product[A, B]: (F[A] ⊙- F[B]) => F[A ⊙= B]
 
-  def map2[A, B, C](fn: (A ⊙= B) ==> C)(implicit E: Exo.Con[* => *, * --> F[C]]): (F[A] ⊙- F[B]) --> F[C] =
-    E.map(Dual(product[A, B]))(map[A ⊙= B, C](fn))
+//  def map2x[A, B, C](fn: (A ⊙= B) => C)(implicit E: Endofunctor[* => *, F]): (F[A] ⊙- F[B]) => F[C] =
+//    product[A, B].andThen(E.map(fn))
+
+//  def map2[A, B, C](fn: (A ⊙= B) ==> C)(implicit E: Exo.Con[* => *, * --> F[C]]): (F[A] ⊙- F[B]) --> F[C] =
+//    E.map(Dual(product[A, B]))(map[A ⊙= B, C](fn))
+
+  def map2[A, B, C](fn: (A ⊙= B) ==> C)(implicit P: Endoprofunctor[* => *, -->]): (F[A] ⊙- F[B]) --> F[C] =
+    P.leftMap(Dual(product[A, B]))(map[A ⊙= B, C](fn))
 
   def preserveSemigroup[M](ma: CSemigroup.Aux[==>, ⊙=, TC, M])(implicit
     E: Exo.Con[* => *, * --> F[M]]
@@ -32,6 +38,18 @@ object LaxSemigroupal extends LaxSemigroupalInstances {
 
   abstract class ProtoFunctor[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]](F: Exofunctor[==>, -->, F]) extends LaxSemigroupal[==>, ⊙=, -->, ⊙-, F] {
     def map[A, B](f: A ==> B) = F.map(f)
+  }
+
+  implicit class LaxSemigroupalOps[->[_,_], ⊙-[_,_], F[_]](val F: LaxSemigroupal[->, ⊙-, ->, ⊙-, F]) {
+    def compose[G[_], T[_]](G: LaxSemigroupal.Aux[->, ⊙-, ->, ⊙-, T, G])(implicit E: Endofunctor[* => *, F])
+    : LaxSemigroupal.Aux[->, ⊙-, ->, ⊙-, T, λ[a => F[G[a]]]] =
+      new LaxSemigroupal[->, ⊙-, ->, ⊙-, λ[a => F[G[a]]]] {
+        type TC[a] = T[a]
+        def M1: Associative.Aux[->, ⊙-, T] = ???
+        def M2: Associative.Aux[->, ⊙-, λ[a => T[F[G[a]]]]] = ???
+        def product[A, B]: F[G[A]] ⊙- F[G[B]] => F[G[A ⊙- B]] = F.product[G[A], G[B]].andThen(E.map(G.product[A, B]))
+        def map[A, B](f: A -> B): F[G[A]] -> F[G[B]] = ???
+      }
   }
 
 

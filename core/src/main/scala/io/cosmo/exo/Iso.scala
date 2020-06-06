@@ -24,9 +24,9 @@ trait Iso[->[_,_], A, B] { ab =>
   final def compose[Z](za: Z <-> A): Z <-> B = za.andThen(ab)
 
   /** Flips the isomorphism from A <-> B to B <-> A grace to it's reflexivity property */
-  def flip: B <-> A = new (B <-> A) {
+  lazy val flip: B <-> A = new (B <-> A) {
     val (cat, to, from) = (ab.cat, ab.from, ab.to)
-    override val flip = ab
+    override lazy val flip = ab
   }
 
   /** If A <-> B then having a function B -> B we can obtain A -> A */
@@ -48,7 +48,7 @@ trait Iso[->[_,_], A, B] { ab =>
   def and[⨂[_,_]] = new AndPartial[⨂]
   class AndPartial[⨂[_,_]] {
     def apply[I, J](ij: I <-> J)(implicit C: Cartesian[->, ⨂]): ⨂[A, I] <-> ⨂[B, J] =
-      Iso.unsafe(C.split(ab.to, ij.to), C.split(ab.from, ij.from))(C.C)
+      Iso.unsafe(C.grouped(ab.to, ij.to), C.grouped(ab.from, ij.from))(C.C)
   }
 
   /** From A <-> B, X <-> Y we can obtain (A, X) <-> (B, Y) if -> has a Cartesian instance with Tuple2 */
@@ -58,7 +58,7 @@ trait Iso[->[_,_], A, B] { ab =>
   def or[⨁[_,_]] = new OrPartial[⨁]
   class OrPartial[⨁[_,_]] {
     def apply[I, J](ij: I <-> J)(implicit C: Cocartesian[->, ⨁]): ⨁[A, I] <-> ⨁[B, J] =
-      Iso.unsafe[->, ⨁[A, I], ⨁[B, J]](C.split(Dual(ab.to), Dual(ij.to)), C.split(Dual(ab.from), Dual(ij.from)))(ab.cat)
+      Iso.unsafe[->, ⨁[A, I], ⨁[B, J]](C.grouped(Dual(ab.to), Dual(ij.to)), C.grouped(Dual(ab.from), Dual(ij.from)))(ab.cat)
   }
 
   /** From A <-> B, X <-> Y we can obtain (A \/ X) <-> (B \/ Y) if -> has a Cocartesian instance with \/ */
@@ -69,7 +69,7 @@ trait Iso[->[_,_], A, B] { ab =>
 object Iso extends IsoInstances {
   def apply[->[_,_], A, B](implicit iso: Iso[->, A, B]): Iso[->, A, B] = iso
 
-  def liftFnToIso[==>[_,_], -->[_,_]](iso: ==> <~~> -->)(implicit
+  def liftIsoFnToIso[==>[_,_], -->[_,_]](iso: ==> <~~> -->)(implicit
     c1: Subcat[==>], c2: Subcat[-->]
   ): Iso[==>,*,*] <~~> Iso[-->,*,*] =
     <~~>.unsafe(

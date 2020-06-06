@@ -72,9 +72,9 @@ private[instances] object DualHelpers {
 
   trait OppBifunctor[->[_,_], P[_,_]] extends Endobifunctor[Opp[->]#l, P] {
     protected def E: Endobifunctor[->, P]
-    def L = oppSemicategory(E.L)
-    def R = oppSemicategory(E.R)
-    def C = oppSemicategory(E.C)
+//    def L = oppSemicategory(E.L)
+//    def R = oppSemicategory(E.R)
+//    def C = oppSemicategory(E.C)
     def leftMap [A, B, Z](fn:  Z -> A): P[Z, B] -> P[A, B] = E.leftMap(fn)
     def rightMap[A, B, Z](fn:  Z -> B): P[A, Z] -> P[A, B] = E.rightMap(fn)
     override def bimap[A, X, B, Y](left: X -> A, right: Y -> B): P[X, Y] -> P[A, B] = E.bimap(left, right)

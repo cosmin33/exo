@@ -18,7 +18,7 @@ trait Associative[->[_, _], ⊙[_, _]] {
   def associate  [X, Y, Z]: ⊙[⊙[X, Y], Z] -> ⊙[X, ⊙[Y, Z]]
   def diassociate[X, Y, Z]: ⊙[X, ⊙[Y, Z]] -> ⊙[⊙[X, Y], Z]
 
-  def split[A, B, X, Y](f: A -> B, g: X -> Y): ⊙[A, X] -> ⊙[B, Y] = bifunctor.bimap(f, g)
+  def grouped[A, B, X, Y](f: A -> B, g: X -> Y): ⊙[A, X] -> ⊙[B, Y] = bifunctor.bimap(f, g)
 
   private type <->[a, b] = Iso[->, a, b]
   def isoAssociate[X, Y, Z]: ⊙[⊙[X, Y], Z] <-> ⊙[X, ⊙[Y, Z]] = Iso.unsafe(associate[X,Y,Z], diassociate[X,Y,Z])(C)
@@ -60,7 +60,7 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
         def snd[A, B]: (A, B) -> B = { case (_, b) => b }
         def &&&[X, Y, Z](f: X -> Y, g: X -> Z): X -> (Y, Z) = x => (f(x), g(x))
         def diag[A]: A -> (A, A) = a => (a, a)
-        override def split[A, B, X, Y](f: A => B, g: X => Y): ((A, X)) => (B, Y) =
+        override def grouped[A, B, X, Y](f: A => B, g: X => Y): ((A, X)) => (B, Y) =
           {case (a, x) => (f(a), g(x))} // override for performance
       }
 
@@ -85,7 +85,7 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
         def diag[A]: (A \/ A) => A = _.fold[A](identity, identity)
         def &&&[X, Y, Z](f: Y => X, g: Z => X): (Y \/ Z) => X = _.fold(f, g)
         //// overrides for performance
-        override def split[A, B, X, Y](f: B => A, g: Y => X): (B \/ Y) => (A \/ X) = _.fold(f(_).left, g(_).right)
+        override def grouped[A, B, X, Y](f: B => A, g: Y => X): (B \/ Y) => (A \/ X) = _.fold(f(_).left, g(_).right)
       }
 
   def cocartesianFn1Either: Cartesian.Aux[Opp[* => *]#l, Either, Trivial.T1, Void] =
@@ -97,22 +97,50 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
   implicit def cocartesianFn1DisjDual: Cartesian.Aux[Dual[* => *,*,*], \/, Trivial.T1, Void] =
     Dual.leibniz[* => *].subst[Cartesian.Aux[*[_,_], \/, Trivial.T1, Void]](cocartesianFn1Disj)
 
-  implicit val injMonoidalDisj: Monoidal[Inject, \/] with Symmetric[Inject, \/] =
-    new Monoidal[Inject, \/] with Symmetric[Inject, \/] {
-      type Id = Void
-      type TC[a] = Trivial.T1[a]
-      def C: Subcat.Aux[Inject, Trivial.T1] = Semicategory.injSubcat
-      def idl[A]: Inject[Void \/ A, A] = new Inject[Void \/ A, A] {
-        def inj: Void \/ A => A = _.fold(identity, identity)
-        def prj: A => Option[Void \/ A] = ???
+  val injMonoidalDisj: Monoidal[Opp[Inject]#l, \/] with Symmetric[Opp[Inject]#l, \/] =
+    new Monoidal[Opp[Inject]#l, \/] with Symmetric[Opp[Inject]#l, \/] {
+      override type Id = Void
+      override type TC[a] = Trivial.T1[a]
+      override def idl[A]: Inject[A, Void \/ A] = new Inject[A, Void \/ A] {
+        val inj: A => Void \/ A = _.right[Void]
+        val prj: Void \/ A => Option[A] = _.fold(_ => Option.empty[A], _.some)
       }
-      def coidl[A]: Inject[A, Void \/ A] = ???
-      def idr[A]: Inject[A \/ Void, A] = ???
-      def coidr[A]: Inject[A, A \/ Void] = ???
-      def bifunctor: Endobifunctor[Inject, \/] = ???
-      def braid[A, B]: Inject[A \/ B, B \/ A] = ???
-      def associate[X, Y, Z]: Inject[X \/ Y \/ Z, X \/ (Y \/ Z)] = ???
-      def diassociate[X, Y, Z]: Inject[X \/ (Y \/ Z), X \/ Y \/ Z] = ???
+      override def coidl[A]: Inject[Void \/ A, A] = new Inject[Void \/ A, A] {
+        val inj: Void \/ A => A = _.fold(v => v, a => a)
+        val prj: A => Option[Void \/ A] = _.right[Void].some
+      }
+      override def idr[A]: Inject[A, A \/ Void] = new Inject[A, A \/ Void] {
+        val inj: A => A \/ Void = _.left[Void]
+        val prj: A \/ Void => Option[A] = _.fold(_.some, _ => Option.empty[A])
+      }
+      override def coidr[A]: Inject[A \/ Void, A] = new Inject[A \/ Void, A] {
+        val inj: A \/ Void => A = _.fold(a => a, v => v)
+        val prj: A => Option[A \/ Void] = _.left[Void].some
+      }
+      override def braid[A, B]: Inject[B \/ A, A \/ B] = new Inject[B \/ A, A \/ B] {
+        val inj: B \/ A => A \/ B = _.swap
+        val prj: A \/ B => Option[B \/ A] = _.swap.some
+      }
+      def C: Subcat.Aux[Opp[Inject]#l, Trivial.T1] = DualModule.oppSubcat(implicitly[Subcat.Aux[Inject, Trivial.T1]])
+      def bifunctor: Endobifunctor[Opp[Inject]#l, \/] = new Endobifunctor[Opp[Inject]#l, \/] {
+        val L, R, C = new Semicategory[Opp[Inject]#l] {
+          def andThen[A, B, C](ba: Inject[B, A], cb: Inject[C, B]) = Semicategory[Inject].compose(ba, cb)
+        }
+        def leftMap [A, B, Z](fn: Inject[Z, A]): Inject[Z \/ B, A \/ B] = new Inject[Z \/ B, A \/ B] {
+          val inj: Z \/ B => A \/ B = _.fold(fn.inj(_).left[B], _.right[A])
+          val prj: A \/ B => Option[Z \/ B] = { aub =>
+            val pp: A => Option[Z] = fn.prj
+            def pp1: A => Option[Z] = fn.prj
+            //val rr: Option[Z] = aub.fold(pp1, _.some)
+
+            ???
+          }
+        }
+        def rightMap[A, B, Z](fn: Inject[Z, B]): Inject[A \/ Z, A \/ B] = ???
+        override def bimap[A, X, B, Y](left: Inject[X, A], right: Inject[Y, B]) = ???
+      }
+      def associate[X, Y, Z]: Inject[X \/ (Y \/ Z), X \/ Y \/ Z] = ???
+      def diassociate[X, Y, Z]: Inject[X \/ Y \/ Z, X \/ (Y \/ Z)] = ???
     }
 
 
@@ -157,6 +185,11 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
           new Inject[(A, B), (A, Z)] {
             val inj: ((A, B)) => (A, Z) = { case (a, b) => (a, fn(b)) }
             val prj: ((A, Z)) => Option[(A, B)] = { case (a, z) => fn.prj(z).map((a, _)) }
+          }
+        override def bimap[A, X, B, Y](left: Inject[A, X], right: Inject[B, Y]): Inject[(A, B), (X, Y)] =
+          new Inject[(A, B), (X, Y)] {
+            val inj: ((A, B)) => (X, Y)         = ab => (left(ab._1), right(ab._2))
+            val prj: ((X, Y)) => Option[(A, B)] = xy => left.prj(xy._1) zip right.prj(xy._2)
           }
       }
 

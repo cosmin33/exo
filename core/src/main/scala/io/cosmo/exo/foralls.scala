@@ -76,6 +76,10 @@ object foralls {
       def fromK: G ~> F = ∀.mk[G ~> F].fromH(t => iso[t.T].from)
     }
 
+    def mrrr[->[_,_], A, F[_]]: ∀[λ[x => A -> F[x]]] <=> (A -> ∀[F]) = ???
+
+    def mrr1[Bi[_,_], A, F[_]]: ∀[λ[x => Bi[A, F[x]]]] <=> Bi[A, ∀[F]] = ???
+
     // https://nokyotsu.com/qscripts/2014/07/distribution-of-quantifiers-over-logic-connectives.html
     ////////////////////////
     def isoDistribFn[A, F[_]]: ∀[λ[x => A => F[x]]] <=> (A => ∀[F]) =

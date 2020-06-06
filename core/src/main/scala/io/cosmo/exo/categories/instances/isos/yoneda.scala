@@ -37,7 +37,7 @@ object yoneda {
 
   def isoIndirectLiskov[A, B]: ((A <~< *) ~> (B <~< *)) <=> (B <~< A) = yoEmbeddingCov[<~<, Trivial.T1, A, B]
   def isoIndirectLeibniz[A, B]: ((A === *) <~> (B === *)) <=> (A === B) =
-    yoCorol1Cov[===, Trivial.T1, A, B].andThen(Groupoid.isoIso[===, B, A].flip).andThen(Groupoid.isoFlip)
+    yoCorol1Cov[===, Trivial.T1, A, B] andThen Groupoid.isoIso[===, B, A].flip andThen Groupoid.isoFlip
 
   def yoEmbedCovTo[->[_,_], ->#[_], A, B](fa: (A -> *) ~> (B -> *))(implicit
     C: Subcat.Aux[->, ->#], tc: ->#[A], E: Exo.Cov[->, B -> *]

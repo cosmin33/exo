@@ -21,6 +21,8 @@ object EvidenceCat {
   def id[T[_], A](implicit A: T[A]): EvidenceCat[T, A, A] =
     new EvidenceCat[T, A, A](A, A)
 
+  implicit def fromImplicits[T[_], A, B](implicit ta: T[A], tb: T[B]): EvidenceCat[T, A, B] = EvidenceCat(ta, tb)
+
   implicit def category[T[_]]: Groupoid.Aux[EvidenceCat[T, *, *], T] =
     new Groupoid[EvidenceCat[T, *, *]] {
       override type TC[a] = T[a]

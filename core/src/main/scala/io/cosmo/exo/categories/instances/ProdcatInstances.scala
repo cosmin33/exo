@@ -113,11 +113,13 @@ private[instances] object ProdcatHelpers {
   trait ProdcatEndoBifunctor[==>[_,_], -->[_,_], Bi[_,_]] extends Endobifunctor[Prodcat[==>, -->, *, *], Bi] {
     protected def eb1: Endobifunctor[==>, Bi]
     protected def eb2: Endobifunctor[-->, Bi]
-    def L = prodcatSemicat(eb1.L, eb2.R)
-    def R = prodcatSemicat(eb1.L, eb2.R)
-    def C = prodcatSemicat(eb1.L, eb2.R)
+//    def L = prodcatSemicat(eb1.L, eb2.R)
+//    def R = prodcatSemicat(eb1.L, eb2.R)
+//    def C = prodcatSemicat(eb1.L, eb2.R)
     def leftMap [A, B, Z](fn: (A ==> Z, A --> Z)) = (eb1.leftMap(fn._1), eb2.leftMap(fn._2))
     def rightMap[A, B, Z](fn: (B ==> Z, B --> Z)) = (eb1.rightMap(fn._1), eb2.rightMap(fn._2))
+    override def bimap[A, X, B, Y](left: (A ==> X, A --> X), right: (B ==> Y, B --> Y)): (Bi[A, B] ==> Bi[X, Y], Bi[A, B] --> Bi[X, Y]) =
+      (eb1.bimap(left._1, right._1), eb2.bimap(left._2, right._2))
   }
 
   trait ProdcatAssociative[==>[_,_], -->[_,_], P[_,_], TC0[_]] extends Associative[Prodcat[==>, -->, *, *], P] {

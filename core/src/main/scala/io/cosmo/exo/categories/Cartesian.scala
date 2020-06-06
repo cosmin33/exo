@@ -23,6 +23,7 @@ object Cartesian {
     def inl[A, B]: A -> ⨁[A, B] = self.fst
     def inr[A, B]: B -> ⨁[A, B] = self.snd
     def codiag[A]: ⨁[A, A] -> A = self.diag
+    def split[X, Y, Z](f: X -> Z, g: Y -> Z): ⨁[X, Y] -> Z = |||(f, g)
     def |||[X, Y, Z](f: X -> Z, g: Y -> Z): ⨁[X, Y] -> Z = self.&&&(Dual(f), Dual(g))
   }
 }

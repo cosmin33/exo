@@ -22,9 +22,7 @@ object KleisModule {
   def kleisCartesian[->[_,_], ⨂[_,_], F[_], Term](implicit
     cc: Cartesian[->, ⨂],
     term: Terminal.AuxTerm[->, Term],
-    mon: Exomonad[* => *, Id, F],
-    bif: Endobifunctor[* => *, ⨂],
-    pro: Exobifunctor.Pro[->],
+    mon: Exomonad[->, Id, F],
   ): Cartesian[λ[(a,b) => a -> F[b]], ⨂] = {
     new Cartesian[λ[(a,b) => a -> F[b]], ⨂] {
       type TC[a] = cc.TC[a]
@@ -37,11 +35,10 @@ object KleisModule {
       }
 
 
-      override def fst[A, B]: ⨂[A, B] -> F[A] = pro.rightMap(mon.pure[A])(cc.fst[A, B])
+      override def fst[A, B]: ⨂[A, B] -> F[A] = cc.C.andThen(cc.fst[A, B], mon.pure[A])
+      override def snd[A, B]: ⨂[A, B] -> F[B] = cc.C.andThen(cc.snd[A, B], mon.pure[B])
 
-      override def snd[A, B]: ⨂[A, B] -> F[B] = pro.rightMap(mon.pure[B])(cc.snd[A, B])
-
-      override def diag[A]: A -> F[⨂[A, A]] = pro.rightMap(mon.pure[⨂[A, A]])(cc.diag[A])
+      override def diag[A]: A -> F[⨂[A, A]] = cc.C.andThen(cc.diag[A], mon.pure[⨂[A, A]])
 
       override def braid[A, B]: ⨂[A, B] -> F[⨂[B, A]] = ???
 
@@ -54,11 +51,9 @@ object KleisModule {
 
       def bifunctor: Endobifunctor[λ[(a, b) => a -> F[b]], ⨂] =
         new Endobifunctor[λ[(a, b) => a -> F[b]], ⨂] {
-          override def L = ???
-          override def R = ???
-          override def C = ???
           override def leftMap [A, B, Z](fn: A -> F[Z]): (A ⨂ B) -> F[Z ⨂ B] = ???
           override def rightMap[A, B, Z](fn: B -> F[Z]): (A ⨂ B) -> F[A ⨂ Z] = ???
+          override def bimap[A, X, B, Y](left: A -> F[X], right: B -> F[Y]): (A ⨂ B) -> F[X ⨂ Y] = ???
         }
 
       def associate[X, Y, Z] = ???

@@ -3,7 +3,7 @@ package io.cosmo.exo.categories.functors
 import cats.data.{Cokleisli, Kleisli}
 import cats.implicits._
 import cats.syntax._
-import cats.{Applicative, CoflatMap, Contravariant, FlatMap, Functor, FunctorFilter, Invariant, Monad, Traverse, TraverseFilter}
+import cats.{Applicative, CoflatMap, Contravariant, FlatMap, Functor, FunctorFilter, Id, Invariant, Monad, Traverse, TraverseFilter}
 import io.cosmo.exo._
 import io.cosmo.exo.categories._
 import io.cosmo.exo.categories.conversions.CatsInstances._
@@ -13,16 +13,20 @@ import io.cosmo.exo.typeclasses.HasTc
 trait Exofunctor[==>[_,_], -->[_,_], F[_]] {
   def map[A, B](f: A ==> B): F[A] --> F[B]
 
-  def compose[G[_]](G: Endofunctor[==>, G]): Exofunctor[==>, -->, λ[α => F[G[α]]]] =
+  final def compose[G[_]](G: Endofunctor[==>, G]): Exofunctor[==>, -->, λ[α => F[G[α]]]] =
     Exo.unsafe[==>, -->, λ[α => F[G[α]]]](f => map(G.map(f)))
 
-  def composeContra[G[_]](G: Exofunctor[Dual[==>,*,*], ==>, G]): Exofunctor[Dual[==>,*,*], -->, λ[α => F[G[α]]]] =
+  final def composeContra[G[_]](G: Exofunctor[Dual[==>,*,*], ==>, G]): Exofunctor[Dual[==>,*,*], -->, λ[α => F[G[α]]]] =
     Exo.unsafe[Dual[==>,*,*], -->, λ[α => F[G[α]]]](f => map(G.map(f)))
 
 }
 
 object Exofunctor extends ExofunctorImplicits {
   def apply[==>[_,_], -->[_,_], F[_]](implicit E: Exo[==>, -->, F]): Exo[==>, -->, F] = E
+
+  /*implicit*/ class ExofunctorFunSyntax[F[_], A](val fa: F[A]) extends AnyVal {
+    def emap[==>[_,_], B](f: A ==> B)(implicit E: Exofunctor.Cov[==>, F]): F[B] = E.map(f)(fa)
+  }
 
   implicit class ExofunctorDualOps[==>[_,_], -->[_,_], F[_]](val F: Exofunctor[Dual[==>,*,*], -->, F]) extends AnyVal {
     def coComposeContra[G[_]](G: Exofunctor[Dual[==>,*,*], ==>, G]): Exofunctor[==>, -->, λ[α => F[G[α]]]] =
@@ -72,15 +76,17 @@ object Exofunctor extends ExofunctorImplicits {
     ): Exo[==>, -->, F] = apply(f(TypeHolder2[X, Y]))
   }
 
+  implicit def exoId: Exo.Cov[* => *, Id] = Exo.unsafe[* => *, * => *, Id](identity)
+
   implicit def isoCatsContravariant[F[_]]: Exo.ConF[F] <=> Contravariant[F] =
     Iso.unsafe(
-      F => new Contravariant[F] {def contramap[A, B](fa: F[A])(f: B => A): F[B] = F.map[A, B](Dual(f))(fa)},
+      F => new Contravariant[F] { def contramap[A, B](fa: F[A])(f: B => A): F[B] = F.map[A, B](Dual(f))(fa) },
       F => Exo.unsafe[Dual[* => *,*,*], * => *, F](ba => F.contramap(_)(ba))
     )
 
   implicit def isoCatsInvariant[F[_]]: Exo.InvF[F] <=> Invariant[F] =
     Iso.unsafe(
-      F => new Invariant[F] {def imap[A, B](fa: F[A])(f: A => B)(g: B => A): F[B] = F.map((f, Dual(g)))(fa)},
+      F => new Invariant[F] { def imap[A, B](fa: F[A])(f: A => B)(g: B => A): F[B] = F.map((f, Dual(g)))(fa) },
       I => Exo.unsafe[Dicat[* => *, *, *], * => *, F].apply(f => I.imap(_)(f._1)(f._2))
     )
 
@@ -98,7 +104,7 @@ object Exofunctor extends ExofunctorImplicits {
   implicit def isoCatsFunctorFilter[F[_]]: Exo[λ[(a,b) => a => Option[b]], * => *, F] <=> FunctorFilter[F] =
     Iso.unsafe(
       E => new FunctorFilter[F] {
-        def functor = new Functor[F] { def map[A, B](fa: F[A])(f: A => B): F[B] = E.map(f.andThen(_.some))(fa)}
+        def functor = new Functor[F] { def map[A, B](fa: F[A])(f: A => B): F[B] = E.map(f.andThen(_.some))(fa) }
         def mapFilter[A, B](fa: F[A])(f: A => Option[B]) = E.map(f)(fa)
       },
       F => Exo.unsafe[λ[(a,b) => a => Option[b]], * => *, F](f => F.mapFilter(_)(f))
@@ -117,6 +123,12 @@ object Exofunctor extends ExofunctorImplicits {
     Exo.unsafe[Cokleisli[F,*,*], * => *, F](f => _.coflatMap(f.run))
   implicit def exoFromCoflatMap1[F[_]: CoflatMap]: Exo[λ[(a,b) => F[a] => b], * => *, F] =
     Exo.unsafe[λ[(a,b) => F[a] => b], * => *, F](f => _.coflatMap(f))
+
+  implicit def bifunctorLeft [==>[_,_], >->[_,_], Bi[_,_]](
+    B: Exobifunctor[==>, ==>, >->, Bi]): ∀[λ[x => Exo[==>, >->, Bi[*,x]]]] = B.leftForall
+  implicit def bifunctorRight[==>[_,_], >->[_,_], Bi[_,_]](
+    B: Exobifunctor[==>, ==>, >->, Bi]): ∀[λ[x => Exo[==>, >->, Bi[x,*]]]] = B.rightForall
+
 
 }
 
@@ -140,6 +152,7 @@ object Endofunctor {
   /** This is isomorphic to cats.Functor[F] */
   type CovF[F[_]] = Endofunctor[* => *, F]
 
+  def apply[->[_,_], F[_]](implicit E: Endofunctor[->, F]): Endofunctor[->, F] = E
   def unsafe[->[_,_], F[_]]: Exofunctor.MkExofunctor[->, ->, F] = Exofunctor.unsafe[->, ->, F]
 
 }

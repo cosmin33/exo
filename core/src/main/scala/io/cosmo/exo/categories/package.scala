@@ -37,5 +37,6 @@ package object categories extends ProdcatInstances with categories.syntax {
   type Endofunctor[->[_,_], F[_]] = Exofunctor[->, ->, F]
 
   type Endobifunctor[->[_,_], ⊙[_,_]] = Exobifunctor[->, ->, ->, ⊙]
+  type Endoprofunctor[->[_,_], ⊙[_,_]] = Exobifunctor[Dual[->,*,*], ->, ->, ⊙]
 
 }

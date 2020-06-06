@@ -28,7 +28,7 @@ trait Ccc[->[_, _]] extends Subcat[->] {
 
   def precmp [A, B, C](f: A -> B): (C |-> A) -> (C |-> B) = curry(andThen(apply[C, A], f))
   def postcmp[A, B, C](f: A -> B): (B |-> C) -> (A |-> C) =
-    curry(andThen(cartesian.split(id_[B |-> C], f), apply[B, C]))
+    curry(andThen(cartesian.grouped(id_[B |-> C], f), apply[B, C]))
 
   def promap1[A, B, C, D](f: A -> B, g: C -> D): (D |-> A) -> (C |-> B) =
     compose(precmp[A, B, C](f), postcmp[C, D, A](g))
