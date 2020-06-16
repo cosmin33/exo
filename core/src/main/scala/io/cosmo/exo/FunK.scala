@@ -13,6 +13,8 @@ trait FunK[TA, TB] {
   def instance: TypeA ~> TypeB
 }
 object FunK {
+  type fn[F[_], G[_]] = FunK[TypeF[F], TypeF[G]]
+  type :~>[F[_], G[_]] = fn[F, G]
   def apply[F[_], G[_]](fn: F ~> G): FunK[TypeF[F], TypeF[G]] = wrap(fn)
 
   private def wrap[F[_], G[_]](fn: F ~> G): FunK[TypeF[F], TypeF[G]] =
@@ -36,7 +38,9 @@ object FunK {
     def apply[A](fa: F[A]): G[A] = unwrap[A](fa)
   }
 
-  implicit def isoCanonic[F[_], G[_]]: FunK[TypeF[F], TypeF[G]] <=> (F ~> G) =
+  implicit def isoKanonic: :~> <≈≈> ~> = ∀~∀~.mk[:~> <≈≈> ~>].from(isoCanonic)
+
+  implicit def isoCanonic[F[_], G[_]]: (F :~> G) <=> (F ~> G) =
     Iso.unsafe(unwrap[F, G], wrap[F, G])
 
   implicit def isoKIso[F[_], G[_]]: Iso[FunK, TypeF[F], TypeF[G]] <=> (F <~> G) =

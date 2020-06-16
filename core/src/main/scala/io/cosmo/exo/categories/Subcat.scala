@@ -32,9 +32,7 @@ trait SubcategorySyntax {
     //def <<<[A](f: A -> B)(implicit ev: Semicategory[->]): A -> C = macro ops.Ops.nia_1[compose]
     //def >>>[D](f: C -> D)(implicit ev: Semicategory[->]): B -> D = macro ops.Ops.nia_1[andThen]
 
-    def followedBy[D](f: C -> D)(implicit ev: Semicategory[->]): B -> D = macro ops.Ops.ia_1
-    type followedBy
-    def >>>>[D](f: C -> D)(implicit ev: Semicategory[->]): B -> D = macro ops.Ops.nia_1[followedBy]
+    def followedBy[D](f: C -> D)(implicit ev: Semicategory[->]): B -> D = ev.andThen(self, f)
 
     def flipped(implicit C: Groupoid[->]): C -> B = C.flip(self)
 
@@ -50,12 +48,12 @@ trait SubcategorySyntax {
       B: Braided[->, ⊙], ev: C === ⊙[X, Y]
     ): B -> ⊙[Y, X] = B.C.andThen(ev.subst[λ[X => B -> X]](self), B.braid[X, Y])
 
-    def curry[X, Y, Z, C0[_], P[_, _], PI, E[_, _]](f: P[X, Y] -> Z)(implicit
-      C: Ccc.Aux[->, C0, P, PI, E]
+    def curry[P[_, _], X, Y, Z, E[_,_]](f: P[X, Y] -> Z)(implicit
+      C: Ccc[->] {type ⊙[a, b] = P[a, b]; type |->[a, b] = E[a, b]}
     ): X -> E[Y, Z] = C.curry(f)
 
-    def uncurry[X, Y, Z, C0[_], P[_, _], PI, E[_, _]](f: X -> E[Y, Z])(implicit
-      C: Ccc.Aux[->, C0, P, PI, E]
+    def uncurry[X, Y, Z, P[_, _], E[_, _]](f: X -> E[Y, Z])(implicit
+      C: Ccc[->] {type ⊙[a, b] = P[a, b]; type |->[a, b] = E[a, b]}
     ): P[X, Y] -> Z = C.uncurry(f)
   }
 }

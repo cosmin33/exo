@@ -54,7 +54,7 @@ package object exo extends Existence with syntax {
   val Disjunction: DisjunctionModule = DisjunctionModuleImpl
   type Disjunction[L, R] = Disjunction.Type[L, R]
   type \/[L, R] = Disjunction[L, R]
-  val (\/): Disjunction.type = Disjunction
+  val \/ : Disjunction.type = Disjunction
   type -\/[L, R] = \/.TypeL[L, R]
   type \/-[L, R] = \/.TypeR[L, R]
   def  -\/[L, R](l: L): \/.TypeL[L, R] = \/.left(l)
@@ -63,7 +63,7 @@ package object exo extends Existence with syntax {
   val Conjunction: ConjunctionModule = ConjunctionModuleImpl
   type Conjunction[L, R] = Conjunction.Type[L, R]
   type /\[L, R] = Conjunction[L, R]
-  val (/\): Conjunction.type = Conjunction
+  val /\ : Conjunction.type = Conjunction
 
   type VoidK[x] = Void
   type UnitK[x] = Unit
@@ -73,10 +73,6 @@ package object exo extends Existence with syntax {
   type Any2[f[_]]    = Any
 
   // morphisms and isomorphisms
-  //type FunK  [->[_,_], F[_],    G[_]]    =  ∀[λ[ᵒ     => F[ᵒ] -> G[ᵒ]]]
-  //type BifunK[->[_,_], F[_,_],  G[_,_]]  = ∀∀[λ[(a,b) => F[a,b] -> G[a,b]]]
-  //type FunHK [->[_,_], A[_[_]], B[_[_]]] = ∀~[λ[f[_]  => A[f] -> B[f]]]
-
   type IsoFunK[A, B] = Iso[FunK, A, B]
 
   type IsoK [->[_,_], F[_], G[_]]       =  ∀[λ[a     => Iso[->, F[a], G[a]]]]
@@ -86,17 +82,21 @@ package object exo extends Existence with syntax {
   type <=> [A, B] = Iso[* => *, A, B]
   type ~>  [F[_], G[_]] = ∀[λ[α => F[α] =>  G[α]]]
   type <~> [F[_], G[_]] = ∀[λ[α => F[α] <=> G[α]]]
-  object <~> {
+  object IsoK {
     def unsafe[F[_], G[_]](fg: F ~> G, gf: G ~> F): F <~> G = ∀.mk[F <~> G].fromH(t => Iso.unsafe(fg[t.T], gf[t.T]))
   }
+  val <~> : IsoK.type = IsoK
   type ~~> [F[_,_],  G[_,_]]  = ∀∀[λ[(a,b) => F[a,b] =>  G[a,b]]]
   type <~~>[F[_,_],  G[_,_]]  = ∀∀[λ[(a,b) => F[a,b] <=> G[a,b]]]
-  object <~~> {
+  object IsoK2 {
     def unsafe[F[_,_], G[_,_]](fg: F ~~> G, gf: G ~~> F): F <~~> G =
       ∀∀.mk[F <~~> G].fromH(t => Iso.unsafe(fg[t.A, t.B], gf[t.A, t.B]))
   }
+  val <~~> : IsoK2.type = IsoK2
   type ≈>  [A[_[_]], B[_[_]]] = ∀~[λ[f[_]  => A[f] =>  B[f]]]
   type <≈> [A[_[_]], B[_[_]]] = ∀~[λ[f[_]  => A[f] <=> B[f]]]
+  type ≈≈>  [A[_[_],_[_]], B[_[_],_[_]]] = ∀~∀~[λ[(f[_],g[_]) => A[f, g] =>  B[f, g]]]
+  type <≈≈> [A[_[_],_[_]], B[_[_],_[_]]] = ∀~∀~[λ[(f[_],g[_]) => A[f, g] <=> B[f, g]]]
 
   type Exofun[==>[_,_], -->[_,_], F[_]] = ==> ~~> λ[(a, b) => F[a] --> F[b]]
 

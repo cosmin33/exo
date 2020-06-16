@@ -3,7 +3,7 @@ package io.cosmo.exo
 import io.cosmo.exo.Iso.HasIso
 import io.cosmo.exo.categories._
 import io.cosmo.exo.categories.functors.Exo
-import io.cosmo.exo.evidence.{=:!=, =~~=}
+import io.cosmo.exo.evidence.{=:!=, ===, =~~=}
 import io.cosmo.exo.internalstuff.TupleGeneric
 import io.cosmo.exo.typeclasses.{HasTc, TypeF}
 import io.estatico.newtype.macros.newtype
@@ -104,10 +104,10 @@ object Iso extends IsoInstances {
   def forGeneric[A, Repr](implicit g: Generic.Aux[A, Repr]): A <=> Repr = Iso.unsafe(g.to, g.from)
 
   /** Isomorphism between any iso and it's flipped iso */
-  def flippedIso[->[_,_], A, B]: Iso[->, A, B] <=> Iso[->, B, A] = Iso.unsafe(_.flip, _.flip)
+  implicit def flippedIso[->[_,_], A, B]: Iso[->, A, B] <=> Iso[->, B, A] = Iso.unsafe(_.flip, _.flip)
 
   /** Isomorphism between an iso and a tuple of 'to' and 'from' functions */
-  def isoIsoTuple[->[_,_]: Subcat, A, B]: Iso[->, A, B] <=> (A -> B, B -> A) =
+  private[exo] def isoIsoTuple[->[_,_]: Subcat, A, B]: Iso[->, A, B] <=> (A -> B, B -> A) =
     Iso.unsafe(i => (i.to, i.from), t => Iso.unsafe(t._1, t._2))
 
   /** Any singleton is isomorphic with unit */
@@ -166,20 +166,20 @@ object Iso extends IsoInstances {
     final def second[A, B, C](iso: B <=> C): (A \/ B) <=> (A \/ C) = refl[A].or_(iso)(Associative.cocartesianFn1DisjDual)
   }
 
-//  @newtype case class HasIso1[->[_,_], A, B](iso: Iso[->, A, B])
-//  object HasIso1 {
-//    implicit def hi1[->[_,_], A, B](implicit
-//      imps: ((A === B) /\ Subcat.Triv[->])
-//        \/ Iso[->, A, B]
-//        \/ Iso[->, B, A],
-//    ): HasIso1[->, A, B] = {
-//      imps.fold3(
-//        i => HasIso1(i._1.subst[Iso[->, A, *]](Iso.refl[->, A, Trivial.T1](i._2.subcat, implicitly))),
-//        i => HasIso1(i),
-//        i => HasIso1(i.flip)
-//      )
-//    }
-//  }
+  /** this is experimental, use HasIso */
+  @newtype case class HasIso1[->[_,_], A, B](iso: Iso[->, A, B])
+  object HasIso1 {
+    implicit def hi1[->[_,_], A, B](implicit
+      imps: ((A === B) /\ Subcat.Aux[->, Trivial.T1])
+        \/ Iso[->, A, B]
+        \/ Iso[->, B, A],
+    ): HasIso1[->, A, B] =
+      imps.fold3(
+        i => HasIso1(i._1.subst[Iso[->, A, *]](Iso.refl[->, A, Trivial.T1](i._2, implicitly))),
+        i => HasIso1(i),
+        i => HasIso1(i.flip)
+      )
+  }
 
   @newtype case class HasIso[->[_,_], A, B](iso: Iso[->, A, B])
   object HasIso {

@@ -80,6 +80,8 @@ object foralls {
 
     def mrr1[Bi[_,_], A, F[_]]: ∀[λ[x => Bi[A, F[x]]]] <=> Bi[A, ∀[F]] = ???
 
+    def mrr2[B[_], F[_]]: ∀[λ[x => B[F[x]]]] <=> B[∀[F]] = ???
+
     // https://nokyotsu.com/qscripts/2014/07/distribution-of-quantifiers-over-logic-connectives.html
     ////////////////////////
     def isoDistribFn[A, F[_]]: ∀[λ[x => A => F[x]]] <=> (A => ∀[F]) =
@@ -93,15 +95,6 @@ object foralls {
 
     //////////////////////////// ⨂
     /** ∀ distributes over Tuple2 */
-    def fnDistribCartesianToG[->[_,_], F[_], G[_], ⨂[_,_]](implicit
-      cc: Cartesian[->, ⨂]
-    ): ∀[λ[x => F[x] ⨂ G[x]]] -> (∀[F] ⨂ ∀[G]) = {
-
-      //val o1 = ∀.of[F].fromH(t => cc.fst(f[t.T]))
-
-      ???
-    }
-
     def fnDistribCartesianTo[F[_], G[_], ⨂[_,_]](implicit
       cc: Cartesian[* => *, ⨂]
     ): ∀[λ[x => F[x] ⨂ G[x]]] => (∀[F] ⨂ ∀[G]) =

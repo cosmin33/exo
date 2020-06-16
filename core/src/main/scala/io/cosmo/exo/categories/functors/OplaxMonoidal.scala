@@ -13,6 +13,6 @@ trait OplaxMonoidal[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends Opla
   def preserveComonoid[M](ma: CMonoid.Aux[Dual[==>,*,*], ⊙=, TC, I, M])(implicit
     E: Exo.Cov[* => *, F[M] --> *]
   ): CMonoid.Aux[Dual[-->,*,*], ⊙-, λ[a => TC[F[a]]], F[I], F[M]] =
-    CMonoid.unsafe(map(ma.id), Dual(E.map(opProduct[M, M])(map(ma.op))))(M2)
+    ??? //CMonoid.unsafe(map(ma.id), Dual(E.map(opProduct[M, M])(map(ma.op))))(M2)
 
 }

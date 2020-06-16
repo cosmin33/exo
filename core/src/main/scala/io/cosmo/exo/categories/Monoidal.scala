@@ -25,7 +25,7 @@ object Monoidal extends MonoidalInstances {
   type AuxT [->[_, _], ⊙[_, _]] = AuxTC[->, ⊙, Trivial.T1]
 
   /** Prototype for easily creating a Monoidal if you already have an Associative */
-  abstract class ProtoAssociative[->[_, _], ⊙[_, _], TC0[_]](A: Associative.Aux[->, ⊙, TC0]) extends Monoidal[->, ⊙] {
+  abstract class ProtoFromAssociative[->[_, _], ⊙[_, _], TC0[_]](A: Associative.Aux[->, ⊙, TC0]) extends Monoidal[->, ⊙] {
     type TC[a] = TC0[a]
     val C: Subcat.Aux[->, TC0] = A.C
     val bifunctor = A.bifunctor

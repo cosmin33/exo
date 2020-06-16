@@ -13,7 +13,7 @@ class MonoidalInstances {
   ): Exo.IsoFun[* => *, Monoidal.Aux[->, ⊙, TC0, *]] =
     new Exo.IsoFun[* => *, Monoidal.Aux[->, ⊙, TC0, *]] {
       def map[A, B](iso: Iso[* => *, A, B]): Monoidal.Aux[->, ⊙, TC0, A] => Monoidal.Aux[->, ⊙, TC0, B] =
-        ma => new Monoidal.ProtoAssociative[->, ⊙, TC0](ma) {
+        ma => new Monoidal.ProtoFromAssociative[->, ⊙, TC0](ma) {
           type Id = B
           def idl  [X]: ⊙[B, X] -> X = B1.leftMap(Dual(B2.leftMap[B, X, A](iso.from)))(ma.idl)
           def coidl[X]: X -> ⊙[B, X] = B1.rightMap(Dual(B2.leftMap[A, X, B](iso.to)))(ma.coidl)
@@ -31,7 +31,7 @@ class MonoidalInstances {
   implicit def exoMonoidalIdIso[->[_, _], ⊙[_, _], TC0[_]]: Exo.IsoFun[->, Monoidal.Aux[->, ⊙, TC0, *]] =
     new Exo[Iso[->,*,*], * => *, Monoidal.Aux[->, ⊙, TC0, *]] {
       def map[A, B](iso: Iso[->, A, B]): Monoidal.Aux[->, ⊙, TC0, A] => Monoidal.Aux[->, ⊙, TC0, B] =
-        ma => new Monoidal.ProtoAssociative[->, ⊙, TC0](ma) {
+        ma => new Monoidal.ProtoFromAssociative[->, ⊙, TC0](ma) {
           type Id = B
           def idl  [X]: ⊙[B, X] -> X = C.andThen(ma.bifunctor.leftMap[B, X, A](iso.from), ma.idl)
           def coidl[X]: X -> ⊙[B, X] = C.andThen(ma.coidl, ma.bifunctor.leftMap[A, X, B](iso.to))

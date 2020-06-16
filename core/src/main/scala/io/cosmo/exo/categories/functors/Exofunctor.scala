@@ -78,6 +78,9 @@ object Exofunctor extends ExofunctorImplicits {
 
   implicit def exoId: Exo.Cov[* => *, Id] = Exo.unsafe[* => *, * => *, Id](identity)
 
+  implicit def leftFunctorFa [==>[_, _], -->[_, _], >->[_, _], Bi[_, _]](b: Exobifunctor[==>, -->, >->, Bi]): ∀[λ[x => Exo[==>, >->, Bi[*,x]]]] = b.leftForall
+  implicit def rightFunctorFa[==>[_, _], -->[_, _], >->[_, _], Bi[_, _]](b: Exobifunctor[==>, -->, >->, Bi]): ∀[λ[x => Exo[-->, >->, Bi[x,*]]]] = b.rightForall
+
   implicit def isoCatsContravariant[F[_]]: Exo.ConF[F] <=> Contravariant[F] =
     Iso.unsafe(
       F => new Contravariant[F] { def contramap[A, B](fa: F[A])(f: B => A): F[B] = F.map[A, B](Dual(f))(fa) },

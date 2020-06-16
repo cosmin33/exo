@@ -11,21 +11,12 @@ trait LaxSemigroupal[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends Exo
   def M1: Associative.Aux[==>, ⊙=, TC]
   def M2: Associative.Aux[-->, ⊙-, λ[a => TC[F[a]]]]
 
-  def product[A, B]: (F[A] ⊙- F[B]) => F[A ⊙= B]
+  def product[A, B]: (F[A] ⊙- F[B]) --> F[A ⊙= B]
 
-//  def map2x[A, B, C](fn: (A ⊙= B) => C)(implicit E: Endofunctor[* => *, F]): (F[A] ⊙- F[B]) => F[C] =
-//    product[A, B].andThen(E.map(fn))
+  def map2[A, B, C](fn: (A ⊙= B) ==> C): (F[A] ⊙- F[B]) --> F[C] = M2.C.andThen(product[A, B], map(fn))
 
-//  def map2[A, B, C](fn: (A ⊙= B) ==> C)(implicit E: Exo.Con[* => *, * --> F[C]]): (F[A] ⊙- F[B]) --> F[C] =
-//    E.map(Dual(product[A, B]))(map[A ⊙= B, C](fn))
-
-  def map2[A, B, C](fn: (A ⊙= B) ==> C)(implicit P: Endoprofunctor[* => *, -->]): (F[A] ⊙- F[B]) --> F[C] =
-    P.leftMap(Dual(product[A, B]))(map[A ⊙= B, C](fn))
-
-  def preserveSemigroup[M](ma: CSemigroup.Aux[==>, ⊙=, TC, M])(implicit
-    E: Exo.Con[* => *, * --> F[M]]
-  ): CSemigroup.Aux[-->, ⊙-, λ[a => TC[F[a]]], F[M]] =
-    CSemigroup.unsafe(E.map(Dual(product[M, M]))(map(ma.op)))(M2)
+  def preserveSemigroup[M](ma: CSemigroup.Aux[==>, ⊙=, TC, M]): CSemigroup.Aux[-->, ⊙-, λ[a => TC[F[a]]], F[M]] =
+    CSemigroup.unsafe(map2(ma.op))(M2)
 
 }
 
@@ -40,15 +31,22 @@ object LaxSemigroupal extends LaxSemigroupalInstances {
     def map[A, B](f: A ==> B) = F.map(f)
   }
 
-  implicit class LaxSemigroupalOps[->[_,_], ⊙-[_,_], F[_]](val F: LaxSemigroupal[->, ⊙-, ->, ⊙-, F]) {
-    def compose[G[_], T[_]](G: LaxSemigroupal.Aux[->, ⊙-, ->, ⊙-, T, G])(implicit E: Endofunctor[* => *, F])
-    : LaxSemigroupal.Aux[->, ⊙-, ->, ⊙-, T, λ[a => F[G[a]]]] =
-      new LaxSemigroupal[->, ⊙-, ->, ⊙-, λ[a => F[G[a]]]] {
+  implicit class LaxSemigroupalOps[->[_,_], ⊙[_,_], F[_], T[_]](val F: LaxSemigroupal.Aux[->, ⊙, ->, ⊙, T, F]) {
+    def compose[G[_]](G: LaxSemigroupal.Aux[->, ⊙, ->, ⊙, T, G])
+    : LaxSemigroupal.Aux[->, ⊙, ->, ⊙, T, λ[a => F[G[a]]]] =
+      new LaxSemigroupal[->, ⊙, ->, ⊙, λ[a => F[G[a]]]] {
         type TC[a] = T[a]
-        def M1: Associative.Aux[->, ⊙-, T] = ???
-        def M2: Associative.Aux[->, ⊙-, λ[a => T[F[G[a]]]]] = ???
-        def product[A, B]: F[G[A]] ⊙- F[G[B]] => F[G[A ⊙- B]] = F.product[G[A], G[B]].andThen(E.map(G.product[A, B]))
-        def map[A, B](f: A -> B): F[G[A]] -> F[G[B]] = ???
+        def M1: Associative.Aux[->, ⊙, T] = F.M1
+        def M2: Associative.Aux[->, ⊙, λ[a => T[F[G[a]]]]] = {
+          val fm1: Associative.Aux[->, ⊙, T] = F.M1
+          val fm2: Associative.Aux[->, ⊙, λ[a => T[F[a]]]] = F.M2
+          //val gm2: Associative.Aux[->, ⊙, λ[a => T[F[a]]]] = G.M2
+
+          ???
+        }
+        def product[A, B]: F[G[A]] ⊙ F[G[B]] -> F[G[A ⊙ B]] =
+          M1.C.andThen(F.product[G[A], G[B]], F.map(G.product[A, B]))
+        def map[A, B](f: A -> B): F[G[A]] -> F[G[B]] = F.map(G.map(f))
       }
   }
 
@@ -121,7 +119,7 @@ private object LaxSemigroupalHelpers {
     type I = Unit
     def id: I => F[I] = F.point(_)
     override def M2: Monoidal.Aux[* => *, (*, *), λ[a => Trivial.T1[F[a]]], F[Unit]] =
-      new Monoidal.ProtoAssociative[* => *, (*, *), λ[a => Trivial.T1[F[a]]]](Associative[* => *, (*, *)]) {
+      new Monoidal.ProtoFromAssociative[* => *, (*, *), λ[a => Trivial.T1[F[a]]]](Associative[* => *, (*, *)]) {
         type Id = F[Unit]
         def idl  [A]: ((Id, A)) => A = _._2
         def coidl[A]: A => (Id, A)   = (F.unit, _)

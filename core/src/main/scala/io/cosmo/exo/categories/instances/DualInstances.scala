@@ -1,8 +1,8 @@
 package io.cosmo.exo.categories.instances
 
 import io.cosmo.exo.categories._
-
 import DualHelpers._
+import io.cosmo.exo.{<=>, Iso}
 trait DualInstances extends DualInstances01 {
   def dualSubcat[->[_,_], C[_]](s: Subcat.Aux[->, C]): Subcat.Aux[Dual[->,*,*], C] =
     Dual.leibniz[->].subst[Subcat.Aux[*[_,_], C]](oppSubcat(s))
@@ -41,6 +41,15 @@ private[instances] object DualHelpers {
   private[instances] def oppSubcat[->[_,_], C[_]](s: Subcat.Aux[->, C]): Subcat.Aux[Opp[->]#l, C] =
     new OppSubcat[->, C] {val S = s}
 
+  private[instances] def isoOppEndobifunctor[->[_,_], B[_,_]]: Endobifunctor[->, B] <=> Endobifunctor[Opp[->]#l, B] =
+      Iso.unsafe(
+        oppEndobifunctor,
+        {
+          case ob: OppBifunctor[->, B] => ob.E
+          case eo => oppEndobifunctor(eo)
+        }
+      )
+
   private[instances] def oppEndobifunctor[->[_,_], P[_,_]](e: Endobifunctor[->, P]): Endobifunctor[Opp[->]#l, P] =
     new OppBifunctor[->, P] {val E = e}
 
@@ -71,7 +80,7 @@ private[instances] object DualHelpers {
   }
 
   trait OppBifunctor[->[_,_], P[_,_]] extends Endobifunctor[Opp[->]#l, P] {
-    protected def E: Endobifunctor[->, P]
+    protected[exo] def E: Endobifunctor[->, P]
 //    def L = oppSemicategory(E.L)
 //    def R = oppSemicategory(E.R)
 //    def C = oppSemicategory(E.C)

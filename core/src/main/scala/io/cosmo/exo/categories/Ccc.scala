@@ -1,6 +1,7 @@
 package io.cosmo.exo.categories
 
 import io.cosmo.exo._
+import mouse.any._
 import io.cosmo.exo.categories.functors._
 
 trait Ccc[->[_, _]] extends Subcat[->] {

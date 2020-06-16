@@ -13,7 +13,7 @@ trait CSemigroup[->[_,_], ⊙[_,_], A] {
 object CSemigroup {
   type Aux[->[_,_], ⊙[_,_], ->#[_], A] = CSemigroup[->, ⊙, A] {type TC[a] = ->#[a]}
 
-  def unsafe[->[_,_], ⊙[_,_], ->#[_], A](f: (A ⊙ A) -> A)(implicit
+  def unsafe[->[_,_], ⊙[_,_], A, ->#[_]](f: (A ⊙ A) -> A)(implicit
     m: Associative.Aux[->, ⊙, ->#]
   ): CSemigroup.Aux[->, ⊙, ->#, A] = new CSemigroup[->, ⊙, A] {type TC[a] = ->#[a]; val C = m; val op = f}
 

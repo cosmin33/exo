@@ -125,7 +125,7 @@ private[categories] object SemicategoryHelpers {
     def initial: Trivial.T1[Nothing] = Trivial.trivialInstance
     def initiate[A](implicit A: Trivial.T1[A]): Nothing => A = identity
     def distribute[A, B, C]: A ⨂ (B ⨁ C) => A ⨂ B ⨁ (A ⨂ C) =
-      { case (a, e) => e.fold((a, _).asLeft, (a, _).asRight) }
+      { case (a, bc) => bc.fold((a, _).asLeft, (a, _).asRight) }
   }
 
   trait FunKClass
@@ -155,11 +155,14 @@ private[categories] object SemicategoryHelpers {
     }
     def id[A](implicit A: TC[A]): FunK[A, A] =
       Is.lift2[FunK](A.is, A.is)(FunK(∀.mk[A.Type ~> A.Type].from(a => a)))
-    def andThen[A, B, C](ab: FunK[A, B], bc: FunK[B, C])  = {
-//      val fab: ab.TypeA ~> ab.TypeB = ab.instance
-//      val fbc: bc.TypeA ~> bc.TypeB = bc.instance
-//      val ff = fab.andThen(fbc)
-      ???
+    def andThen[A, B, C](ab: FunK[A, B], bc: FunK[B, C])  = new FunK[A, C] {
+      type TypeA[x] = ab.TypeA[x]
+      type TypeB[x] = bc.TypeB[x]
+      val (eqA, eqB) = (ab.eqA, bc.eqB)
+      val instance = ∀.mk[ab.TypeA ~> bc.TypeB].from(
+        TypeF.injectivity(ab.eqB.andThen(bc.eqA.flip))
+          .subst(ab.instance).apply
+          .andThen(bc.instance.apply))
     }
     override def apply[A, B]: FunK[(FunK[A, B], A), B] = ???
     def uncurry[A, B, C](f: FunK[A, B |-> C]): FunK[(A, B), C] = ???

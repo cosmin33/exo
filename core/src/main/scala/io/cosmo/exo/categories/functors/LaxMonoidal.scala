@@ -17,7 +17,7 @@ trait LaxMonoidal[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends LaxSem
   def preserveMonoid[M](ma: CMonoid.Aux[==>, ⊙=, TC, I, M])(implicit
     E: Exo.Con[* => *, * --> F[M]]
   ): CMonoid.Aux[-->, ⊙-, λ[a => TC[F[a]]], F[I], F[M]] =
-    CMonoid.unsafe(map(ma.id), E.map(Dual(product[M, M]))(map(ma.op)))(M2)
+    ??? //CMonoid.unsafe(map(ma.id), E.map(Dual(product[M, M]))(map(ma.op)))(M2)
 
 }
 
@@ -29,7 +29,7 @@ object LaxMonoidal {
     val self: LaxMonoidal[Dual[==>,*,*], ⊙=, -->, ⊙-, F]
   ) extends AnyVal {
     def comap2[A, B, C](fn: C ==> (A ⊙= B))(implicit E: Exo.Con[* => *, * --> F[C]]): (F[A] ⊙- F[B]) --> F[C] =
-      E.map(Dual(self.product[A, B]))(self.map[A ⊙= B, C](Dual(fn)))
+      ??? //E.map(Dual(self.product[A, B]))(self.map[A ⊙= B, C](Dual(fn)))
   }
 
 }
