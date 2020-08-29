@@ -65,9 +65,9 @@ object As {
 
   implicit def refl[A]: A <~< A = reflAny.asInstanceOf[A <~< A]
 
-  implicit def proposition[A, B]: Proposition[As[A, B]] = (p: ¬¬[A <~< B]) => Axioms.asConsistency[A, B](p.run)
-
   implicit def reify[A, B >: A]: A <~< B = refl[A]
+
+  implicit def proposition[A, B]: Proposition[A <~< B] = (p: ¬¬[A <~< B]) => Axioms.asConsistency[A, B](p.run)
 
   /** Antisymmetric */
   def bracket[A, B](f: A <~< B, g: B <~< A): A === B = Axioms.bracket[A, B](f, g)
@@ -114,8 +114,6 @@ object As {
     ec: IsContravariant[F] \/ IsConstant[F]
   ): Exofunctor[Opp[<~<]#l, <~<, F] =
     new Exofunctor[Opp[<~<]#l, <~<, F] {
-      val C = DualModule.oppSubcat[<~<, Triv](Semicategory.liskov)
-      val D = Semicategory.liskov
       def map[A, B](f: B <~< A): F[A] <~< F[B] =
         ec.fold(cn => cn(f), const => const[A, B].toAs)
     }

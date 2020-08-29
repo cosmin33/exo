@@ -72,11 +72,15 @@ trait IsInjective[F[_]] { F =>
 }
 
 object IsInjective {
-  type Canonic[F[_]] = ∀∀[λ[(a,b) => (F[a] === F[b]) => (a === b)]]
-
   def apply[F[_]](implicit F: IsInjective[F]): IsInjective[F] = F
 
-  def isoCanonic[F[_]]: Canonic[F] <=> IsInjective[F] = ???
+  type Canonic[F[_]] = ∀∀[λ[(a,b) => (F[a] === F[b]) => (a === b)]]
+
+  implicit def isoCanonic[F[_]]: Canonic[F] <=> IsInjective[F] =
+    Iso.unsafe(
+      can => new IsInjective[F] { def apply[A, B](implicit ev: F[A] === F[B]): A === B = can[A, B](ev) },
+      isi => ∀∀.mk[Canonic[F]].from(isi.apply(_))
+    )
 
   implicit def witness[F[_]](implicit fnab: F[Void] =!= F[Any]): IsInjective[F] =
     witness1[F, Void, Any](fnab)

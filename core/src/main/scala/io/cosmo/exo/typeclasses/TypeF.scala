@@ -17,7 +17,7 @@ object TypeF {
   implicit def impl: ForallK[TypeF] = forall
 
   /** TypeF is injective, so if two TypeF's are equal then the types contained are equal. */
-  def injectivity[F[_], G[_]](ev: TypeF[F] === TypeF[G]): F =~= G = Unsafe.isK[F, G]
+  def injectivity[F[_], G[_]](implicit ev: TypeF[F] === TypeF[G]): F =~= G = Unsafe.isK[F, G]
 }
 
 trait IsTypeF[A] {
@@ -36,11 +36,11 @@ object IsTypeF {
   type FF[F[_], a] = IsTypeF[TypeF[F]]#Type[a]
 
   def someStupidRel[F[_], X]: F[X] <~< FF[F, X] = {
-    val ist: IsTypeF[TypeF[F]] = impl[F]
+    val ist: IsTypeF[TypeF[F]] = IsTypeF[F]
+//    def s1[A]: F[A] <~< ist.Type[A] = TypeF.injectivity[F, ist.Type].is[A].toAs
     def s1[A]: F[A] <~< ist.Type[A] = TypeF.injectivity(ist.is.flip).is[A].toAs
-    def s2[A] = the[ist.Type[A] <~< FF[F, A]]
-    def za[A]: F[A] <~< FF[F, A] = s1.andThen(s2)
-    za[X]
+    def s2[A] = <~<[ist.Type[A], FF[F, A]]
+    s1.andThen(s2)
   }
 }
 

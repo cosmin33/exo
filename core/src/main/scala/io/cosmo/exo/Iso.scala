@@ -67,7 +67,7 @@ trait Iso[->[_,_], A, B] { ab =>
 }
 
 object Iso extends IsoInstances {
-  def apply[->[_,_], A, B](implicit iso: Iso[->, A, B]): Iso[->, A, B] = iso
+  def apply[->[_,_], A, B](implicit iso: HasIso[->, A, B]): Iso[->, A, B] = iso.iso
 
   def liftIsoFnToIso[==>[_,_], -->[_,_]](iso: ==> <~~> -->)(implicit
     c1: Subcat[==>], c2: Subcat[-->]
@@ -79,7 +79,6 @@ object Iso extends IsoInstances {
 
   private val reflAny: Iso[* => *, Any, Any] =
     new Iso[* => *, Any, Any] {
-      type TC[a] = Trivial.T1[a]
       val cat = Subcat[* => *]
       val to, from = identity[Any]
     }
@@ -166,29 +165,26 @@ object Iso extends IsoInstances {
     final def second[A, B, C](iso: B <=> C): (A \/ B) <=> (A \/ C) = refl[A].or_(iso)(Associative.cocartesianFn1DisjDual)
   }
 
-  /** this is experimental, use HasIso */
-  @newtype case class HasIso1[->[_,_], A, B](iso: Iso[->, A, B])
-  object HasIso1 {
-    implicit def hi1[->[_,_], A, B](implicit
-      imps: ((A === B) /\ Subcat.Aux[->, Trivial.T1])
-        \/ Iso[->, A, B]
-        \/ Iso[->, B, A],
-    ): HasIso1[->, A, B] =
-      imps.fold3(
-        i => HasIso1(i._1.subst[Iso[->, A, *]](Iso.refl[->, A, Trivial.T1](i._2, implicitly))),
-        i => HasIso1(i),
-        i => HasIso1(i.flip)
-      )
-  }
-
   @newtype case class HasIso[->[_,_], A, B](iso: Iso[->, A, B])
   object HasIso {
-    implicit def conversionToIso[->[_, _], A, B](hi: HasIso[->, A, B]): Iso[->, A, B] = hi.iso
+    implicit def impl[->[_,_], A, B](implicit
+      e: EqImpIso[->, A, B] \/ Iso[->, A, B] \/ Iso[->, B, A]
+    ): HasIso[->, A, B] =
+      e.fold3(eqIso => HasIso(eqIso.iso), ab => HasIso(ab), ba => HasIso(ba.flip))
 
-    implicit def hasIsoImpRefl[->[_,_], A, T[_]](implicit s: Subcat.Aux[->, T], t: T[A]): HasIso[->, A, A] =
-      HasIso(Iso.refl[->, A, T])
-    implicit def hasIsoImpAB[->[_,_], A: * =:!= B, B](implicit i: Iso[->, A, B]): HasIso[->, A, B] = HasIso(i)
-    implicit def hasIsoImpBA[->[_,_], A: * =:!= B, B](implicit i: Iso[->, B, A]): HasIso[->, A, B] = HasIso(i.flip)
+    implicit def conversionToIso[->[_, _], A, B](hi: HasIso[->, A, B]): Iso[->, A, B] = hi.iso
+  }
+
+  @newtype private[exo] case class ReflImpIso[->[_,_], A, B](iso: Iso[->, A, B])
+  private[exo] object ReflImpIso {
+    implicit def impl[->[_,_], A, C[_]](implicit s: Subcat.Aux[->, C], t: C[A]): ReflImpIso[->, A, A] =
+      ReflImpIso(Iso.refl[->, A, C])
+  }
+
+  @newtype private[exo] case class EqImpIso[->[_,_], A, B](iso: Iso[->, A, B])
+  private[exo] object EqImpIso {
+    implicit def impl[->[_,_], A, B](implicit eq: A === B, r: ReflImpIso[->, A, A]): EqImpIso[->, A, B] =
+      EqImpIso(eq.subst(r.iso))
   }
 
   object syntax extends IsoSyntax

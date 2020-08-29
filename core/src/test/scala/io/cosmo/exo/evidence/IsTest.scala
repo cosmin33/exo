@@ -1,5 +1,6 @@
 package io.cosmo.exo.evidence
 
+import io.cosmo.exo.Iso.HasIso
 import io.cosmo.exo._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.funsuite.AnyFunSuite
@@ -46,6 +47,11 @@ class IsTest extends AnyFunSuite with Matchers {
     type h[xx] = g[g[xx]]
     type f[xx] = List[h[xx]]
     implicitly[f[Int] === List[Unit]]
+  }
+
+  test("equality derived from estatico newtypes") {
+    def mrrr[->[_,_], A, B] = implicitly[HasIso[->, A, B] === Iso[->, A, B]]
+    mrrr[* => *, Int, String]
   }
 
   test("liskov simple") {

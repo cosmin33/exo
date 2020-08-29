@@ -4,7 +4,7 @@ import cats.implicits._
 import io.cosmo.exo._
 import io.cosmo.exo.categories.functors._
 import io.cosmo.exo.categories.{Dual, Endobifunctor, Endofunctor, Groupoid, Semicategory, Subcat, Trivial}
-import shapeless.the
+import io.estatico.newtype.Coercible
 
 sealed abstract class Is[A, B] private[Is]()  { ab =>
   import Is._
@@ -29,9 +29,9 @@ sealed abstract class Is[A, B] private[Is]()  { ab =>
 
   def onF[X](fa: X => A): X => B = subst[X => *](fa)
 
-  def toPredef: A =:= B = subst[A =:= *](the[A =:= A])
+  def toPredef: A =:= B = subst[A =:= *](implicitly[A =:= A])
 
-  def toIso: <=>[A, B] = subst[A <=> *](Iso.refl[A])
+  def toIso: A <=> B = subst[A <=> *](Iso.refl[A])
 
   def toAs: A <~< B = subst[A <~< *](As.refl[A])
 }
@@ -39,23 +39,23 @@ sealed abstract class Is[A, B] private[Is]()  { ab =>
 object Is extends IsInstances {
   def apply[A, B](implicit ev: A Is B): A Is B = ev
 
-  implicit def isoCanonic[A, B]: ∀~[λ[f[_] => f[A] => f[B]]] <=> (A === B) =
+  type Canonic[A, B] = ∀~[λ[f[_] => f[A] => f[B]]]
+
+  implicit def isoCanonic[A, B]: Canonic[A, B] <=> (A === B) =
     Iso.unsafe(
       fa => new Is[A, B] { def subst[F[_]](f: F[A]): F[B] = fa.apply[F](f) },
-      ab => ∀~.of[λ[f[_] => f[A] => f[B]]].from(ab.subst)
+      ab => ∀~.mk[Canonic[A, B]].from(ab.subst)
     )
 
   implicit def isoInjectivity[F[_]: IsInjective, A, B]: (F[A] === F[B]) <=> (A === B) =
     Iso.unsafe(IsInjective[F].apply(_), _.lift)
 
+  implicit def coercibleToEquality[A, B](implicit ec: Coercible[A === A, A === B]): A === B = ec(Is.refl)
+
   implicit def exoCov[A]: Exo.Cov[===, A === *] = Exo.unsafe[===, * => *, A === *](_.subst[A === *])
   implicit def exoCon[A]: Exo.Con[===, * === A] = Exo.unsafe[Dual[===,*,*], * => *, * === A](_.flip.subst[* === A])
 
   implicit def isBifunctor[P[_,_]]: Endobifunctor[===, P] = new Endobifunctor[===, P] {
-    type TCL[a] = Trivial.T1[a]
-    type TCR[a] = Trivial.T1[a]
-    type TC [a] = Trivial.T1[a]
-    val L, R, C = Semicategory.leibnizGroupoid
     override def bimap[A, X, B, Y](left: A === X, right: B === Y): P[A, B] === P[X, Y] = left.lift2[P](right)
     def leftMap [A, B, Z](fn: A === Z): P[A, B] === P[Z, B] = fn.lift[P[*, B]]
     def rightMap[A, B, Z](fn: B === Z): P[A, B] === P[A, Z] = fn.lift[P[A, *]]
@@ -100,10 +100,6 @@ object Is extends IsInstances {
       neq => left[A =!= B, A === B](=!=.witness(neq.run)),
       r => right[A =!= B, A === B](r)
     ))
-//  def lem[A, B]: ¬¬[Either[A =!= B, A === B]] = Inhabited.lem[A === B].map {
-//    case Right(eqv) => Right(eqv)
-//    case Left(neqv) => Left(WeakApart(neqv))
-//  }
 
   def consistent[A, B](f: (A =!= B) => Void): A === B =
     proposition[A, B].proved(¬¬.witness(a => f(WeakApart.witness(a))))
@@ -112,7 +108,6 @@ object Is extends IsInstances {
     cat: Semicategory[===],
   ): Endofunctor[===, F] =
     new Endofunctor[===, F] {
-      val C, D = cat
       def map[A, B](f: A === B): F[A] === F[B] = Is.lift(f)
     }
 

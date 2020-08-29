@@ -4,6 +4,7 @@ import cats.Semigroup
 import cats.implicits._
 import io.cosmo.exo.Iso.HasIso
 import io.cosmo.exo.categories.conversions.CatsInstances._
+import io.cosmo.exo.evidence.===
 import io.cosmo.exo.typeclasses.TypeF
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -33,6 +34,14 @@ class IsoTests extends AnyFunSuite with Matchers {
     implicitly[HasIso[* => *, Int, Int]]
     implicitly[HasIso[FunK, TypeF[List], TypeF[List]]]
     implicitly[Refute[HasIso[* => *, String, Long]]]
+
+    Iso.refl[Iso[* => *, String, Int]]
+      .chain[HasIso[* => *, String, Int]]
+
+    def mrr1[->[_,_], A, B] = implicitly[HasIso[* => *, HasIso[->, A, B], Iso[->, A, B]]]
+
+    mrr1[* => *, String, Int]
+
   }
 
   test("case class <-> tupleN iso derivation") {

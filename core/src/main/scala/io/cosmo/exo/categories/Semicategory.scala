@@ -4,6 +4,7 @@ import cats.Inject
 import cats.implicits._
 import io.cosmo.exo._
 import io.cosmo.exo.categories.Trivial.T1
+import io.cosmo.exo.categories._
 import io.cosmo.exo.categories.functors._
 import io.cosmo.exo.evidence._
 import io.cosmo.exo.typeclasses.{IsTypeF, TypeF}
@@ -126,6 +127,31 @@ private[categories] object SemicategoryHelpers {
     def initiate[A](implicit A: Trivial.T1[A]): Nothing => A = identity
     def distribute[A, B, C]: A ⨂ (B ⨁ C) => A ⨂ B ⨁ (A ⨂ C) =
       { case (a, bc) => bc.fold((a, _).asLeft, (a, _).asRight) }
+  }
+
+  trait FunKCartesian extends Cartesian[FunK, Tuple2] {
+    override type Id = TypeF[UnitK]
+    override type TC[a] = IsTypeF[a]
+    override def C: Subcat.Aux[FunK, IsTypeF] = ???
+    override def bifunctor: Endobifunctor[FunK, Tuple2] = ???
+    override def fst[A, B]: FunK[(A, B), A] = ???
+//      new FunK[(A, B), A] {
+//        override type TypeA[a] = ???
+//        override type TypeB[a] = ???
+//        override def eqA = ???
+//        override def eqB = ???
+//        override def instance = ???
+//      }
+    override def snd[A, B]: FunK[(A, B), B] = ???
+    override def diag[A]: FunK[A, (A, A)] = ???
+    override def &&&[X, Y, Z](f: FunK[X, Y], g: FunK[X, Z]): FunK[X, (Y, Z)] = ???
+    override def braid[A, B]: FunK[(A, B), (B, A)] = ???
+    override def idl[A]: FunK[(TypeF[UnitK], A), A] = ???
+    override def coidl[A]: FunK[A, (TypeF[UnitK], A)] = ???
+    override def idr[A]: FunK[(A, TypeF[UnitK]), A] = ???
+    override def coidr[A]: FunK[A, (A, TypeF[UnitK])] = ???
+    override def associate[X, Y, Z]: FunK[((X, Y), Z), (X, (Y, Z))] = ???
+    override def diassociate[X, Y, Z]: FunK[(X, (Y, Z)), ((X, Y), Z)] = ???
   }
 
   trait FunKClass

@@ -2,7 +2,9 @@ package io.cosmo.exo.evidence
 
 import cats.{Contravariant, ContravariantSemigroupal, FlatMap, Monad, Semigroupal}
 import cats.implicits._
+import io.cosmo.exo.Iso.HasIso
 import io.cosmo.exo._
+import io.estatico.newtype.Coercible
 import io.estatico.newtype.macros.newsubtype
 import io.estatico.newtype.ops._
 
@@ -57,12 +59,11 @@ object inhabitance {
 
     def contradicts(a: A): Void = run(a)
 
-    def notInhabited(a: ¬¬[A]): Void = a.contradicts(contradicts)
+    def notInhabited(a: ¬¬[A]): Void = a.contradicts(run)
 
-    def contramap[B](f: B => A): Uninhabited[B] = Uninhabited.witness[B](b => contradicts(f(b)))
+    def contramap[B](f: B => A): ¬[B] = ¬.witness[B](f >>> run)
 
-    def zip[B](notB: Uninhabited[B]): Uninhabited[Either[A, B]] =
-      ¬.witness[Either[A, B]](_.fold(contradicts, notB.contradicts))
+    def zip[B](notB: ¬[B]): ¬[Either[A, B]] = ¬.witness[Either[A, B]](_.fold(run, notB.run))
   }
 
   trait UninhabitedLowerPriority {
@@ -72,9 +73,13 @@ object inhabitance {
   object Uninhabited extends UninhabitedLowerPriority {
     def apply[A](implicit ev: ¬[A]): ¬[A] = ev
 
-    def witness[A](f: A => Void): ¬[A] = f.coerce
+    def witness[A](f: A => Void): ¬[A] = f.coerce[¬[A]]
 
-    implicit def isoCanonic[A]: (A => Void) <=> ¬[A] = Iso.unsafe(witness, _.run)
+    def asdfas[A] = implicitly[Coercible[A => Void, ¬[A]]]
+
+    def eqCanonic [A]: (A => Void) === ¬[A] = implicitly[(A => Void) === ¬[A]]
+
+    def isoCanonic[A]: (A => Void) <=> ¬[A] = Iso[* => *, A => Void, ¬[A]]
 
     def contramap2[A, B, C](p: ¬¬[Either[¬[A], ¬[B]]])(f: C => (A, B)): ¬[C] =
       witness { c =>
@@ -104,7 +109,7 @@ object inhabitance {
     def proposition[A]: Proposition[¬[A]] =
       Proposition.witness((nnA: ¬¬[¬[A]]) => ¬.witness((a : A) => nnA.contradicts(A => A.contradicts(a))))
 
-    implicit def contraSem: Contravariant[Uninhabited] = Contravariant[* => Void].coerce
+    implicit def contraSem: Contravariant[¬] = Contravariant[* => Void].coerce
   }
 
   @newsubtype class Inhabited[A](val run: (A => Void) => Void) {

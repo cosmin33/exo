@@ -9,15 +9,13 @@ inThisBuild(Seq(
 ))
 
 lazy val versionOf = new {
-  val simulacrum = "0.19.0"
-  val mouse = "0.24"
-  val monix = "3.1.0"
+  val simulacrum = "1.0.0"
+  val mouse = "0.25-SNAPSHOT"
   val cats = "2.1.1"
   val shapeless = "2.3.3"
   val scalaCheck = "1.14.3"
   val scalatest = "3.3.0-SNAP2"
-  val estaticoNewtype = "0.4.3"
-//  val estaticoNewtype = "0.4.4-SNAPSHOT"
+  val estaticoNewtype = "0.4.4-SNAPSHOT"
 }
 
 lazy val commonSettings = Seq(
@@ -70,11 +68,12 @@ lazy val commonSettings = Seq(
   ),
   libraryDependencies ++= Seq(
     "org.typelevel"        %%% "mouse"               % versionOf.mouse,
-    "com.github.mpilquist" %%% "simulacrum"          % versionOf.simulacrum,
+    "org.typelevel"        %%% "simulacrum"          % versionOf.simulacrum,
     "org.typelevel"        %%% "cats-core"           % versionOf.cats,
+    "org.typelevel"        %%% "cats-laws"           % versionOf.cats,
     "org.typelevel"        %%% "cats-free"           % versionOf.cats,
     "org.typelevel"        %%% "alleycats-core"      % versionOf.cats,
-    "io.monix"             %%% "monix"               % versionOf.monix,
+    "org.scala-lang"       % "scala-reflect" % scalaVersion.value,
     "io.estatico"          %%% "newtype"             % versionOf.estaticoNewtype,
     "org.scalatest"        %%% "scalatest"           % versionOf.scalatest % Test,
     "org.scalacheck"       %%% "scalacheck"          % versionOf.scalaCheck % Test,
@@ -101,3 +100,4 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(name := "exo-core")
   .settings(commonSettings)
+  .jsConfigure(_.enablePlugins(JSDependenciesPlugin))

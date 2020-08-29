@@ -30,7 +30,9 @@ package object exo extends Existence with syntax {
   type ∀~[A[_[_]]]      = ForallK.ForallK[A]
 
   val ForallHK: foralls.ForallHKModule = foralls.ForallHKImpl
+  val ∀≈ : ForallHK.type    = ForallHK
   type ForallHK[A[_[_[_]]]] = ForallHK.ForallHK[A]
+  type ∀≈[A[_[_[_]]]]       = ForallHK.ForallHK[A]
 
   val ForallK1: foralls.ForallK1Module = foralls.ForallK1Impl
   type ForallK1[A[_[_],_]]   = ForallK1.ForallK1[A]

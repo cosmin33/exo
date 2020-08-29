@@ -2,7 +2,6 @@ package io.cosmo.exo.categories.functors
 
 import cats.data.{Cokleisli, Kleisli}
 import cats.implicits._
-import cats.syntax._
 import cats.{Applicative, CoflatMap, Contravariant, FlatMap, Functor, FunctorFilter, Id, Invariant, Monad, Traverse, TraverseFilter}
 import io.cosmo.exo._
 import io.cosmo.exo.categories._
@@ -78,6 +77,7 @@ object Exofunctor extends ExofunctorImplicits {
 
   implicit def exoId: Exo.Cov[* => *, Id] = Exo.unsafe[* => *, * => *, Id](identity)
 
+  /** from bifunctor derive left and right functors */
   implicit def leftFunctorFa [==>[_, _], -->[_, _], >->[_, _], Bi[_, _]](b: Exobifunctor[==>, -->, >->, Bi]): ∀[λ[x => Exo[==>, >->, Bi[*,x]]]] = b.leftForall
   implicit def rightFunctorFa[==>[_, _], -->[_, _], >->[_, _], Bi[_, _]](b: Exobifunctor[==>, -->, >->, Bi]): ∀[λ[x => Exo[-->, >->, Bi[x,*]]]] = b.rightForall
 
@@ -126,12 +126,6 @@ object Exofunctor extends ExofunctorImplicits {
     Exo.unsafe[Cokleisli[F,*,*], * => *, F](f => _.coflatMap(f.run))
   implicit def exoFromCoflatMap1[F[_]: CoflatMap]: Exo[λ[(a,b) => F[a] => b], * => *, F] =
     Exo.unsafe[λ[(a,b) => F[a] => b], * => *, F](f => _.coflatMap(f))
-
-  implicit def bifunctorLeft [==>[_,_], >->[_,_], Bi[_,_]](
-    B: Exobifunctor[==>, ==>, >->, Bi]): ∀[λ[x => Exo[==>, >->, Bi[*,x]]]] = B.leftForall
-  implicit def bifunctorRight[==>[_,_], >->[_,_], Bi[_,_]](
-    B: Exobifunctor[==>, ==>, >->, Bi]): ∀[λ[x => Exo[==>, >->, Bi[x,*]]]] = B.rightForall
-
 
 }
 

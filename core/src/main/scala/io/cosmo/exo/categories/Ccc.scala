@@ -50,8 +50,7 @@ object Ccc {
     type TC[x] = ->#[x]
     type ProductId = PI
   }
-  type AuxPH[->[_,_], P[_,_], E[_,_]] = Ccc[->] {type ⊙[A, B] = P[A, B]; type Hom[A, B] = E[A, B]}
-  type AuxTC[->[_,_], ->#[_]] = Ccc[->] { type TC[a] = ->#[a] }
+
   //type Homoiconic[->[_,_]] = InstanceOf[CccClass.Homoiconic[->]]
 
   case class SingleOf[T, U <: {type TC[_]; type |->[_,_]; type ⊙[_, _]; type ProductId}](

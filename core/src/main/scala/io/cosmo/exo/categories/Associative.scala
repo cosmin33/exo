@@ -147,7 +147,7 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
 
   //  val injMonoidal: Cartesian[Inject, (*, *)] =
   //    new Cartesian[Inject, (*, *)] {
-  implicit val injMonoidalTuple: Monoidal[Inject, (*, *)] with Symmetric[Inject, (*, *)] =
+  implicit val injMonoidalTuple: Monoidal.Aux[Inject, (*, *), Trivial.T1, Unit] with Symmetric.Aux[Inject, (*, *), Trivial.T1] =
     new Monoidal[Inject, (*, *)] with Symmetric[Inject, (*, *)] {
       type Id = Unit
       type TC[a] = Trivial.T1[a]
