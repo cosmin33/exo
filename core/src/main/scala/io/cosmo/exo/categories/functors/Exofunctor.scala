@@ -24,28 +24,7 @@ trait Exofunctor[==>[_,_], -->[_,_], F[_]] { self =>
     C1: Cartesian[-->, U],
     cc1: Ccc[-->],
     T: Terminal[==>]
-  ): U[F[A], B] --> F[P[A, B]] = {
-    val p1: P[F[A], B] ==> F[A] = C.fst[F[A], B]
-    val p2: P[F[A], B] ==> B = C.snd[F[A], B]
-
-
-    type |->[a,b] = cc.|->[a,b]
-
-    val xx: cc.⊙[A |-> B, A] ==> B = cc.apply[A, B]
-
-    def ff(b: B): A ==> (A, B) = {
-      //val d1: A ==> (A, A) = C.diag[A]
-      //val ff = cc1.uncurry[F[A], B, F[(A, B)]]
-      //C.bifunctor.rightMap()
-      ???
-    }
-    def m1(b: B): F[A] --> F[(A, B)] = map(ff(b))
-    //val x: (F[A], B) --> F[A] = C1.fst[F[A], B]
-
-
-
-    ???
-  }
+  ): U[F[A], B] --> F[P[A, B]] = ???
 
 }
 

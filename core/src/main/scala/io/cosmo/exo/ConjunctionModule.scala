@@ -2,6 +2,7 @@ package io.cosmo.exo
 
 import cats.implicits._
 import cats.Bifunctor
+import io.cosmo.exo.categories.functors.{LaxMonoidal, LaxSemigroupal}
 import io.cosmo.exo.evidence.{===, =~=, =~~=, Is, IsK, IsK2}
 import io.estatico.newtype.Coercible
 
@@ -35,6 +36,10 @@ object ConjunctionModule {
   implicit val iso: (*, *) <~~> /\ = /\.leibniz.toIso
 
   implicit def bothImp[A, B](implicit a: A, b: B): A /\ B = /\(a, b)
+
+  implicit def productTypeclass[T[_], A, B](implicit
+    L: LaxSemigroupal.Endo[* => *, /\, T], ta: T[A], tb: T[B]
+  ): T[A /\ B] = L.product(/\(ta, tb))
 }
 
 private[exo] object ConjunctionModuleImpl extends ConjunctionModule {

@@ -15,10 +15,10 @@ class MonoidalInstances {
       def map[A, B](iso: Iso[* => *, A, B]): Monoidal.Aux[->, ⊙, TC0, A] => Monoidal.Aux[->, ⊙, TC0, B] =
         ma => new Monoidal.ProtoFromAssociative[->, ⊙, TC0](ma) {
           type Id = B
-          def idl  [X]: ⊙[B, X] -> X = B1.leftMap(Dual(B2.leftMap[B, X, A](iso.from)))(ma.idl)
-          def coidl[X]: X -> ⊙[B, X] = B1.rightMap(Dual(B2.leftMap[A, X, B](iso.to)))(ma.coidl)
-          def idr  [X]: ⊙[X, B] -> X = B1.leftMap(Dual(B2.rightMap[X, B, A](iso.from)))(ma.idr)
-          def coidr[X]: X -> ⊙[X, B] = B1.rightMap(Dual(B2.rightMap[X, A, B](iso.to)))(ma.coidr)
+          def idl  [X: TC]: ⊙[B, X] -> X = B1.leftMap(Dual(B2.leftMap[B, X, A](iso.from)))(ma.idl)
+          def coidl[X: TC]: X -> ⊙[B, X] = B1.rightMap(Dual(B2.leftMap[A, X, B](iso.to)))(ma.coidl)
+          def idr  [X: TC]: ⊙[X, B] -> X = B1.leftMap(Dual(B2.rightMap[X, B, A](iso.from)))(ma.idr)
+          def coidr[X: TC]: X -> ⊙[X, B] = B1.rightMap(Dual(B2.rightMap[X, A, B](iso.to)))(ma.coidr)
         }
     }
 
@@ -33,10 +33,10 @@ class MonoidalInstances {
       def map[A, B](iso: Iso[->, A, B]): Monoidal.Aux[->, ⊙, TC0, A] => Monoidal.Aux[->, ⊙, TC0, B] =
         ma => new Monoidal.ProtoFromAssociative[->, ⊙, TC0](ma) {
           type Id = B
-          def idl  [X]: ⊙[B, X] -> X = C.andThen(ma.bifunctor.leftMap[B, X, A](iso.from), ma.idl)
-          def coidl[X]: X -> ⊙[B, X] = C.andThen(ma.coidl, ma.bifunctor.leftMap[A, X, B](iso.to))
-          def idr  [X]: ⊙[X, B] -> X = C.andThen(ma.bifunctor.rightMap[X, B, A](iso.from), ma.idr)
-          def coidr[X]: X -> ⊙[X, B] = C.andThen(ma.coidr, ma.bifunctor.rightMap[X, A, B](iso.to))
+          def idl  [X: TC]: ⊙[B, X] -> X = C.andThen(ma.bifunctor.leftMap[B, X, A](iso.from), ma.idl)
+          def coidl[X: TC]: X -> ⊙[B, X] = C.andThen(ma.coidl, ma.bifunctor.leftMap[A, X, B](iso.to))
+          def idr  [X: TC]: ⊙[X, B] -> X = C.andThen(ma.bifunctor.rightMap[X, B, A](iso.from), ma.idr)
+          def coidr[X: TC]: X -> ⊙[X, B] = C.andThen(ma.coidr, ma.bifunctor.rightMap[X, A, B](iso.to))
         }
     }
 

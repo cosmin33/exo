@@ -2,7 +2,7 @@ package io.cosmo.exo
 
 import io.cosmo
 import io.cosmo.exo
-import io.cosmo.exo.categories.{Cartesian, Ccc, Cocartesian, Dual}
+import io.cosmo.exo.categories.{Cartesian, Ccc, Cocartesian, Dual, Trivial}
 import io.cosmo.exo.categories.functors.Exo
 import io.cosmo.exo.evidence._
 
@@ -102,9 +102,9 @@ object foralls {
     //////////////////////////// ⨂
     /** ∀ distributes over Tuple2 */
     def fnDistribCartesianTo[F[_], G[_], ⨂[_,_]](implicit
-      cc: Cartesian[* => *, ⨂]
+      cc: Cartesian[* => *, ⨂] { type TC[a] = Trivial.T1[a] }
     ): ∀[λ[x => F[x] ⨂ G[x]]] => (∀[F] ⨂ ∀[G]) =
-      cc.&&&(f => ∀.of[F].fromH(t => cc.fst(f[t.T])), f => ∀.of[G].fromH(t => cc.snd(f[t.T])))
+      cc.&&&(f => ∀.of[F].fromH(t => cc.fst.apply(f[t.T])), f => ∀.of[G].fromH(t => cc.snd.apply(f[t.T])))
 
     def fnDistribCartesianToXX[->[_,_], F[_], G[_], ⨂[_,_]](implicit
       cc: Cartesian[->, ⨂],
@@ -121,7 +121,7 @@ object foralls {
       fg => ∀.of[λ[x => F[x] ⨂ G[x]]].fromH(t => cc.bifunctor.bimap[∀[F], F[t.T], ∀[G], G[t.T]](_[t.T], _[t.T])(fg))
 
     def isoDistributeCartesian[F[_], G[_], ⨂[_,_]](implicit
-      cc: Cartesian[* => *, ⨂]
+      cc: Cartesian[* => *, ⨂] { type TC[a] = Trivial.T1[a] }
     ): ∀[λ[x => F[x] ⨂ G[x]]] <=> (∀[F] ⨂ ∀[G]) = Iso.unsafe(fnDistribCartesianTo, fnDistribCartesianFrom)
 
     // these are no longer needed because they are a specific type (for Tuple2) of those above
@@ -135,10 +135,10 @@ object foralls {
     //////////////////////// ⨁
     /** ∀ distributes over \/ (one way only) */
     def fnDistributeCocartesian[F[_], G[_], ⨁[_,_]](implicit
-      cc: Cocartesian[* => *, ⨁]
+      cc: Cocartesian[* => *, ⨁] { type TC[a] = Trivial.T1[a] }
     ): (∀[F] ⨁ ∀[G]) => ∀[λ[x => F[x] ⨁ G[x]]] = { fun =>
-      def f1[x]: ∀[F] => F[x] ⨁ G[x] = f => cc.fst[F[x], G[x]](f[x])
-      def f2[x]: ∀[G] => F[x] ⨁ G[x] = f => cc.snd[F[x], G[x]](f[x])
+      def f1[x]: ∀[F] => F[x] ⨁ G[x] = f => cc.fst[F[x], G[x]].apply(f[x])
+      def f2[x]: ∀[G] => F[x] ⨁ G[x] = f => cc.snd[F[x], G[x]].apply(f[x])
       ∀.of[λ[x => F[x] ⨁ G[x]]].fromH(t => cc.&&&(Dual(f1[t.T]), Dual(f2[t.T]))(fun))
     }
 

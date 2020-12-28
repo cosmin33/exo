@@ -4,11 +4,9 @@ import io.cosmo.exo.{Iso, categories}
 
 trait Braided[->[_, _], ⊙[_, _]] extends Associative[->, ⊙] {
   def braid[A, B]: ⊙[A, B] -> ⊙[B, A]
-  def braid1[A, B]: ⊙[A, B] -> ⊙[B, A] = ???
 
   private type <->[a, b] = Iso[->, a, b]
   def isoBraid[A, B]: ⊙[A, B] <-> ⊙[B, A] = Iso.unsafe(braid[A, B], braid[B, A])(C)
-  def isoBraid1[A: TC, B: TC]: ⊙[A, B] <-> ⊙[B, A] = Iso.unsafe(braid1[A, B], braid1[B, A])(C)
 }
 
 object Braided {

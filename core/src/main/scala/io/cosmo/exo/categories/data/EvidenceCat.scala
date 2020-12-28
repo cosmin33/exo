@@ -1,7 +1,8 @@
 package io.cosmo.exo.categories.data
 
+import io.cosmo.exo.categories.functors.LaxSemigroupal
 import io.cosmo.exo.categories.{Cartesian, Endobifunctor, Groupoid, Monoidal, Subcat}
-import io.cosmo.exo.{<=>, Iso, ~>}
+import io.cosmo.exo.{/\, <=>, Iso, ~>}
 
 final case class EvidenceCat[T[_], A, B](left: T[A], right: T[B]) {
   def andThen[C](that: EvidenceCat[T, B, C]): EvidenceCat[T, A, C] =
@@ -42,34 +43,39 @@ object EvidenceCat {
       type TC[x] = T[x]
       type Id = I
       def C: Subcat.Aux[EvidenceCat[T, *, *], T] = category[T]
-      def idl[A]: EvidenceCat[T, (I, A), A] = {
-
-        ???
-      }
-      def coidl[A]: EvidenceCat[T, A, (I, A)] = ???
-      def idr[A]: EvidenceCat[T, (A, I), A] = ???
-      def coidr[A]: EvidenceCat[T, A, (A, I)] = ???
+      def idl  [A: TC]: EvidenceCat[T, (I, A), A] = ???
+      def coidl[A: TC]: EvidenceCat[T, A, (I, A)] = ???
+      def idr  [A: TC]: EvidenceCat[T, (A, I), A] = ???
+      def coidr[A: TC]: EvidenceCat[T, A, (A, I)] = ???
       def bifunctor: Endobifunctor[EvidenceCat[T, *, *], Tuple2] = ???
       def associate[X, Y, Z]: EvidenceCat[T, ((X, Y), Z), (X, (Y, Z))] = ???
       def diassociate[X, Y, Z]: EvidenceCat[T, (X, (Y, Z)), ((X, Y), Z)] = ???
     }
-//  def more[T[_], I]: Cartesian[EvidenceCat[T, *, *], Tuple2] {type TC[x] = T[x]; type Id = I} =
-//    new Cartesian[EvidenceCat[T,*,*], (*, *)] {
-//      type TC[x] = T[x]
-//      type Id = I
-//      def fst[A, B]: EvidenceCat[T, (A, B), A] = ???
-//      def snd[A, B]: EvidenceCat[T, (A, B), B] = ???
-//      def diag[A]: EvidenceCat[T, A, (A, A)] = ???
-//      def &&&[X, Y, Z](f: EvidenceCat[T, X, Y], g: EvidenceCat[T, X, Z]): EvidenceCat[T, X, (Y, Z)] = ???
-//      def braid[A, B]: EvidenceCat[T, (A, B), (B, A)] = ???
-//      def idl[A]: EvidenceCat[T, (I, A), A] = ???
-//      def coidl[A]: EvidenceCat[T, A, (I, A)] = ???
-//      def idr[A]: EvidenceCat[T, (A, I), A] = ???
-//      def coidr[A]: EvidenceCat[T, A, (A, I)] = ???
-//      def C: Aux[EvidenceCat[T, *, *], T] = ???
-//      def bifunctor: Endobifunctor[EvidenceCat[T, *, *], Tuple2] = ???
-//      def associate[X, Y, Z]: EvidenceCat[T, ((X, Y), Z), (X, (Y, Z))] = ???
-//      def diassociate[X, Y, Z]: EvidenceCat[T, (X, (Y, Z)), ((X, Y), Z)] = ???
-//    }
+
+  def more1[T[_], I](implicit
+    ti: T[I],
+    L: LaxSemigroupal[* => *, /\, * => *, /\, T]
+  ) = {
+    new Monoidal[EvidenceCat[T,*,*], /\] {
+      type TC[x] = T[x]
+      type Id = I
+      def C: Subcat.Aux[EvidenceCat[T, *, *], T] = category[T]
+      def idl  [A : TC]: EvidenceCat[T, I /\ A, A] = fromImplicits
+      def coidl[A: TC]: EvidenceCat[T, A, I /\ A] = fromImplicits
+      def idr  [A: TC]: EvidenceCat[T, A /\ I, A] = fromImplicits
+      def coidr[A: TC]: EvidenceCat[T, A, A /\ I] = fromImplicits
+      def bifunctor: Endobifunctor[EvidenceCat[T, *, *], /\] = new Endobifunctor[EvidenceCat[T, *, *], /\] {
+          def bimap[A, X, B, Y](l: EvidenceCat[T, A, X], r: EvidenceCat[T, B, Y]): EvidenceCat[T, A /\ B, X /\ Y] =
+            fromImplicits[T, A /\ B, X /\ Y](L.product[A, B](/\(l.left, r.left)), L.product(/\(l.right, r.right)))
+          def leftMap[A, B, Z] (fn: EvidenceCat[T, A, Z]): EvidenceCat[T, A /\ B, Z /\ B] = {
+            //fromImplicits[T, A /\ B, Z /\ B](L.product())
+            ???
+          }
+          def rightMap[A, B, Z](fn: EvidenceCat[T, B, Z]) = ???
+        }
+      def associate[X, Y, Z]: EvidenceCat[T, X /\ Y /\ Z, X /\ (Y /\ Z)] = ???
+      def diassociate[X, Y, Z]: EvidenceCat[T, X /\ (Y /\ Z), X /\ Y /\ Z] = ???
+    }
+  }
 
 }

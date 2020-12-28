@@ -17,15 +17,11 @@ trait Associative[->[_, _], ⊙[_, _]] {
 
   def associate  [X, Y, Z]: ⊙[⊙[X, Y], Z] -> ⊙[X, ⊙[Y, Z]]
   def diassociate[X, Y, Z]: ⊙[X, ⊙[Y, Z]] -> ⊙[⊙[X, Y], Z]
-  def associate1  [X: TC, Y: TC, Z: TC]: ⊙[⊙[X, Y], Z] -> ⊙[X, ⊙[Y, Z]] = ???
-  def diassociate1[X: TC, Y: TC, Z: TC]: ⊙[X, ⊙[Y, Z]] -> ⊙[⊙[X, Y], Z] = ???
 
   def grouped[A, B, X, Y](f: A -> B, g: X -> Y): ⊙[A, X] -> ⊙[B, Y] = bifunctor.bimap(f, g)
 
   private type <->[a, b] = Iso[->, a, b]
   def isoAssociator[X, Y, Z]: ⊙[⊙[X, Y], Z] <-> ⊙[X, ⊙[Y, Z]] = Iso.unsafe(associate[X,Y,Z], diassociate[X,Y,Z])(C)
-  def isoAssociator1[X: TC, Y: TC, Z: TC]: ⊙[⊙[X, Y], Z] <-> ⊙[X, ⊙[Y, Z]] =
-    Iso.unsafe(associate1[X,Y,Z], diassociate1[X,Y,Z])(C)
 }
 
 object Associative extends AssociativeImplicits {
@@ -56,14 +52,14 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
         def associate  [X, Y, Z]: ((X, Y), Z) -> (X, (Y, Z)) = { case ((x, y), z) => (x, (y, z)) }
         def diassociate[X, Y, Z]: (X, (Y, Z)) -> ((X, Y), Z) = { case (x, (y, z)) => ((x, y), z) }
         def braid[A, B]: ((A, B)) => (B, A) = { case (a, b) => (b, a) }
-        def coidl[A]: A -> (Unit, A) = a => ((), a)
-        def coidr[A]: A -> (A, Unit) = a => (a, ())
-        def idr[A]: (A, Unit) -> A = { case (a, _) => a }
-        def idl[A]: (Unit, A) -> A = { case (_, a) => a }
-        def fst[A, B]: (A, B) -> A = { case (a, _) => a }
-        def snd[A, B]: (A, B) -> B = { case (_, b) => b }
+        def coidl[A: TC]: A -> (Unit, A) = a => ((), a)
+        def coidr[A: TC]: A -> (A, Unit) = a => (a, ())
+        def idr[A: TC]: (A, Unit) -> A = { case (a, _) => a }
+        def idl[A: TC]: (Unit, A) -> A = { case (_, a) => a }
+        def fst[A: TC, B]: (A, B) -> A = { case (a, _) => a }
+        def snd[A, B: TC]: (A, B) -> B = { case (_, b) => b }
         def &&&[X, Y, Z](f: X -> Y, g: X -> Z): X -> (Y, Z) = x => (f(x), g(x))
-        def diag[A]: A -> (A, A) = a => (a, a)
+        def diag[A: TC]: A -> (A, A) = a => (a, a)
         override def grouped[A, B, X, Y](f: A => B, g: X => Y): ((A, X)) => (B, Y) =
           {case (a, x) => (f(a), g(x))} // override for performance
       }
@@ -80,13 +76,13 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
         def diassociate[X, Y, Z]: (X \/ Y \/ Z) => (X \/ (Y \/ Z)) = _.fold(_.fold(_.left[Y \/ Z], _.left[Z].right[X]), _.right[Y].right[X])
         def associate  [X, Y, Z]: (X \/ (Y \/ Z)) => (X \/ Y \/ Z) = _.fold(_.left[Y].left[Z], _.fold(_.right[X].left[Z], _.right[X \/ Y]))
         def braid[A, B]: (B \/ A) => (A \/ B) = _.fold(_.right, _.left)
-        def coidr[A]: (A \/ Void) => A = _.fold[A](identity, identity)
-        def coidl[A]: (Void \/ A) => A = _.fold[A](identity, identity)
-        def idl[A]: A => (Void \/ A) = _.right
-        def idr[A]: A => (A \/ Void) = _.left
-        def fst[A, B]: A => (A \/ B) = _.left
-        def snd[A, B]: B => (A \/ B) = _.right
-        def diag[A]: (A \/ A) => A = _.fold[A](identity, identity)
+        def coidr[A: TC]: (A \/ Void) => A = _.fold[A](identity, identity)
+        def coidl[A: TC]: (Void \/ A) => A = _.fold[A](identity, identity)
+        def idl[A: TC]: A => (Void \/ A) = _.right
+        def idr[A: TC]: A => (A \/ Void) = _.left
+        def fst[A: TC, B]: A => (A \/ B) = _.left
+        def snd[A, B: TC]: B => (A \/ B) = _.right
+        def diag[A: TC]: (A \/ A) => A = _.fold[A](identity, identity)
         def &&&[X, Y, Z](f: Y => X, g: Z => X): (Y \/ Z) => X = _.fold(f, g)
         //// overrides for performance
         override def grouped[A, B, X, Y](f: B => A, g: Y => X): (B \/ Y) => (A \/ X) = _.fold(f(_).left, g(_).right)
@@ -105,19 +101,19 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
     new Monoidal[Opp[Inject]#l, \/] with Symmetric[Opp[Inject]#l, \/] {
       override type Id = Void
       override type TC[a] = Trivial.T1[a]
-      override def idl[A]: Inject[A, Void \/ A] = new Inject[A, Void \/ A] {
+      override def idl[A: TC]: Inject[A, Void \/ A] = new Inject[A, Void \/ A] {
         val inj: A => Void \/ A = _.right[Void]
         val prj: Void \/ A => Option[A] = _.fold(_ => Option.empty[A], _.some)
       }
-      override def coidl[A]: Inject[Void \/ A, A] = new Inject[Void \/ A, A] {
+      override def coidl[A: TC]: Inject[Void \/ A, A] = new Inject[Void \/ A, A] {
         val inj: Void \/ A => A = _.fold(v => v, a => a)
         val prj: A => Option[Void \/ A] = _.right[Void].some
       }
-      override def idr[A]: Inject[A, A \/ Void] = new Inject[A, A \/ Void] {
+      override def idr[A: TC]: Inject[A, A \/ Void] = new Inject[A, A \/ Void] {
         val inj: A => A \/ Void = _.left[Void]
         val prj: A \/ Void => Option[A] = _.fold(_.some, _ => Option.empty[A])
       }
-      override def coidr[A]: Inject[A \/ Void, A] = new Inject[A \/ Void, A] {
+      override def coidr[A: TC]: Inject[A \/ Void, A] = new Inject[A \/ Void, A] {
         val inj: A \/ Void => A = _.fold(a => a, v => v)
         val prj: A => Option[A \/ Void] = _.left[Void].some
       }
@@ -143,7 +139,7 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
         def rightMap[A, B, Z](fn: Inject[Z, B]): Inject[A \/ Z, A \/ B] = ???
         override def bimap[A, X, B, Y](left: Inject[X, A], right: Inject[Y, B]): Inject[X \/ Y, A \/ B] = ???
       }
-      def associate[X, Y, Z]: Inject[X \/ (Y \/ Z), X \/ Y \/ Z] = ???
+      def associate  [X, Y, Z]: Inject[X \/ (Y \/ Z), X \/ Y \/ Z] = ???
       def diassociate[X, Y, Z]: Inject[X \/ Y \/ Z, X \/ (Y \/ Z)] = ???
     }
 
@@ -158,22 +154,22 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
 
       def C: Subcat.Aux[Inject, Trivial.T1] = Semicategory.injSubcat
 
-      def idl[A]: Inject[(Unit, A), A] = new Inject[(Unit, A), A] {
+      def idl[A: TC]: Inject[(Unit, A), A] = new Inject[(Unit, A), A] {
         val inj: ((Unit, A)) => A = _._2
         val prj: A => Option[(Unit, A)] = a => ((), a).some
       }
 
-      def coidl[A]: Inject[A, (Unit, A)] = new Inject[A, (Unit, A)] {
+      def coidl[A: TC]: Inject[A, (Unit, A)] = new Inject[A, (Unit, A)] {
         val inj: A => (Unit, A) = ((), _)
         val prj: ((Unit, A)) => Option[A] = _._2.some
       }
 
-      def idr[A]: Inject[(A, Unit), A] = new Inject[(A, Unit), A] {
+      def idr[A: TC]: Inject[(A, Unit), A] = new Inject[(A, Unit), A] {
         val inj: ((A, Unit)) => A = _._1
         val prj: A => Option[(A, Unit)] = a => (a, ()).some
       }
 
-      def coidr[A]: Inject[A, (A, Unit)] = new Inject[A, (A, Unit)] {
+      def coidr[A: TC]: Inject[A, (A, Unit)] = new Inject[A, (A, Unit)] {
         val inj: A => (A, Unit) = (_, ())
         val prj: ((A, Unit)) => Option[A] = _._1.some
       }

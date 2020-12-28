@@ -2,7 +2,6 @@ package io.cosmo.exo.categories
 
 trait Symmetric[->[_, _], ⊙[_, _]] extends Braided[->, ⊙] {
   def swap[A, B]: ⊙[A, B] -> ⊙[B, A] = braid
-  def swap1[A: TC, B: TC]: ⊙[A, B] -> ⊙[B, A] = braid1
 }
 object Symmetric {
   type Aux[->[_, _], ⊙[_, _], TC0[_]] = Symmetric[->, ⊙] {type TC[a] = TC0[a]}

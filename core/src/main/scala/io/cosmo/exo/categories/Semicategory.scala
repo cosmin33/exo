@@ -127,7 +127,8 @@ private[categories] object SemicategoryHelpers {
     def cocartesian = Associative.cocartesianFn1EitherDual
     def id[A](implicit A: TC[A]): A => A = identity
     def andThen[A, B, C](ab: A => B, bc: B => C): A => C = bc.compose(ab)
-    override def apply[A, B]: ((A => B, A)) => B = { case (ab, a) => ab(a) }
+    //override def apply[A, B]: ((A => B, A)) => B = { case (ab, a) => ab(a) }
+    override def apply[A, B](implicit t: TC[A |-> B]): ((A => B, A)) => B = { case (ab, a) => ab(a) }
     def curry[X, Y, Z](f: ((X, Y)) => Z): X => (Y => Z) = x => y => f((x, y))
     def uncurry[X, Y, Z](f: X => (Y => Z)): ⊙[X, Y] => Z = { case (x, y) => f(x)(y) }
     def terminalTC: Trivial.T1[Terminal] = Trivial.trivialInstance
@@ -148,7 +149,7 @@ private[categories] object SemicategoryHelpers {
       override def leftMap [A, B, Z](fn: FunK[A, Z]): FunK[(A, B), (Z, B)] = ???
       override def rightMap[A, B, Z](fn: FunK[B, Z]): FunK[(A, B), (A, Z)] = ???
       }
-    override def fst[A, B]: FunK[(A, B), A] = ???
+    override def fst[A: TC, B]: FunK[(A, B), A] = ???
 //      new FunK[(A, B), A] {
 //        override type TypeA[a] = ???
 //        override type TypeB[a] = ???
@@ -156,14 +157,14 @@ private[categories] object SemicategoryHelpers {
 //        override def eqB = ???
 //        override def instance = ???
 //      }
-    override def snd[A, B]: FunK[(A, B), B] = ???
-    override def diag[A]: FunK[A, (A, A)] = ???
+    override def snd[A, B: TC]: FunK[(A, B), B] = ???
+    override def diag[A: TC]: FunK[A, (A, A)] = ???
     override def &&&[X, Y, Z](f: FunK[X, Y], g: FunK[X, Z]): FunK[X, (Y, Z)] = ???
     override def braid[A, B]: FunK[(A, B), (B, A)] = ???
-    override def idl[A]: FunK[(TypeF[UnitK], A), A] = ???
-    override def coidl[A]: FunK[A, (TypeF[UnitK], A)] = ???
-    override def idr[A]: FunK[(A, TypeF[UnitK]), A] = ???
-    override def coidr[A]: FunK[A, (A, TypeF[UnitK])] = ???
+    override def idl  [A: TC]: FunK[(TypeF[UnitK], A), A] = ???
+    override def coidl[A: TC]: FunK[A, (TypeF[UnitK], A)] = ???
+    override def idr  [A: TC]: FunK[(A, TypeF[UnitK]), A] = ???
+    override def coidr[A: TC]: FunK[A, (A, TypeF[UnitK])] = ???
     override def associate[X, Y, Z]: FunK[((X, Y), Z), (X, (Y, Z))] = ???
     override def diassociate[X, Y, Z]: FunK[(X, (Y, Z)), ((X, Y), Z)] = ???
   }
@@ -204,7 +205,9 @@ private[categories] object SemicategoryHelpers {
           .subst(ab.instance).apply
           .andThen(bc.instance.apply))
     }
-    override def apply[A, B]: FunK[(FunK[A, B], A), B] = ???
+
+
+    override def apply[A, B](implicit t: TC[A |-> B]) = ???
     def uncurry[A, B, C](f: FunK[A, B |-> C]): FunK[(A, B), C] = ???
     def curry[A, B, C](f: FunK[A ⊙ B, C]): FunK[A, FunK[B, C]] = ???
     def cartesian: Cartesian.Aux[FunK, Tuple2, IsTypeF, TypeF[UnitK]] = ???

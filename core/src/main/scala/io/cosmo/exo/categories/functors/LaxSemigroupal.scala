@@ -121,10 +121,10 @@ private object LaxSemigroupalHelpers {
     override def M2: Monoidal.Aux[* => *, (*, *), λ[a => Trivial.T1[F[a]]], F[Unit]] =
       new Monoidal.ProtoFromAssociative[* => *, (*, *), λ[a => Trivial.T1[F[a]]]](Associative[* => *, (*, *)]) {
         type Id = F[Unit]
-        def idl  [A]: ((Id, A)) => A = _._2
-        def coidl[A]: A => (Id, A)   = (F.unit, _)
-        def idr  [A]: ((A, Id)) => A = _._1
-        def coidr[A]: A => (A, Id)   = (_, F.unit)
+        def idl  [A: TC]: ((Id, A)) => A = _._2
+        def coidl[A: TC]: A => (Id, A)   = (F.unit, _)
+        def idr  [A: TC]: ((A, Id)) => A = _._1
+        def coidr[A: TC]: A => (A, Id)   = (_, F.unit)
       }
   }
 

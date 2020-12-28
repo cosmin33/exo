@@ -35,17 +35,17 @@ object KleisModule {
       }
 
 
-      override def fst[A, B]: ⨂[A, B] -> F[A] = cc.C.andThen(cc.fst[A, B], mon.pure[A])
-      override def snd[A, B]: ⨂[A, B] -> F[B] = cc.C.andThen(cc.snd[A, B], mon.pure[B])
+      override def fst[A: TC, B]: ⨂[A, B] -> F[A] = cc.C.andThen(cc.fst[A, B], mon.pure[A])
+      override def snd[A, B: TC]: ⨂[A, B] -> F[B] = cc.C.andThen(cc.snd[A, B], mon.pure[B])
 
-      override def diag[A]: A -> F[⨂[A, A]] = cc.C.andThen(cc.diag[A], mon.pure[⨂[A, A]])
+      override def diag[A: TC]: A -> F[⨂[A, A]] = cc.C.andThen(cc.diag[A], mon.pure[⨂[A, A]])
 
       override def braid[A, B]: ⨂[A, B] -> F[⨂[B, A]] = ???
 
-      def idl[A] = ???
-      def coidl[A] = ???
-      def idr[A] = ???
-      def coidr[A] = ???
+      def idl  [A: TC] = ???
+      def coidl[A: TC] = ???
+      def idr  [A: TC] = ???
+      def coidr[A: TC] = ???
 
       def C: Subcat.Aux[λ[(a, b) => a -> F[b]], cc.TC] = ???
 

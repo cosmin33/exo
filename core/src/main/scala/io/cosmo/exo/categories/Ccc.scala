@@ -17,36 +17,33 @@ trait Ccc[->[_, _]] extends Subcat[->] {
   def rcurry  [A, B, C](f: (A ⊙ B) -> C): B -> (A |-> C) = curry(compose(f, cartesian.swap))
   def runcurry[A, B, C](f: B -> (A |-> C)): (A ⊙ B) -> C = compose(uncurry(f), cartesian.swap)
 
-  /** identity without the need to provide the typeclass; possible because of the cartesian structure; to be removed */
-  def id_[A]: A -> A = andThen(cartesian.diag[A], cartesian.fst[A, A])
+  def apply  [A, B](implicit t: TC[A |-> B]): ⊙[A |-> B, A] -> B = uncurry(id[A |-> B])
+  def unapply[A, B](implicit t: TC[⊙[A, B]]): A -> (B |-> (A ⊙ B)) = curry(id[⊙[A, B]])
 
-  def apply  [A, B]: ⊙[A |-> B, A] -> B = uncurry(id_[A |-> B])
-  def unapply[A, B]: A -> (B |-> (A ⊙ B)) = curry(id_[⊙[A, B]])
-  def apply1  [A, B](implicit t: TC[A |-> B]): ⊙[A |-> B, A] -> B = uncurry(id[A |-> B])
-  def unapply1[A, B](implicit t: TC[⊙[A, B]]): A -> (B |-> (A ⊙ B)) = curry(id[⊙[A, B]])
+//  def const[A, B, C](f: B -> C): A -> (B |-> C) = curry(andThen(cartesian.snd[A, B], f))
+  def const[A: TC, B: TC, C](f: B -> C): A -> (B |-> C) = curry(andThen(cartesian.snd[A, B], f))
 
-  def const[A, B, C](f: B -> C): A -> (B |-> C) = curry(andThen(cartesian.snd[A, B], f))
-  def const1[A: TC, B: TC, C](f: B -> C): A -> (B |-> C) = curry(andThen(cartesian.snd1[A, B], f))
-
-  def thing[A, B](in: ProductId -> (A |-> B)): A -> B = andThen(cartesian.coidl[A], uncurry(in))
-  def thing1[A: TC, B](in: ProductId -> (A |-> B)): A -> B = andThen(cartesian.coidl1[A], uncurry(in))
+//  def thing[A, B](in: ProductId -> (A |-> B)): A -> B = andThen(cartesian.coidl[A], uncurry(in))
+  def thing[A: TC, B](in: ProductId -> (A |-> B)): A -> B = andThen(cartesian.coidl[A], uncurry(in))
 
   /** Iso between ''PId -> (A |-> B)'' and ''A -> B'''' */
-  def isoConstThing[A, B]: (ProductId -> (A |-> B)) <=> (A -> B) = Iso.unsafe(thing, const)
-//  def isoConstThing1[A: TC, B: TC]: (ProductId -> (A |-> B)) <=> (A -> B) = Iso.unsafe(thing1, const1(_)(implicitly[TC[A]], implicitly[TC[B]]))
-  def isoConstThing1[A, B](implicit
+  def isoConstThing[A, B](implicit
     ta: TC[A],
     term: Terminal.Aux[->, TC, ProductId]
   ): (ProductId -> (A |-> B)) <=> (A -> B) =
-    Iso.unsafe(thing1(_)(ta), const1(_)(term.terminalTC, ta))
+    Iso.unsafe(thing(_)(ta), const(_)(term.terminalTC, ta))
 
-  def precmp [A, B, C](f: A -> B): (C |-> A) -> (C |-> B) = curry(andThen(apply[C, A], f))
-  def postcmp[A, B, C](f: A -> B): (B |-> C) -> (A |-> C) =
-    curry(andThen(cartesian.grouped(id_[B |-> C], f), apply[B, C]))
+  def precmp [A, B, C](f: A -> B)(implicit t: TC[C |-> A]): (C |-> A) -> (C |-> B) = curry(andThen(apply[C, A], f))
+  def postcmp[A, B, C](f: A -> B)(implicit t: TC[B |-> C]): (B |-> C) -> (A |-> C) =
+    curry(andThen(cartesian.grouped(id[B |-> C], f), apply[B, C]))
 
-  def promap1[A, B, C, D](f: A -> B, g: C -> D): (D |-> A) -> (C |-> B) =
+  def promap1[A, B, C, D](f: A -> B, g: C -> D)(implicit
+    tca: TC[C |-> A], tda: TC[D |-> A]
+  ): (D |-> A) -> (C |-> B) =
     compose(precmp[A, B, C](f), postcmp[C, D, A](g))
-  def promap2[A, B, C, D](f: A -> B, g: C -> D): (B |-> C) -> (A |-> D) = promap1(g, f)
+  def promap2[A, B, C, D](f: A -> B, g: C -> D)(implicit
+    tac: TC[A |-> C], tbc: TC[B |-> C]
+  ): (B |-> C) -> (A |-> D) = promap1(g, f)
 
   // Cartesian Closed Functor Laws: (to be deleted once I code the functor)
   // F(B -> A) => F(B) -> F(A)

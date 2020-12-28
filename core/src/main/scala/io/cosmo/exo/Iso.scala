@@ -281,10 +281,10 @@ private[exo] object IsoHelperTraits {
   trait IsoMonoidal[->[_,_], ⊙[_,_], T[_], I] extends Monoidal[Iso[->, *, *], ⊙] with IsoAssoc[->, T, ⊙] {
     def A: Monoidal.Aux[->, ⊙, T, I]
     type Id = I
-    def idl[A]:   Iso[->, I ⊙ A, A  ] = Iso.unsafe(A.idl[A], A.coidl[A])(A.C)
-    def coidl[A]: Iso[->,   A, I ⊙ A] = Iso.unsafe(A.coidl[A], A.idl[A])(A.C)
-    def idr[A]:   Iso[->, A ⊙ I, A  ] = Iso.unsafe(A.idr[A], A.coidr[A])(A.C)
-    def coidr[A]: Iso[->,   A, A ⊙ I] = Iso.unsafe(A.coidr[A], A.idr[A])(A.C)
+    def idl[A: TC]:   Iso[->, I ⊙ A, A  ] = Iso.unsafe(A.idl[A], A.coidl[A])(A.C)
+    def coidl[A: TC]: Iso[->,   A, I ⊙ A] = Iso.unsafe(A.coidl[A], A.idl[A])(A.C)
+    def idr[A: TC]:   Iso[->, A ⊙ I, A  ] = Iso.unsafe(A.idr[A], A.coidr[A])(A.C)
+    def coidr[A: TC]: Iso[->,   A, A ⊙ I] = Iso.unsafe(A.coidr[A], A.idr[A])(A.C)
   }
 
 }

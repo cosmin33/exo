@@ -23,6 +23,18 @@ object Subcat {
 
 }
 
+trait SubcatHasId[->[_,_], A] {
+  type TC[_]
+  val s: Subcat.Aux[->, TC]
+  val t: TC[A]
+  def id: A -> A = s.id(t)
+}
+object SubcatHasId {
+  implicit def impHasId[->[_,_], A, T[_]](implicit sub: Subcat.Aux[->, T], tc: T[A]): SubcatHasId[->, A] =
+    new SubcatHasId[->, A] { type TC[a] = T[a]; val s = sub; val t = tc }
+}
+
+
 trait SubcategorySyntax {
   implicit final class ToCategoryOps[->[_, _], B, C](self: B -> C) {
     def compose[A](f: A -> B)(implicit ev: Semicategory[->]): A -> C = macro ops.Ops.ia_1

@@ -50,8 +50,8 @@ object Exobifunctor extends ExobifunctorInstances {
     new Exobifunctor[==>, -->, >->, Bi] {
       def bimap[A, X, B, Y](left: A ==> X, right: B --> Y): Bi[A, B] >-> Bi[X, Y] =
         Semicategory[>->].andThen(leftMap[A, B, X](left), rightMap[X, B, Y](right))
-      def leftMap[A, B, Z](fn: A ==> Z): Bi[A, B] >-> Bi[Z, B] = l.apply[B].map(fn)
-      def rightMap[A, B, Z](fn: B --> Z): Bi[A, B] >-> Bi[A, Z] = r.apply[A].map(fn)
+      def leftMap [A, B, Z](fn: A ==> Z): Bi[A, B] >-> Bi[Z, B] = l[B].map(fn)
+      def rightMap[A, B, Z](fn: B --> Z): Bi[A, B] >-> Bi[A, Z] = r[A].map(fn)
     }
   }
 

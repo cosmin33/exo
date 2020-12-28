@@ -106,10 +106,10 @@ private[instances] object DualHelpers {
   trait OppMonoidal[->[_,_], P[_,_], C[_], I] extends OppAssociative[->, P, C] with Monoidal[Opp[->]#l, P] {
     type Id = I
     protected def A: Monoidal.Aux[->, P, C, I]
-    def idl[A]: A -> P[I, A] = A.coidl
-    def coidl[A]: P[I, A] -> A = A.idl
-    def idr[A]: A -> P[A, I] = A.coidr
-    def coidr[A]: P[A, I] -> A = A.idr
+    def idl  [A: TC]: A -> P[I, A] = A.coidl
+    def coidl[A: TC]: P[I, A] -> A = A.idl
+    def idr  [A: TC]: A -> P[A, I] = A.coidr
+    def coidr[A: TC]: P[A, I] -> A = A.idr
   }
 
   trait OppCartesian[->[_,_], P[_,_], C[_], I] extends OppMonoidal[->, P, C, I] with Cartesian[Opp[->]#l, P] {

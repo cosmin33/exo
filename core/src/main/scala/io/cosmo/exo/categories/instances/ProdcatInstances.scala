@@ -139,10 +139,10 @@ private[instances] object ProdcatHelpers {
     protected def a1: Monoidal.Aux[==>, P, TC0, I]
     protected def a2: Monoidal.Aux[-->, P, TC0, I]
     type Id = I
-    def idl[A] = (a1.idl, a2.idl)
-    def coidl[A] = (a1.coidl, a2.coidl)
-    def idr[A] = (a1.idr, a2.idr)
-    def coidr[A] = (a1.coidr, a2.coidr)
+    def idl  [A: TC] = (a1.idl, a2.idl)
+    def coidl[A: TC] = (a1.coidl, a2.coidl)
+    def idr  [A: TC] = (a1.idr, a2.idr)
+    def coidr[A: TC] = (a1.coidr, a2.coidr)
   }
 
   trait ProdcatBraided[==>[_,_], -->[_,_], P[_,_], TC0[_]]
@@ -161,9 +161,9 @@ private[instances] object ProdcatHelpers {
   {
     protected def a1: Cartesian.Aux[==>, P, TC0, I]
     protected def a2: Cartesian.Aux[-->, P, TC0, I]
-    def fst[A, B] = (a1.fst, a2.fst)
-    def snd[A, B] = (a1.snd, a2.snd)
-    def diag[A] = (a1.diag, a2.diag)
+    def fst[A: TC, B] = (a1.fst, a2.fst)
+    def snd[A, B: TC] = (a1.snd, a2.snd)
+    def diag[A: TC] = (a1.diag, a2.diag)
     def &&&[X, Y, Z](f: (X ==> Y, X --> Y), g: (X ==> Z, X --> Z)) = (a1.&&&(f._1, g._1), a2.&&&(f._2, g._2))
   }
 
@@ -195,7 +195,6 @@ private[instances] object ProdcatHelpers {
     type ⊙[a, b] = P[a, b]
     type ProductId = PI
     def cartesian = prodcatCartesian[==>, -->, P, TC0, PI](s1.cartesian, s2.cartesian)
-    override def apply[A, B]: (⊙[A |-> B, A] ==> B, ⊙[A |-> B, A] --> B) = (s1.apply, s2.apply)
     def uncurry[A, B, C](f: (A ==> (B |-> C), A --> (B |-> C))) = (s1.uncurry[A, B, C](f._1), s2.uncurry[A, B, C](f._2))
     def curry[A, B, C](f: (⊙[A, B] ==> C, ⊙[A, B] --> C)) = (s1.curry(f._1), s2.curry(f._2))
   }
