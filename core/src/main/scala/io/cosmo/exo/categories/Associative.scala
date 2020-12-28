@@ -15,13 +15,13 @@ trait Associative[->[_, _], ⊙[_, _]] {
   def C: Subcat.Aux[->, TC]
   def bifunctor: Endobifunctor[->, ⊙]
 
-  def associate  [X, Y, Z]: ⊙[⊙[X, Y], Z] -> ⊙[X, ⊙[Y, Z]]
-  def diassociate[X, Y, Z]: ⊙[X, ⊙[Y, Z]] -> ⊙[⊙[X, Y], Z]
+  def associate  [X: TC, Y: TC, Z: TC]: ⊙[⊙[X, Y], Z] -> ⊙[X, ⊙[Y, Z]]
+  def diassociate[X: TC, Y: TC, Z: TC]: ⊙[X, ⊙[Y, Z]] -> ⊙[⊙[X, Y], Z]
 
   def grouped[A, B, X, Y](f: A -> B, g: X -> Y): ⊙[A, X] -> ⊙[B, Y] = bifunctor.bimap(f, g)
 
   private type <->[a, b] = Iso[->, a, b]
-  def isoAssociator[X, Y, Z]: ⊙[⊙[X, Y], Z] <-> ⊙[X, ⊙[Y, Z]] = Iso.unsafe(associate[X,Y,Z], diassociate[X,Y,Z])(C)
+  def isoAssociator[X: TC, Y: TC, Z: TC]: ⊙[⊙[X, Y], Z] <-> ⊙[X, ⊙[Y, Z]] = Iso.unsafe(associate[X,Y,Z], diassociate[X,Y,Z])(C)
 }
 
 object Associative extends AssociativeImplicits {
@@ -35,8 +35,8 @@ object Associative extends AssociativeImplicits {
     type TC[a] = Tc[a]
     val C = cat
     val bifunctor = bif
-    def associate  [X, Y, Z] = i.apply[X, Y, Z].to
-    def diassociate[X, Y, Z] = i.apply[X, Y, Z].from
+    def associate  [X: TC, Y: TC, Z: TC] = i.apply[X, Y, Z].to
+    def diassociate[X: TC, Y: TC, Z: TC] = i.apply[X, Y, Z].from
   }
 
   def apply[->[_,_], ⊙[_,_]](implicit assoc: Associative[->, ⊙]): Associative.Aux[->, ⊙, assoc.TC] = assoc
@@ -49,15 +49,15 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
         type ->[a, b] = a => b
         def C: Subcat.AuxT[* => *] = Semicategory.function1
         def bifunctor = Exobifunctor.tuple2Endobifunctor
-        def associate  [X, Y, Z]: ((X, Y), Z) -> (X, (Y, Z)) = { case ((x, y), z) => (x, (y, z)) }
-        def diassociate[X, Y, Z]: (X, (Y, Z)) -> ((X, Y), Z) = { case (x, (y, z)) => ((x, y), z) }
+        def associate  [X: Trivial.T1, Y: Trivial.T1, Z: Trivial.T1]: ((X, Y), Z) -> (X, (Y, Z)) = { case ((x, y), z) => (x, (y, z)) }
+        def diassociate[X: Trivial.T1, Y: Trivial.T1, Z: Trivial.T1]: (X, (Y, Z)) -> ((X, Y), Z) = { case (x, (y, z)) => ((x, y), z) }
         def braid[A, B]: ((A, B)) => (B, A) = { case (a, b) => (b, a) }
         def coidl[A: TC]: A -> (Unit, A) = a => ((), a)
         def coidr[A: TC]: A -> (A, Unit) = a => (a, ())
         def idr[A: TC]: (A, Unit) -> A = { case (a, _) => a }
         def idl[A: TC]: (Unit, A) -> A = { case (_, a) => a }
-        def fst[A: TC, B]: (A, B) -> A = { case (a, _) => a }
-        def snd[A, B: TC]: (A, B) -> B = { case (_, b) => b }
+        def fst[A: TC, B: TC]: (A, B) -> A = { case (a, _) => a }
+        def snd[A: TC, B: TC]: (A, B) -> B = { case (_, b) => b }
         def &&&[X, Y, Z](f: X -> Y, g: X -> Z): X -> (Y, Z) = x => (f(x), g(x))
         def diag[A: TC]: A -> (A, A) = a => (a, a)
         override def grouped[A, B, X, Y](f: A => B, g: X => Y): ((A, X)) => (B, Y) =
@@ -73,15 +73,15 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
       new Cartesian.Proto[Opp[* => *]#l, \/, Trivial.T1, Void] {
         def C: Subcat.AuxT[Opp[* => *]#l] = DualModule.oppSubcat(implicitly[Subcat.Aux[* => *, Trivial.T1]])
         def bifunctor = DualModule.oppEndobifunctor(Endobifunctor[* => *, \/])
-        def diassociate[X, Y, Z]: (X \/ Y \/ Z) => (X \/ (Y \/ Z)) = _.fold(_.fold(_.left[Y \/ Z], _.left[Z].right[X]), _.right[Y].right[X])
-        def associate  [X, Y, Z]: (X \/ (Y \/ Z)) => (X \/ Y \/ Z) = _.fold(_.left[Y].left[Z], _.fold(_.right[X].left[Z], _.right[X \/ Y]))
+        def diassociate[X: Trivial.T1, Y: Trivial.T1, Z: Trivial.T1]: (X \/ Y \/ Z) => (X \/ (Y \/ Z)) = _.fold(_.fold(_.left[Y \/ Z], _.left[Z].right[X]), _.right[Y].right[X])
+        def associate  [X: Trivial.T1, Y: Trivial.T1, Z: Trivial.T1]: (X \/ (Y \/ Z)) => (X \/ Y \/ Z) = _.fold(_.left[Y].left[Z], _.fold(_.right[X].left[Z], _.right[X \/ Y]))
         def braid[A, B]: (B \/ A) => (A \/ B) = _.fold(_.right, _.left)
         def coidr[A: TC]: (A \/ Void) => A = _.fold[A](identity, identity)
         def coidl[A: TC]: (Void \/ A) => A = _.fold[A](identity, identity)
         def idl[A: TC]: A => (Void \/ A) = _.right
         def idr[A: TC]: A => (A \/ Void) = _.left
-        def fst[A: TC, B]: A => (A \/ B) = _.left
-        def snd[A, B: TC]: B => (A \/ B) = _.right
+        def fst[A: TC, B: TC]: A => (A \/ B) = _.left
+        def snd[A: TC, B: TC]: B => (A \/ B) = _.right
         def diag[A: TC]: (A \/ A) => A = _.fold[A](identity, identity)
         def &&&[X, Y, Z](f: Y => X, g: Z => X): (Y \/ Z) => X = _.fold(f, g)
         //// overrides for performance
@@ -139,8 +139,8 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
         def rightMap[A, B, Z](fn: Inject[Z, B]): Inject[A \/ Z, A \/ B] = ???
         override def bimap[A, X, B, Y](left: Inject[X, A], right: Inject[Y, B]): Inject[X \/ Y, A \/ B] = ???
       }
-      def associate  [X, Y, Z]: Inject[X \/ (Y \/ Z), X \/ Y \/ Z] = ???
-      def diassociate[X, Y, Z]: Inject[X \/ Y \/ Z, X \/ (Y \/ Z)] = ???
+      def associate  [X: TC, Y: TC, Z: TC]: Inject[X \/ (Y \/ Z), X \/ Y \/ Z] = ???
+      def diassociate[X: TC, Y: TC, Z: TC]: Inject[X \/ Y \/ Z, X \/ (Y \/ Z)] = ???
     }
 
 
@@ -175,17 +175,6 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
       }
 
       def bifunctor: Endobifunctor[Inject, (*, *)] = new Endobifunctor[Inject, (*, *)] {
-        val L, R, C = Semicategory.injSubcat
-        def leftMap [A, B, Z](fn:  Inject[A, Z]): Inject[(A, B), (Z, B)] =
-          new Inject[(A, B), (Z, B)] {
-            val inj: ((A, B)) => (Z, B) = { case (a, b) => (fn(a), b) }
-            val prj: ((Z, B)) => Option[(A, B)] = { case (z, b) => fn.prj(z).map((_, b)) }
-          }
-        def rightMap[A, B, Z](fn:  Inject[B, Z]): Inject[(A, B), (A, Z)] =
-          new Inject[(A, B), (A, Z)] {
-            val inj: ((A, B)) => (A, Z) = { case (a, b) => (a, fn(b)) }
-            val prj: ((A, Z)) => Option[(A, B)] = { case (a, z) => fn.prj(z).map((a, _)) }
-          }
         override def bimap[A, X, B, Y](left: Inject[A, X], right: Inject[B, Y]): Inject[(A, B), (X, Y)] =
           new Inject[(A, B), (X, Y)] {
             val inj: ((A, B)) => (X, Y)         = ab => (left(ab._1), right(ab._2))
@@ -193,12 +182,12 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
           }
       }
 
-      def associate[X, Y, Z]: Inject[((X, Y), Z), (X, (Y, Z))] = new Inject[((X, Y), Z), (X, (Y, Z))] {
+      def associate[X: TC, Y: TC, Z: TC]: Inject[((X, Y), Z), (X, (Y, Z))] = new Inject[((X, Y), Z), (X, (Y, Z))] {
         val inj: (((X, Y), Z)) => (X, (Y, Z)) = { case ((x, y), z) => (x, (y, z)) }
         val prj: ((X, (Y, Z))) => Option[((X, Y), Z)] = { case (x, (y, z)) => ((x, y), z).some }
       }
 
-      def diassociate[X, Y, Z]: Inject[(X, (Y, Z)), ((X, Y), Z)] = new Inject[(X, (Y, Z)), ((X, Y), Z)] {
+      def diassociate[X: TC, Y: TC, Z: TC]: Inject[(X, (Y, Z)), ((X, Y), Z)] = new Inject[(X, (Y, Z)), ((X, Y), Z)] {
         val inj: ((X, (Y, Z))) => ((X, Y), Z) = { case (x, (y, z)) => ((x, y), z) }
         val prj: (((X, Y), Z)) => Option[(X, (Y, Z))] = { case ((x, y), z) => (x, (y, z)).some }
       }

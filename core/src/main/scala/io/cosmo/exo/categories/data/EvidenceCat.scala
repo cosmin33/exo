@@ -1,6 +1,6 @@
 package io.cosmo.exo.categories.data
 
-import io.cosmo.exo.categories.functors.LaxSemigroupal
+import io.cosmo.exo.categories.functors.{LaxSemigroupal, OplaxSemigroupal}
 import io.cosmo.exo.categories.{Cartesian, Endobifunctor, Groupoid, Monoidal, Subcat}
 import io.cosmo.exo.{/\, <=>, Iso, ~>}
 
@@ -48,7 +48,7 @@ object EvidenceCat {
 
   def more1[T[_], I](implicit
     ti: T[I],
-    L: LaxSemigroupal[* => *, /\, * => *, /\, T]
+    L: LaxSemigroupal[* => *, /\, * => *, /\, T],
   ) = {
     new Cartesian[EvidenceCat[T,*,*], /\] {
       type TC[x] = T[x]
@@ -59,15 +59,13 @@ object EvidenceCat {
       def coidl[A: TC]: EvidenceCat[T, A, I /\ A] = fromImplicits
       def idr  [A: TC]: EvidenceCat[T, A /\ I, A] = fromImplicits
       def coidr[A: TC]: EvidenceCat[T, A, A /\ I] = fromImplicits
-      def associate[X, Y, Z]: EvidenceCat[T, X /\ Y /\ Z, X /\ (Y /\ Z)] = {
-        //EvidenceCat[T, X /\ Y /\ Z, X /\ (Y /\ Z)]()
-        ???
-      }
-      def diassociate[X, Y, Z]: EvidenceCat[T, X /\ (Y /\ Z), X /\ Y /\ Z] = ???
-      def fst[A: TC, B]: EvidenceCat[T, A /\ B, A] = ???
-      def snd[A, B: TC]: EvidenceCat[T, A /\ B, B] = ???
-      def diag[A: TC]: EvidenceCat[T, A, A /\ A] = ???
-      def &&&[X, Y, Z](f: EvidenceCat[T, X, Y], g: EvidenceCat[T, X, Z]): EvidenceCat[T, X, Y /\ Z] = ???
+      def associate  [X: TC, Y: TC, Z: TC]: EvidenceCat[T, X /\ Y /\ Z, X /\ (Y /\ Z)] = EvidenceCat.fromImplicits
+      def diassociate[X: TC, Y: TC, Z: TC]: EvidenceCat[T, X /\ (Y /\ Z), X /\ Y /\ Z] = EvidenceCat.fromImplicits
+      def fst[A: TC, B: TC]: EvidenceCat[T, A /\ B, A] = EvidenceCat.fromImplicits
+      def snd[A: TC, B: TC]: EvidenceCat[T, A /\ B, B] = EvidenceCat.fromImplicits
+      def diag[A: TC]: EvidenceCat[T, A, A /\ A] = EvidenceCat.fromImplicits
+      def &&&[X, Y, Z](f: EvidenceCat[T, X, Y], g: EvidenceCat[T, X, Z]): EvidenceCat[T, X, Y /\ Z] =
+        EvidenceCat[T, X, Y /\ Z](f.left, L.product[Y, Z](/\(f.right, g.right)))
       def braid[A, B]: EvidenceCat[T, A /\ B, B /\ A] = ???
     }
   }

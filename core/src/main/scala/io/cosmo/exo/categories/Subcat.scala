@@ -50,24 +50,29 @@ trait SubcategorySyntax {
 
     def flipped(implicit C: Groupoid[->]): C -> B = C.flip(self)
 
-    def associateR[X, Y, Z, F[_, _]](implicit
-      A: Associative[->, F], ev: C === F[F[X, Y], Z]
+    def associateR[X, Y, Z, F[_, _], TC[_]](implicit
+      A: Associative.Aux[->, F, TC], ev: C === F[F[X, Y], Z], c: Subcat.Aux[->, TC],
+      tx: TC[X], ty: TC[Y], tz: TC[Z]
     ): B -> F[X, F[Y, Z]] = A.C.andThen(ev.subst[λ[X => B -> X]](self), A.associate[X, Y, Z])
 
-    def diassociateR[X, Y, Z, F[_, _]](implicit
-      A: Associative[->, F], ev: C === F[X, F[Y, Z]]
+    def diassociateR[X, Y, Z, F[_, _], TC[_]](implicit
+      A: Associative.Aux[->, F, TC], ev: C === F[X, F[Y, Z]], c: Subcat.Aux[->, TC],
+      tx: TC[X], ty: TC[Y], tz: TC[Z]
     ): B -> F[F[X, Y], Z] = A.C.andThen(ev.subst[λ[X => B -> X]](self), A.diassociate[X, Y, Z])
 
-    def braidR[X, Y, ⊙[_, _]](implicit
-      B: Braided[->, ⊙], ev: C === ⊙[X, Y]
-    ): B -> ⊙[Y, X] = B.C.andThen(ev.subst[λ[X => B -> X]](self), B.braid[X, Y])
-
-    def curry[P[_, _], X, Y, Z, E[_,_]](f: P[X, Y] -> Z)(implicit
-      C: Ccc[->] {type ⊙[a, b] = P[a, b]; type |->[a, b] = E[a, b]}
-    ): X -> E[Y, Z] = C.curry(f)
-
-    def uncurry[X, Y, Z, P[_, _], E[_, _]](f: X -> E[Y, Z])(implicit
-      C: Ccc[->] {type ⊙[a, b] = P[a, b]; type |->[a, b] = E[a, b]}
-    ): P[X, Y] -> Z = C.uncurry(f)
+//    def braidR[X, Y, ⊙[_, _]](implicit
+//      B: Braided[->, ⊙], ev: C === ⊙[X, Y], c: Subcat.Aux[->, TC],
+//      tx: TC[X], ty: TC[Y], tz: TC[Z]
+//    ): B -> ⊙[Y, X] = B.C.andThen(ev.subst[λ[X => B -> X]](self), B.braid[X, Y])
+//
+//    def curry[P[_, _], X, Y, Z, E[_,_]](f: P[X, Y] -> Z)(implicit
+//      C: Ccc[->] {type ⊙[a, b] = P[a, b]; type |->[a, b] = E[a, b]}, c: Subcat.Aux[->, TC],
+//      tx: TC[X], ty: TC[Y], tz: TC[Z]
+//    ): X -> E[Y, Z] = C.curry(f)
+//
+//    def uncurry[X, Y, Z, P[_, _], E[_, _]](f: X -> E[Y, Z])(implicit
+//      C: Ccc[->] {type ⊙[a, b] = P[a, b]; type |->[a, b] = E[a, b]}, c: Subcat.Aux[->, TC],
+//      tx: TC[X], ty: TC[Y], tz: TC[Z]
+//    ): P[X, Y] -> Z = C.uncurry(f)
   }
 }

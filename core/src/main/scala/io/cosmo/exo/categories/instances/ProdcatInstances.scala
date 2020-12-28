@@ -123,8 +123,8 @@ private[instances] object ProdcatHelpers {
     type TC[a] = TC0[a]
     def C = prodcatSubcat[==>, -->, TC0](a1.C, a2.C)
     def bifunctor = prodcatEndobifunctor(a1.bifunctor, a2.bifunctor)
-    def associate  [X, Y, Z] = (a1.associate, a2.associate)
-    def diassociate[X, Y, Z] = (a1.diassociate, a2.diassociate)
+    def associate  [X: TC, Y: TC, Z: TC] = (a1.associate, a2.associate)
+    def diassociate[X: TC, Y: TC, Z: TC] = (a1.diassociate, a2.diassociate)
   }
 
   trait ProdcatMonoidal[==>[_,_], -->[_,_], P[_,_], TC0[_], I]
@@ -156,8 +156,8 @@ private[instances] object ProdcatHelpers {
   {
     protected def a1: Cartesian.Aux[==>, P, TC0, I]
     protected def a2: Cartesian.Aux[-->, P, TC0, I]
-    def fst[A: TC, B] = (a1.fst, a2.fst)
-    def snd[A, B: TC] = (a1.snd, a2.snd)
+    def fst[A: TC, B: TC] = (a1.fst, a2.fst)
+    def snd[A: TC, B: TC] = (a1.snd, a2.snd)
     def diag[A: TC] = (a1.diag, a2.diag)
     def &&&[X, Y, Z](f: (X ==> Y, X --> Y), g: (X ==> Z, X --> Z)) = (a1.&&&(f._1, g._1), a2.&&&(f._2, g._2))
   }

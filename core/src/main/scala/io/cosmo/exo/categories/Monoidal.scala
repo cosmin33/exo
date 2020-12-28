@@ -28,8 +28,8 @@ object Monoidal extends MonoidalInstances {
     type TC[a] = TC0[a]
     val C: Subcat.Aux[->, TC0] = A.C
     val bifunctor = A.bifunctor
-    def associate  [X, Y, Z] = A.associate
-    def diassociate[X, Y, Z] = A.diassociate
+    def associate  [X: TC, Y: TC, Z: TC] = A.associate
+    def diassociate[X: TC, Y: TC, Z: TC] = A.diassociate
   }
 
 }

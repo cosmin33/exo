@@ -89,8 +89,8 @@ private[instances] object DualHelpers {
     type TC[a] = C[a]
     def C = oppSubcat[->, C](A.C)
     def bifunctor = oppEndobifunctor(A.bifunctor)
-    def associate  [X, Y, Z]: P[X, P[Y, Z]] -> P[P[X, Y], Z] = A.diassociate
-    def diassociate[X, Y, Z]: P[P[X, Y], Z] -> P[X, P[Y, Z]] = A.associate
+    def associate  [X: TC, Y: TC, Z: TC]: P[X, P[Y, Z]] -> P[P[X, Y], Z] = A.diassociate
+    def diassociate[X: TC, Y: TC, Z: TC]: P[P[X, Y], Z] -> P[X, P[Y, Z]] = A.associate
   }
 
   trait OppBraided[->[_,_], P[_,_], C[_]] extends OppAssociative[->, P, C] with Braided[Opp[->]#l, P] {

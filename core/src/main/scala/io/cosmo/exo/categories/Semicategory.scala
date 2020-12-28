@@ -127,7 +127,6 @@ private[categories] object SemicategoryHelpers {
     def cocartesian = Associative.cocartesianFn1EitherDual
     def id[A](implicit A: TC[A]): A => A = identity
     def andThen[A, B, C](ab: A => B, bc: B => C): A => C = bc.compose(ab)
-    //override def apply[A, B]: ((A => B, A)) => B = { case (ab, a) => ab(a) }
     override def apply[A, B](implicit t: TC[A |-> B]): ((A => B, A)) => B = { case (ab, a) => ab(a) }
     def curry[X, Y, Z](f: ((X, Y)) => Z): X => (Y => Z) = x => y => f((x, y))
     def uncurry[X, Y, Z](f: X => (Y => Z)): ⊙[X, Y] => Z = { case (x, y) => f(x)(y) }
@@ -144,15 +143,8 @@ private[categories] object SemicategoryHelpers {
     override type TC[a] = IsTypeF[a]
     override def C: Subcat.Aux[FunK, IsTypeF] = FunK.categ
     override def bifunctor: Endobifunctor[FunK, Tuple2] = ???
-    override def fst[A: TC, B]: FunK[(A, B), A] = ???
-//      new FunK[(A, B), A] {
-//        override type TypeA[a] = ???
-//        override type TypeB[a] = ???
-//        override def eqA = ???
-//        override def eqB = ???
-//        override def instance = ???
-//      }
-    override def snd[A, B: TC]: FunK[(A, B), B] = ???
+    override def fst[A: TC, B: TC]: FunK[(A, B), A] = ???
+    override def snd[A: TC, B: TC]: FunK[(A, B), B] = ???
     override def diag[A: TC]: FunK[A, (A, A)] = ???
     override def &&&[X, Y, Z](f: FunK[X, Y], g: FunK[X, Z]): FunK[X, (Y, Z)] = ???
     override def braid[A, B]: FunK[(A, B), (B, A)] = ???
@@ -160,8 +152,8 @@ private[categories] object SemicategoryHelpers {
     override def coidl[A: TC]: FunK[A, (TypeF[UnitK], A)] = ???
     override def idr  [A: TC]: FunK[(A, TypeF[UnitK]), A] = ???
     override def coidr[A: TC]: FunK[A, (A, TypeF[UnitK])] = ???
-    override def associate[X, Y, Z]: FunK[((X, Y), Z), (X, (Y, Z))] = ???
-    override def diassociate[X, Y, Z]: FunK[(X, (Y, Z)), ((X, Y), Z)] = ???
+    override def associate  [X: TC, Y: TC, Z: TC]: FunK[((X, Y), Z), (X, (Y, Z))] = ???
+    override def diassociate[X: TC, Y: TC, Z: TC]: FunK[(X, (Y, Z)), ((X, Y), Z)] = ???
   }
 
   trait FunKClass
