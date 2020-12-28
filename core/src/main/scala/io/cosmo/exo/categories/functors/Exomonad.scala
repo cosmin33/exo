@@ -4,6 +4,8 @@ import cats._
 import io.cosmo.exo._
 import io.cosmo.exo.categories.Endofunctor
 
+import scala.annotation.tailrec
+
 trait Exomonad[->[_,_], I[_], F[_]] extends Endofunctor[->, F] {
   def I: Endofunctor[->, I]
   def pure[A]: I[A] -> F[A]
@@ -25,7 +27,8 @@ object Exomonad {
         new Monad[F] {
           def pure[A](x: A): F[A] = F.pure.apply(x)
           def flatMap[A, B](fa: F[A])(f: A => F[B]): F[B] = F.bind[A, B](f).apply(fa)
-          def tailRecM[A, B](a: A)(f: A => F[Either[A, B]]): F[B] = ???
+          //@tailrec
+          def tailRecM[A, B](a: A)(f: A => F[Either[A, B]]): F[B] = flatMap(f(a))(e => e.fold(tailRecM(_)(f), pure))
         }
     )
 

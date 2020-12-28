@@ -3,7 +3,7 @@ package io.cosmo.exo.evidence
 import io.cosmo.exo._
 import io.cosmo.exo.evidence.internal.Unsafe
 
-@SuppressWarnings(Array("org.wartremover.warts.AsInstanceOf"))
+/** Copied from alexknvl Leibniz library: https://github.com/alexknvl/leibniz */
 object Axioms {
   def predefEq[A, B](ab: A =:= B): A === B = Unsafe.is[A, B]
 

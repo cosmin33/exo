@@ -51,11 +51,11 @@ object IsK {
 
   lazy val forall = ForallK.of[λ[f[_] => f =~= f]].fromH(t => new Refl[t.T]())
 
-  type Canonic[F[_], G[_]] = ∀≈[λ[a[_[_]] => a[F] => a[G]]]
+  private type Canonic[F[_], G[_]] = ∀≈[λ[a[_[_]] => a[F] => a[G]]]
 
   def isoCanonic[F[_], G[_]]: Canonic[F, G] <=> (F =~= G) =
     Iso.unsafe(
-      fa => new IsK[F, G] { def subst[Alg[_[_]]](f: Alg[F]): Alg[G] = fa[Alg](f) },
+      fa => new IsK[F, G] { def subst[Alg[_[_]]](f: Alg[F]): Alg[G] = fa.apply[Alg](f) },
       ev => ∀≈.mk[Canonic[F, G]].from(ev.subst(_))
     )
 

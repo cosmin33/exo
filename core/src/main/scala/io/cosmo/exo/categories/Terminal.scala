@@ -4,7 +4,7 @@ import io.cosmo.exo.{<=>, Iso}
 
 trait Terminal[->[_, _]] extends Subcat[->] {
   type Terminal
-  def terminal : TC[Terminal]
+  def terminalTC : TC[Terminal]
 
   def terminate[A](implicit A: TC[A]): A -> Terminal
 }

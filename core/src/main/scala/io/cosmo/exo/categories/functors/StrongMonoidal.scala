@@ -4,7 +4,7 @@ import io.cosmo.exo.categories.Monoidal
 import io.cosmo.exo.{<=>, Iso}
 
 /** https://cstheory.stackexchange.com/questions/12412/explaining-applicative-functor-in-categorical-terms-monoidal-functors */
-trait StrongMonoidal[==>[_,_], ⊙[_,_], -->[_,_], ∪[_,_], F[_]] extends LaxMonoidal[==>, ⊙, -->, ∪, F] {
+trait StrongMonoidal[==>[_,_], =⊙[_,_], -->[_,_], -⊙[_,_], F[_]] extends LaxMonoidal[==>, =⊙, -->, -⊙, F] {
 //  def M1: Monoidal[==>, ⊙]
 //  def M2: Monoidal[-->, ∪]
 //

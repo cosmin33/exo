@@ -17,15 +17,28 @@ trait Ccc[->[_, _]] extends Subcat[->] {
   def rcurry  [A, B, C](f: (A ⊙ B) -> C): B -> (A |-> C) = curry(compose(f, cartesian.swap))
   def runcurry[A, B, C](f: B -> (A |-> C)): (A ⊙ B) -> C = compose(uncurry(f), cartesian.swap)
 
-  /** identity without the need to provide the typeclass; possible because of the cartesian structure */
+  /** identity without the need to provide the typeclass; possible because of the cartesian structure; to be removed */
   def id_[A]: A -> A = andThen(cartesian.diag[A], cartesian.fst[A, A])
 
   def apply  [A, B]: ⊙[A |-> B, A] -> B = uncurry(id_[A |-> B])
   def unapply[A, B]: A -> (B |-> (A ⊙ B)) = curry(id_[⊙[A, B]])
+  def apply1  [A, B](implicit t: TC[A |-> B]): ⊙[A |-> B, A] -> B = uncurry(id[A |-> B])
+  def unapply1[A, B](implicit t: TC[⊙[A, B]]): A -> (B |-> (A ⊙ B)) = curry(id[⊙[A, B]])
 
   def const[A, B, C](f: B -> C): A -> (B |-> C) = curry(andThen(cartesian.snd[A, B], f))
+  def const1[A: TC, B: TC, C](f: B -> C): A -> (B |-> C) = curry(andThen(cartesian.snd1[A, B], f))
 
   def thing[A, B](in: ProductId -> (A |-> B)): A -> B = andThen(cartesian.coidl[A], uncurry(in))
+  def thing1[A: TC, B](in: ProductId -> (A |-> B)): A -> B = andThen(cartesian.coidl1[A], uncurry(in))
+
+  /** Iso between ''PId -> (A |-> B)'' and ''A -> B'''' */
+  def isoConstThing[A, B]: (ProductId -> (A |-> B)) <=> (A -> B) = Iso.unsafe(thing, const)
+//  def isoConstThing1[A: TC, B: TC]: (ProductId -> (A |-> B)) <=> (A -> B) = Iso.unsafe(thing1, const1(_)(implicitly[TC[A]], implicitly[TC[B]]))
+  def isoConstThing1[A, B](implicit
+    ta: TC[A],
+    term: Terminal.Aux[->, TC, ProductId]
+  ): (ProductId -> (A |-> B)) <=> (A -> B) =
+    Iso.unsafe(thing1(_)(ta), const1(_)(term.terminalTC, ta))
 
   def precmp [A, B, C](f: A -> B): (C |-> A) -> (C |-> B) = curry(andThen(apply[C, A], f))
   def postcmp[A, B, C](f: A -> B): (B |-> C) -> (A |-> C) =

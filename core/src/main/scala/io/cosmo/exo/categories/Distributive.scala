@@ -13,6 +13,7 @@ trait Distributive[->[_, _]] extends Subcat[->] {
 
   /** (A, (B \/ C) => (A, B) \/ (A, C) */
   def distribute[A, B, C]: ⨂[A, ⨁[B, C]] -> ⨁[⨂[A, B], ⨂[A, C]]
+  def distribute1[A: TC, B: TC, C: TC]: ⨂[A, ⨁[B, C]] -> ⨁[⨂[A, B], ⨂[A, C]] = ???
 }
 object Distributive {
   type Aux[==>[_, _], =>#[_], P[_, _], PI, S[_, _], SI] = Distributive[==>] {

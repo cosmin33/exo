@@ -216,7 +216,7 @@ private[instances] object ProdcatHelpers {
     protected def s1: Initial.Aux[==>, C, I]
     protected def s2: Initial.Aux[-->, C, I]
     type Initial = I
-    def initial: C[I] = s1.initial
+    def initialTC: C[I] = s1.initialTC
     def initiate[A](implicit A: C[A]): (I ==> A, I --> A) = (s1.initiate, s2.initiate)
   }
 
@@ -227,7 +227,7 @@ private[instances] object ProdcatHelpers {
     protected def s1: Terminal.Aux[==>, C, T]
     protected def s2: Terminal.Aux[-->, C, T]
     type Terminal = T
-    def terminal = s1.terminal
+    def terminalTC = s1.terminalTC
     def terminate[A](implicit A: C[A]) = (s1.terminate, s2.terminate)
   }
 

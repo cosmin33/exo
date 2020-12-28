@@ -4,7 +4,7 @@ import io.cosmo.exo.{<=>, Iso}
 
 trait Initial[->[_, _]] extends Subcat[->] {
   type Initial
-  def initial : TC[Initial]
+  def initialTC : TC[Initial]
 
   def initiate[A](implicit A: TC[A]): Initial -> A
 }

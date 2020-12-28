@@ -19,13 +19,14 @@ object yoneda {
   /** yoneda lemma covariant (generic category) */
   def lemmaYoIso[->[_,_], ->#[_], A, F[_]](implicit
     C: Subcat.Aux[->, ->#], tc: ->#[A], E : Exo.Cov[->, F]
-//  ): ((A -> *) ~> F) <=> F[A] =
-  ): ∀[λ[x => A -> x => F[x]]] <=> F[A] =
+  ): ((A -> *) ~> F) <=> F[A] =
+//  ): ∀[λ[x => A -> x => F[x]]] <=> F[A] =
     Iso.unsafe(_[A](C.id), fa => ∀.of[λ[x => A -> x => F[x]]].from(E.map(_)(fa)))
   /** yoneda lemma contravariant (generic category) */
   def lemmaCoyoIso[->[_,_], ->#[_], A, F[_]](implicit
     C: Subcat.Aux[->, ->#], tc: ->#[A], E : Exo.Con[->, F]
-  ): ∀[λ[x => x -> A => F[x]]] <=> F[A] =
+  ): ((* -> A) ~> F) <=> F[A] =
+//  ): ∀[λ[x => x -> A => F[x]]] <=> F[A] =
     Iso.unsafe(_[A](C.id[A]), fa => ∀.of[λ[x => x -> A => F[x]]].from(xa => E.map(Dual(xa))(fa)))
 
   def yoEmbeddingCov[->[_,_], ->#[_], A, B](implicit
@@ -34,10 +35,6 @@ object yoneda {
   def yoEmbeddingCon[->[_,_], ->#[_], A, B](implicit
     C: Subcat.Aux[->, ->#], tc: ->#[A], E : Exo.Con[->, * -> B]
   ): ((* -> A) ~> (* -> B)) <=> (A -> B) = lemmaCoyoIso[->, ->#, A, * -> B]
-
-  def isoIndirectLiskov[A, B]: ((A <~< *) ~> (B <~< *)) <=> (B <~< A) = yoEmbeddingCov[<~<, Trivial.T1, A, B]
-  def isoIndirectLeibniz[A, B]: ((A === *) <~> (B === *)) <=> (A === B) =
-    yoCorol1Cov[===, Trivial.T1, A, B] andThen Groupoid.isoIso[===, B, A].flip andThen Groupoid.isoFlip
 
   def yoEmbedCovTo[->[_,_], ->#[_], A, B](fa: (A -> *) ~> (B -> *))(implicit
     C: Subcat.Aux[->, ->#], tc: ->#[A], E: Exo.Cov[->, B -> *]
@@ -63,23 +60,25 @@ object yoneda {
 
   def yoCorol1Cov[->[_,_], ->#[_], A, B](implicit
     C: Subcat.Aux[->, ->#], tca: ->#[A], tcb: ->#[B],
-    Ea: Exo.Cov[->, A -> *],
-    Eb: Exo.Cov[->, B -> *],
+    E: ∀[λ[a => Exo.Cov[->, a -> *]]]
   ): ((A -> *) <~> (B -> *)) <=> Iso[->, B, A] =
       Iso.unsafe(
         fa => Iso.unsafe(fa[A].to(C.id[A]), fa[B].from(C.id[B])),
-        ba => <~>.unsafe[A -> *, B -> *](yoEmbedCovFrom(ba.to), yoEmbedCovFrom(ba.from))
+        ba => <~>.unsafe[A -> *, B -> *](yoEmbedCovFrom(ba.to)(C, tca, E[B]), yoEmbedCovFrom(ba.from)(C, tcb, E[A]))
       )
 
   def yoCorol1Con[->[_,_], ->#[_], A, B](implicit
     C: Subcat.Aux[->, ->#], tca: ->#[A], tcb: ->#[B],
-    Ea: Exo.Con[->, * -> A],
-    Eb: Exo.Con[->, * -> B],
+    E: ∀[λ[a => Exo.Con[->, * -> a]]]
   ): ((* -> A) <~> (* -> B)) <=> Iso[->, A, B] =
     Iso.unsafe(
       i => Iso.unsafe(i[A].to(C.id[A]), i[B].from(C.id[B])),
-      i => <~>.unsafe[* -> A, * -> B](yoEmbedConFrom(i.to), yoEmbedConFrom(i.from))
+      i => <~>.unsafe[* -> A, * -> B](yoEmbedConFrom(i.to)(C, tca, E[B]), yoEmbedConFrom(i.from)(C, tcb, E[A]))
     )
+
+  def isoIndirectLiskov[A, B]: ((A <~< *) ~> (B <~< *)) <=> (B <~< A) = yoEmbeddingCov[<~<, Trivial.T1, A, B]
+  def isoIndirectLeibniz[A, B]: ((A === *) <~> (B === *)) <=> (A === B) =
+    yoCorol1Cov[===, Trivial.T1, A, B] andThen Groupoid.isoIso[===, B, A].flip andThen Groupoid.isoFlip
 
   /** object containing all general yoneda isomorphisms applied to Function1 */
   object function1 {

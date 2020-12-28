@@ -90,6 +90,12 @@ object foralls {
         aff => ∀.of[λ[x => A => F[x]]].from(a => aff(a).apply)
       )
 
+    def isoDistribFnXXTo[->[_,_], A, F[_]](implicit c: Ccc[->]): ∀[λ[x => A -> F[x]]] => (A -> ∀[F]) = {
+      faf =>
+
+      ???
+    }
+
     def fnLowerFunk[F[_], G[_]](fg: F  ~> G): ∀[F]  => ∀[G] = fg.$(_)
     def fnLowerIsok[F[_], G[_]](fg: F <~> G): ∀[F] <=> ∀[G] = Iso.unsafe(fg.toK.$(_), fg.fromK.$(_))
 
@@ -99,6 +105,15 @@ object foralls {
       cc: Cartesian[* => *, ⨂]
     ): ∀[λ[x => F[x] ⨂ G[x]]] => (∀[F] ⨂ ∀[G]) =
       cc.&&&(f => ∀.of[F].fromH(t => cc.fst(f[t.T])), f => ∀.of[G].fromH(t => cc.snd(f[t.T])))
+
+    def fnDistribCartesianToXX[->[_,_], F[_], G[_], ⨂[_,_]](implicit
+      cc: Cartesian[->, ⨂],
+      ccc: Ccc[->]
+    ): ∀[λ[x => F[x] ⨂ G[x]]] -> (∀[F] ⨂ ∀[G]) = {
+      def ff1: ∀[λ[x => F[x] ⨂ G[x]]] -> ∀[F] = ???
+
+      ???
+    }
 
     def fnDistribCartesianFrom[F[_], G[_], ⨂[_,_]](implicit
       cc: Cartesian[* => *, ⨂]

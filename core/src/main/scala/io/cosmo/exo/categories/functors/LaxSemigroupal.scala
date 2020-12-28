@@ -15,7 +15,7 @@ trait LaxSemigroupal[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends Exo
 
   def map2[A, B, C](fn: (A ⊙= B) ==> C): (F[A] ⊙- F[B]) --> F[C] = M2.C.andThen(product[A, B], map(fn))
 
-  def preserveSemigroup[M](ma: CSemigroup.Aux[==>, ⊙=, TC, M]): CSemigroup.Aux[-->, ⊙-, λ[a => TC[F[a]]], F[M]] =
+  def preserveCSemigroup[M](ma: CSemigroup.Aux[==>, ⊙=, TC, M]): CSemigroup.Aux[-->, ⊙-, λ[a => TC[F[a]]], F[M]] =
     CSemigroup.unsafe(map2(ma.op))(M2)
 
 }

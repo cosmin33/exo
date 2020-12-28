@@ -1,10 +1,7 @@
 package io.cosmo.exo.categories.functors
 
-import cats.{Applicative, ContravariantMonoidal, InvariantSemigroupal, InvariantMonoidal}
-import io.cosmo.exo.{<=>, Iso, ~>}
-import io.cosmo.exo.categories.{Associative, Braided, Dual, Endobifunctor, Monoidal, Subcat, CMonoid}
-import io.cosmo.exo.categories.Trivial
-import io.cosmo.exo.evidence.{=~=, =~~=}
+import io.cosmo.exo.categories
+import io.cosmo.exo.categories.{Associative, CMonoid, CSemigroup, Dual, Monoidal}
 
 /** https://ncatlab.org/nlab/show/monoidal+functor */
 trait LaxMonoidal[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends LaxSemigroupal[==>, ⊙=, -->, ⊙-, F] { self =>
@@ -12,12 +9,10 @@ trait LaxMonoidal[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends LaxSem
   def M1: Monoidal.Aux[==>, ⊙=, TC, I]
   def M2: Monoidal.Aux[-->, ⊙-, λ[a => TC[F[a]]], F[I]]
 
-  def id: I => F[I]
+  def id: I --> F[I]
 
-  def preserveMonoid[M](ma: CMonoid.Aux[==>, ⊙=, TC, I, M])(implicit
-    E: Exo.Con[* => *, * --> F[M]]
-  ): CMonoid.Aux[-->, ⊙-, λ[a => TC[F[a]]], F[I], F[M]] =
-    ??? //CMonoid.unsafe(map(ma.id), E.map(Dual(product[M, M]))(map(ma.op)))(M2)
+  def preserveCMonoid[M](ma: CMonoid.Aux[==>, ⊙=, TC, I, M]): CMonoid.Aux[-->, ⊙-, λ[a => TC[F[a]]], F[I], F[M]] =
+    CMonoid.unsafe(map(ma.id), map2(ma.op))(M2)
 
 }
 

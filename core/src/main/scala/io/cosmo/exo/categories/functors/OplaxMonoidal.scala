@@ -8,11 +8,10 @@ trait OplaxMonoidal[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends Opla
   def M1: Monoidal.Aux[Dual[==>,*,*], ⊙=, TC, I]
   def M2: Monoidal.Aux[Dual[-->,*,*], ⊙-, λ[a => TC[F[a]]], F[I]]
 
-  def opId: F[I] => I
+  def opId: F[I] --> I
 
-  def preserveComonoid[M](ma: CMonoid.Aux[Dual[==>,*,*], ⊙=, TC, I, M])(implicit
-    E: Exo.Cov[* => *, F[M] --> *]
-  ): CMonoid.Aux[Dual[-->,*,*], ⊙-, λ[a => TC[F[a]]], F[I], F[M]] =
-    ??? //CMonoid.unsafe(map(ma.id), Dual(E.map(opProduct[M, M])(map(ma.op))))(M2)
+  def preserveComonoid[M](ma: CMonoid.Aux[Dual[==>,*,*], ⊙=, TC, I, M])
+  : CMonoid.Aux[Dual[-->,*,*], ⊙-, λ[a => TC[F[a]]], F[I], F[M]] =
+    CMonoid.unsafe(map(ma.id), Dual(opmap2(ma.op.toFn)))(M2)
 
 }

@@ -5,6 +5,7 @@ import cats.implicits._
 import io.cosmo.exo._
 import io.cosmo.exo.categories.Trivial.T1
 import io.cosmo.exo.categories._
+import io.cosmo.exo.categories.functors.Exofunctor.{Con, Cov}
 import io.cosmo.exo.categories.functors._
 import io.cosmo.exo.evidence._
 import io.cosmo.exo.typeclasses.{IsTypeF, TypeF}
@@ -14,6 +15,14 @@ import shapeless.the
 trait Semicategory[->[_, _]] {
   final def compose[A, B, C](f: B -> C, g: A -> B): A -> C = andThen(g, f)
   def andThen[A, B, C](ab: A -> B, bc: B -> C): A -> C
+}
+
+private trait SemicategoryIsProfunctor[->[_, _]] extends Exobifunctor[Dual[->,*,*], ->, * => *, ->] {
+  def andThen[A, B, C](ab: A -> B, bc: B -> C): A -> C
+  final def compose[A, B, C](f: B -> C, g: A -> B): A -> C = andThen(g, f)
+  def bimap[A, X, B, Y](left: Dual[->, A, X], right:  B -> Y): A -> B => X -> Y = ab => andThen(left, andThen(ab, right))
+  def leftMap[A, B, Z](fn: Dual[->, A, Z]): A -> B => Z -> B = andThen(fn.toFn, _)
+  def rightMap[A, B, Z](fn: B -> Z): A -> B => A -> Z = andThen(_, fn)
 }
 
 object Semicategory extends SemicategoryImplicits {
@@ -78,9 +87,9 @@ private[categories] object SemicategoryHelpers {
     override type TC[a] = Trivial.T1[a]
     def id[A](implicit A: Trivial.T1[A]): A <~< A = As.refl
     def andThen[A, B, C](ab: A <~< B, bc: B <~< C): A <~< C = ab.andThen(bc)
-    def initial: T1[Void] = Trivial.trivialInstance
+    def initialTC: T1[Void] = Trivial.trivialInstance
     def initiate[A](implicit A: T1[A]): Void <~< A = the[Void <~< A]
-    def terminal: T1[Any] = Trivial.trivialInstance
+    def terminalTC: T1[Any] = Trivial.trivialInstance
     def terminate[A](implicit A: T1[A]): A <~< Any = the[A <~< Any]
     def concretize[A, B](f: A <~< B): (A, Trivial.T1[A]) => (B, Trivial.T1[B]) =
       { case (a, _) => (f(a), Trivial.trivialInstance) }
@@ -121,9 +130,9 @@ private[categories] object SemicategoryHelpers {
     override def apply[A, B]: ((A => B, A)) => B = { case (ab, a) => ab(a) }
     def curry[X, Y, Z](f: ((X, Y)) => Z): X => (Y => Z) = x => y => f((x, y))
     def uncurry[X, Y, Z](f: X => (Y => Z)): ⊙[X, Y] => Z = { case (x, y) => f(x)(y) }
-    def terminal: Trivial.T1[Terminal] = Trivial.trivialInstance
+    def terminalTC: Trivial.T1[Terminal] = Trivial.trivialInstance
     def terminate[A](implicit A: Trivial.T1[A]): A => Terminal = _ => ()
-    def initial: Trivial.T1[Nothing] = Trivial.trivialInstance
+    def initialTC: Trivial.T1[Nothing] = Trivial.trivialInstance
     def initiate[A](implicit A: Trivial.T1[A]): Nothing => A = identity
     def distribute[A, B, C]: A ⨂ (B ⨁ C) => A ⨂ B ⨁ (A ⨂ C) =
       { case (a, bc) => bc.fold((a, _).asLeft, (a, _).asRight) }
@@ -132,8 +141,13 @@ private[categories] object SemicategoryHelpers {
   trait FunKCartesian extends Cartesian[FunK, Tuple2] {
     override type Id = TypeF[UnitK]
     override type TC[a] = IsTypeF[a]
-    override def C: Subcat.Aux[FunK, IsTypeF] = ???
-    override def bifunctor: Endobifunctor[FunK, Tuple2] = ???
+    override def C: Subcat.Aux[FunK, IsTypeF] = FunK.categ
+    override def bifunctor: Endobifunctor[FunK, Tuple2] = new Exobifunctor[FunK, FunK, FunK, Tuple2] {
+      override def bimap[A, X, B, Y](left:  FunK[A, X], right:  FunK[B, Y]): FunK[(A, B), (X, Y)] =
+        ???
+      override def leftMap [A, B, Z](fn: FunK[A, Z]): FunK[(A, B), (Z, B)] = ???
+      override def rightMap[A, B, Z](fn: FunK[B, Z]): FunK[(A, B), (A, Z)] = ???
+      }
     override def fst[A, B]: FunK[(A, B), A] = ???
 //      new FunK[(A, B), A] {
 //        override type TypeA[a] = ???
@@ -169,12 +183,12 @@ private[categories] object SemicategoryHelpers {
     override type TC[a] = IsTypeF[a]
     override type |->[a, b] = FunK[a, b]
     override type ⊙[a, b] = (a, b)
-    def terminal = IsTypeF[UnitK]
+    def terminalTC = IsTypeF[UnitK]
     def terminate[A](implicit A: IsTypeF[A]): FunK[A, TypeF[UnitK]] = {
       val ff: A.Type ~> UnitK = ∀.mk[A.Type ~> UnitK].from(_ => ())
       A.is.subst[FunK[*, TypeF[UnitK]]](FunK[A.Type, UnitK](ff))
     }
-    def initial = IsTypeF[VoidK]
+    def initialTC = IsTypeF[VoidK]
     def initiate[A](implicit A: IsTypeF[A]): FunK[TypeF[VoidK], A] = {
       val ff: VoidK ~> A.Type = ∀.mk[VoidK ~> A.Type].from(identity)
       A.is.subst[FunK[TypeF[VoidK], *]](FunK[VoidK, A.Type](ff))

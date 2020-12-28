@@ -8,13 +8,19 @@ trait Monoidal[->[_, _], ⊙[_, _]] extends Associative[->, ⊙] {
 
   def idl  [A]: ⊙[Id, A] -> A
   def coidl[A]: A -> ⊙[Id, A]
+  def idl1  [A: TC]: ⊙[Id, A] -> A = ???
+  def coidl1[A: TC]: A -> ⊙[Id, A] = ???
 
   def idr  [A]: ⊙[A, Id] -> A
   def coidr[A]: A -> ⊙[A, Id]
+  def idr1  [A: TC]: ⊙[A, Id] -> A = ???
+  def coidr1[A: TC]: A -> ⊙[A, Id] = ???
 
   private type <->[a, b] = Iso[->, a, b]
-  def isoIdL[A]: ⊙[Id, A] <-> A = Iso.unsafe(idl[A], coidl[A])(C)
-  def isoIdR[A]: ⊙[A, Id] <-> A = Iso.unsafe(idr[A], coidr[A])(C)
+  def isoUnitorL[A]: ⊙[Id, A] <-> A = Iso.unsafe(idl[A], coidl[A])(C)
+  def isoUnitorR[A]: ⊙[A, Id] <-> A = Iso.unsafe(idr[A], coidr[A])(C)
+  def isoUnitorL1[A: TC]: ⊙[Id, A] <-> A = Iso.unsafe(idl1[A], coidl1[A])(C)
+  def isoUnitorR1[A: TC]: ⊙[A, Id] <-> A = Iso.unsafe(idr1[A], coidr1[A])(C)
 }
 
 object Monoidal extends MonoidalInstances {

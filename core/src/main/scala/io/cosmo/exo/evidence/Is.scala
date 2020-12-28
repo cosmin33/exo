@@ -39,12 +39,10 @@ sealed abstract class Is[A, B] private[Is]()  { ab =>
 object Is extends IsInstances {
   def apply[A, B](implicit ev: A Is B): A Is B = ev
 
-  type Canonic[A, B] = ∀~[λ[f[_] => f[A] => f[B]]]
-
-  implicit def isoCanonic[A, B]: Canonic[A, B] <=> (A === B) =
+  implicit def isoCanonic[A, B]: ∀~[λ[f[_] => f[A] => f[B]]] <=> (A === B) =
     Iso.unsafe(
       fa => new Is[A, B] { def subst[F[_]](f: F[A]): F[B] = fa.apply[F](f) },
-      ab => ∀~.mk[Canonic[A, B]].from(ab.subst)
+      ab => ∀~.of[λ[f[_] => f[A] => f[B]]].from(ab.subst)
     )
 
   implicit def isoInjectivity[F[_]: IsInjective, A, B]: (F[A] === F[B]) <=> (A === B) =
@@ -55,7 +53,12 @@ object Is extends IsInstances {
   implicit def exoCov[A]: Exo.Cov[===, A === *] = Exo.unsafe[===, * => *, A === *](_.subst[A === *])
   implicit def exoCon[A]: Exo.Con[===, * === A] = Exo.unsafe[Dual[===,*,*], * => *, * === A](_.flip.subst[* === A])
 
-  implicit def isBifunctor[P[_,_]]: Endobifunctor[===, P] = new Endobifunctor[===, P] {
+  implicit def faExoCov: ∀[λ[a => Exo.Cov[===, a === *]]] = ∀.of[λ[a => Exo.Cov[===, a === *]]].from(exoCov)
+  implicit def faExoCon: ∀[λ[a => Exo.Con[===, * === a]]] = ∀.of[λ[a => Exo.Con[===, * === a]]].from(exoCon)
+
+  implicit def leibnizFunctor[F[_]]: Endofunctor[===, F] = Exo.unsafe[===, ===, F](f => Is.lift(f))
+
+  implicit def leibnizBifunctor[P[_,_]]: Endobifunctor[===, P] = new Endobifunctor[===, P] {
     override def bimap[A, X, B, Y](left: A === X, right: B === Y): P[A, B] === P[X, Y] = left.lift2[P](right)
     def leftMap [A, B, Z](fn: A === Z): P[A, B] === P[Z, B] = fn.lift[P[*, B]]
     def rightMap[A, B, Z](fn: B === Z): P[A, B] === P[A, Z] = fn.lift[P[A, *]]
@@ -103,13 +106,6 @@ object Is extends IsInstances {
 
   def consistent[A, B](f: (A =!= B) => Void): A === B =
     proposition[A, B].proved(¬¬.witness(a => f(WeakApart.witness(a))))
-
-  implicit def leibnizFunctor[F[_]](implicit
-    cat: Semicategory[===],
-  ): Endofunctor[===, F] =
-    new Endofunctor[===, F] {
-      def map[A, B](f: A === B): F[A] === F[B] = Is.lift(f)
-    }
 
 }
 

@@ -17,11 +17,15 @@ trait Associative[->[_, _], ⊙[_, _]] {
 
   def associate  [X, Y, Z]: ⊙[⊙[X, Y], Z] -> ⊙[X, ⊙[Y, Z]]
   def diassociate[X, Y, Z]: ⊙[X, ⊙[Y, Z]] -> ⊙[⊙[X, Y], Z]
+  def associate1  [X: TC, Y: TC, Z: TC]: ⊙[⊙[X, Y], Z] -> ⊙[X, ⊙[Y, Z]] = ???
+  def diassociate1[X: TC, Y: TC, Z: TC]: ⊙[X, ⊙[Y, Z]] -> ⊙[⊙[X, Y], Z] = ???
 
   def grouped[A, B, X, Y](f: A -> B, g: X -> Y): ⊙[A, X] -> ⊙[B, Y] = bifunctor.bimap(f, g)
 
   private type <->[a, b] = Iso[->, a, b]
-  def isoAssociate[X, Y, Z]: ⊙[⊙[X, Y], Z] <-> ⊙[X, ⊙[Y, Z]] = Iso.unsafe(associate[X,Y,Z], diassociate[X,Y,Z])(C)
+  def isoAssociator[X, Y, Z]: ⊙[⊙[X, Y], Z] <-> ⊙[X, ⊙[Y, Z]] = Iso.unsafe(associate[X,Y,Z], diassociate[X,Y,Z])(C)
+  def isoAssociator1[X: TC, Y: TC, Z: TC]: ⊙[⊙[X, Y], Z] <-> ⊙[X, ⊙[Y, Z]] =
+    Iso.unsafe(associate1[X,Y,Z], diassociate1[X,Y,Z])(C)
 }
 
 object Associative extends AssociativeImplicits {
@@ -44,8 +48,8 @@ object Associative extends AssociativeImplicits {
 }
 
 trait AssociativeImplicits extends AssociativeImplicits01 {
-  val cartesianFn1Tuple: Cartesian.Aux[Function1, Tuple2, Trivial.T1, Unit] =
-      new Cartesian.Proto[Function1, Tuple2, Trivial.T1, Unit] {
+  val cartesianFn1Tuple: Cartesian.Aux[* => *, Tuple2, Trivial.T1, Unit] =
+      new Cartesian.Proto[* => *, Tuple2, Trivial.T1, Unit] {
         type ->[a, b] = a => b
         def C: Subcat.AuxT[* => *] = Semicategory.function1
         def bifunctor = Exobifunctor.tuple2Endobifunctor
@@ -137,7 +141,7 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
           }
         }
         def rightMap[A, B, Z](fn: Inject[Z, B]): Inject[A \/ Z, A \/ B] = ???
-        override def bimap[A, X, B, Y](left: Inject[X, A], right: Inject[Y, B]) = ???
+        override def bimap[A, X, B, Y](left: Inject[X, A], right: Inject[Y, B]): Inject[X \/ Y, A \/ B] = ???
       }
       def associate[X, Y, Z]: Inject[X \/ (Y \/ Z), X \/ Y \/ Z] = ???
       def diassociate[X, Y, Z]: Inject[X \/ Y \/ Z, X \/ (Y \/ Z)] = ???

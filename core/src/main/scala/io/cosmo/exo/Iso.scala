@@ -10,6 +10,7 @@ import io.estatico.newtype.macros.newtype
 import shapeless.Generic
 
 trait Iso[->[_,_], A, B] { ab =>
+  // Laws: to >> from === from >>> to === cat.id
   def cat: Subcat[->]
   def to:   A -> B
   def from: B -> A
@@ -134,13 +135,13 @@ object Iso extends IsoInstances {
     cat: Subcat.Aux[->, TC],
     T: Terminal.Aux[->, TC, T],
     tca: TC[A],
-  ): (A -> T) <=> (T -> T) = Iso.unsafe(_ => cat.id[T](T.terminal), _ => T.terminate)
+  ): (A -> T) <=> (T -> T) = Iso.unsafe(_ => cat.id[T](T.terminalTC), _ => T.terminate)
 
   def isoInitialUnit[->[_,_], I, A, TC[_]](implicit
     cat: Subcat.Aux[->, TC],
     I: Initial.Aux[->, TC, I],
     tca: TC[A],
-  ): (I -> A) <=> (I -> I) = Iso.unsafe(_ => cat.id[I](I.initial), _ => I.initiate)
+  ): (I -> A) <=> (I -> I) = Iso.unsafe(_ => cat.id[I](I.initialTC), _ => I.initiate)
 
   object Product {
     final def associate[A, B, C]: (A, (B, C)) <=> ((A, B), C) = Iso.unsafe({
@@ -208,7 +209,7 @@ trait IsoInstances extends IsoInstances1 {
   implicit def isoBifunctor[->[_,_], ->#[_], ⊙[_,_]](implicit
     S: Subcat.Aux[->, ->#], B: Endobifunctor[->, ⊙],
   ): Endobifunctor[Iso[->, *, *], ⊙] =
-    new IsoBifunctor[->, ->#, ⊙] {val cat = S; val bif = B; val L, R, C = Iso.isoGroupoid(S)}
+    new IsoBifunctor[->, ->#, ⊙] {val cat = S; val bif = B}
 
   implicit def isoGroupoid[->[_,_], T[_]](implicit C: Subcat.Aux[->, T]
   ): Groupoid.Aux[Iso[->, *, *], T] = new IsoGroupoid[->, T] {val cat = C}

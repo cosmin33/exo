@@ -2,21 +2,50 @@ package io.cosmo.exo.categories.functors
 
 import cats.data.{Cokleisli, Kleisli}
 import cats.implicits._
-import cats.{Applicative, CoflatMap, Contravariant, FlatMap, Functor, FunctorFilter, Id, Invariant, Monad, Traverse, TraverseFilter}
+import cats.{Applicative, CoflatMap, Contravariant, Eval, FlatMap, Functor, FunctorFilter, Id, Invariant, Monad, Traverse, TraverseFilter}
 import io.cosmo.exo._
 import io.cosmo.exo.categories._
 import io.cosmo.exo.categories.conversions.CatsInstances._
 import io.cosmo.exo.evidence.TypeHolder2
 import io.cosmo.exo.typeclasses.HasTc
 
-trait Exofunctor[==>[_,_], -->[_,_], F[_]] {
+trait Exofunctor[==>[_,_], -->[_,_], F[_]] { self =>
   def map[A, B](f: A ==> B): F[A] --> F[B]
 
-  final def compose[G[_]](G: Endofunctor[==>, G]): Exofunctor[==>, -->, λ[α => F[G[α]]]] =
-    Exo.unsafe[==>, -->, λ[α => F[G[α]]]](f => map(G.map(f)))
+  final def compose[|->[_,_], G[_]](G: Exo[|->, ==>, G]): Exofunctor[|->, -->, λ[α => F[G[α]]]] =
+    Exo.unsafe[|->, -->, λ[α => F[G[α]]]](f => map(G.map(f)))
 
-  final def composeContra[G[_]](G: Exofunctor[Dual[==>,*,*], ==>, G]): Exofunctor[Dual[==>,*,*], -->, λ[α => F[G[α]]]] =
-    Exo.unsafe[Dual[==>,*,*], -->, λ[α => F[G[α]]]](f => map(G.map(f)))
+  final def composeContra[|->[_,_], G[_]](G: Exofunctor[Dual[|->,*,*], ==>, G]): Exofunctor[Dual[|->,*,*], -->, λ[α => F[G[α]]]] =
+    Exo.unsafe[Dual[|->,*,*], -->, λ[α => F[G[α]]]](f => map(G.map(f)))
+
+  def tupleRight[A, B, P[_,_], U[_,_]](implicit
+    C: Cartesian[==>, P],
+    cc: Ccc[==>],
+    C1: Cartesian[-->, U],
+    cc1: Ccc[-->],
+    T: Terminal[==>]
+  ): U[F[A], B] --> F[P[A, B]] = {
+    val p1: P[F[A], B] ==> F[A] = C.fst[F[A], B]
+    val p2: P[F[A], B] ==> B = C.snd[F[A], B]
+
+
+    type |->[a,b] = cc.|->[a,b]
+
+    val xx: cc.⊙[A |-> B, A] ==> B = cc.apply[A, B]
+
+    def ff(b: B): A ==> (A, B) = {
+      //val d1: A ==> (A, A) = C.diag[A]
+      //val ff = cc1.uncurry[F[A], B, F[(A, B)]]
+      //C.bifunctor.rightMap()
+      ???
+    }
+    def m1(b: B): F[A] --> F[(A, B)] = map(ff(b))
+    //val x: (F[A], B) --> F[A] = C1.fst[F[A], B]
+
+
+
+    ???
+  }
 
 }
 
@@ -57,6 +86,9 @@ object Exofunctor extends ExofunctorImplicits {
   type IsoFun[->[_,_], F[_]] = Exo[Iso[->,*,*], * => *, F]
   object IsoFun { def apply[->[_,_], F[_]](implicit E: IsoFun[->, F]) = E }
 
+  /** Exofunctor from an isomorphism category to iso of function1 */
+  type IsoIso[->[_,_], F[_]] = Exo[Iso[->,*,*], * <=> *, F]
+
   /** Exofunctor from Function to an isomorphism category */
   type FunIso[->[_,_], F[_]] = Exo[* => *, Iso[->,*,*], F]
 
@@ -77,9 +109,15 @@ object Exofunctor extends ExofunctorImplicits {
 
   implicit def exoId: Exo.Cov[* => *, Id] = Exo.unsafe[* => *, * => *, Id](identity)
 
+  def semiFunctorCov[->[_,_]: Semicategory, X]: Exo.Cov[->, X -> *] = Exo.unsafe(f => fn => Semicategory[->].andThen(fn, f))
+  def semiFunctorCon[->[_,_]: Semicategory, X]: Exo.Con[->, * -> X] = Exo.unsafe[Dual[->, *, *], * => *, * -> X](f => fn => Semicategory[->].andThen(f.toFn, fn))
+
+  def semiFaFunCov[->[_,_]: Semicategory]: ∀[λ[a => Exo.Cov[->, a -> *]]] = ∀.of[λ[a => Exo.Cov[->, a -> *]]](semiFunctorCov)
+  def semiFaFunCon[->[_,_]: Semicategory]: ∀[λ[a => Exo.Con[->, * -> a]]] = ∀.of[λ[a => Exo.Con[->, * -> a]]](semiFunctorCon)
+
   /** from bifunctor derive left and right functors */
-  implicit def leftFunctorFa [==>[_, _], -->[_, _], >->[_, _], Bi[_, _]](b: Exobifunctor[==>, -->, >->, Bi]): ∀[λ[x => Exo[==>, >->, Bi[*,x]]]] = b.leftForall
-  implicit def rightFunctorFa[==>[_, _], -->[_, _], >->[_, _], Bi[_, _]](b: Exobifunctor[==>, -->, >->, Bi]): ∀[λ[x => Exo[-->, >->, Bi[x,*]]]] = b.rightForall
+  implicit def leftFunctorFa [==>[_, _], -->[_, _], >->[_, _], Bi[_, _]](implicit b: Exobifunctor[==>, -->, >->, Bi]): ∀[λ[x => Exo[==>, >->, Bi[*,x]]]] = b.leftForall
+  implicit def rightFunctorFa[==>[_, _], -->[_, _], >->[_, _], Bi[_, _]](implicit b: Exobifunctor[==>, -->, >->, Bi]): ∀[λ[x => Exo[-->, >->, Bi[x,*]]]] = b.rightForall
 
   implicit def isoCatsContravariant[F[_]]: Exo.ConF[F] <=> Contravariant[F] =
     Iso.unsafe(
@@ -101,8 +139,16 @@ object Exofunctor extends ExofunctorImplicits {
 
   implicit def exoFromCatsTraverse[M[_]: Applicative, F[_]: Traverse]: Endofunctor[Kleisli[M,*,*], F] =
     Endofunctor.unsafe[Kleisli[M,*,*], F](f => Kleisli(_.traverse(f.run)))
-  implicit def exoFromTraverse1[M[_]: Applicative, F[_]: Traverse]: Endofunctor[λ[(a,b) => a => M[b]], F] =
+  implicit def exoFromTraverse1[M[_]: Applicative, F[_]: Traverse]: Endofunctor[λ[(a,b) => a => M[b]], F] = {
     Endofunctor.unsafe[λ[(a,b) => a => M[b]], F](f => _.traverse(f))
+  }
+  def exoToTraverse1[F[_]](fe: ∀~[λ[M[_] => Endofunctor[λ[(a,b) => a => M[b]], F]]]): Traverse[F] =
+    new Traverse[F] {
+      def traverse[G[_]: Applicative, A, B](fa: F[A])(f: A => G[B]): G[F[B]] = fe.apply[G].map(f)(fa)
+      def foldLeft[A, B](fa: F[A], b: B)(f: (B, A) => B): B = ???
+      def foldRight[A, B](fa: F[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = ???
+    }
+
 
   implicit def isoCatsFunctorFilter[F[_]]: Exo[λ[(a,b) => a => Option[b]], * => *, F] <=> FunctorFilter[F] =
     Iso.unsafe(
@@ -131,16 +177,21 @@ object Exofunctor extends ExofunctorImplicits {
 
 trait ExofunctorImplicits extends ExofunctorImplicits01 {
   // TODO: generalize these:
+  implicit def isoFunToIsoIso[->[_,_], F[_]](implicit e: Exo.IsoFun[->, F]): Exo.IsoIso[->, F] =
+    Exo.unsafe[Iso[->,*,*], * <=> *, F](i => Iso.unsafe(e.map(i), e.map(i.flip)))
+}
+
+trait ExofunctorImplicits01 extends ExofunctorImplicits02 {
   implicit def invToIso[->[_,_], F[_]](implicit e: Exo.Inv[->, F]): Exo.IsoFun[->, F] =
     Exo.unsafe[Iso[->,*,*], * => *, F](i => e.map((i.to, Dual(i.from))))
 }
 
-trait ExofunctorImplicits01 extends ExofunctorImplicits02 {
+trait ExofunctorImplicits02 extends ExofunctorImplicits03 {
   implicit def covToInv[->[_,_], F[_]](implicit e: Exo.Cov[->, F]): Exo.Inv[->, F] =
     Exo.unsafe[Dicat[->,*,*], * => *, F](f => e.map(f._1))
 }
 
-trait ExofunctorImplicits02 {
+trait ExofunctorImplicits03 {
   implicit def conToInv[->[_,_], F[_]](implicit e: Exo.Con[->, F]): Exo.Inv[->, F] =
     Exo.unsafe[Dicat[->,*,*], * => *, F](f => e.map(f._2))
 }
