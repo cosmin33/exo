@@ -1,6 +1,7 @@
 package io.cosmo.exo.categories.instances
 
 import io.cosmo.exo._
+import io.cosmo.exo.categories.Subcat.Aux
 import io.cosmo.exo.categories._
 import io.cosmo.exo.categories.functors.{Exo, Exobifunctor}
 import io.cosmo.exo.evidence.NotEqK2
@@ -15,10 +16,10 @@ class MonoidalInstances {
       def map[A, B](iso: Iso[* => *, A, B]): Monoidal.Aux[->, ⊙, TC0, A] => Monoidal.Aux[->, ⊙, TC0, B] =
         ma => new Monoidal.ProtoFromAssociative[->, ⊙, TC0](ma) {
           type Id = B
-          def idl  [X: TC]: ⊙[B, X] -> X = B1.leftMap(Dual(B2.leftMap[B, X, A](iso.from)))(ma.idl)
-          def coidl[X: TC]: X -> ⊙[B, X] = B1.rightMap(Dual(B2.leftMap[A, X, B](iso.to)))(ma.coidl)
-          def idr  [X: TC]: ⊙[X, B] -> X = B1.leftMap(Dual(B2.rightMap[X, B, A](iso.from)))(ma.idr)
-          def coidr[X: TC]: X -> ⊙[X, B] = B1.rightMap(Dual(B2.rightMap[X, A, B](iso.to)))(ma.coidr)
+          def idl  [X: TC]: ⊙[B, X] -> X = B1.leftMap(Dual(B2.leftMap[B, X, A](iso.from)))(SubcatHasId[* => *, X]).apply(ma.idl)
+          def coidl[X: TC]: X -> ⊙[B, X] = B1.rightMap(Dual(B2.leftMap[A, X, B](iso.to)))(SubcatHasId[Dual[* => *,*,*], X]).apply(ma.coidl)
+          def idr  [X: TC]: ⊙[X, B] -> X = B1.leftMap(Dual(B2.rightMap[X, B, A](iso.from)))(SubcatHasId[* => *, X]).apply(ma.idr)
+          def coidr[X: TC]: X -> ⊙[X, B] = B1.rightMap(Dual(B2.rightMap[X, A, B](iso.to)))(SubcatHasId[Dual[* => *,*,*], X]).apply(ma.coidr)
         }
     }
 
@@ -33,6 +34,7 @@ class MonoidalInstances {
       def map[A, B](iso: Iso[->, A, B]): Monoidal.Aux[->, ⊙, TC0, A] => Monoidal.Aux[->, ⊙, TC0, B] =
         ma => new Monoidal.ProtoFromAssociative[->, ⊙, TC0](ma) {
           type Id = B
+          implicit val currCategory: Subcat.Aux[->, TC0] = C
           def idl  [X: TC]: ⊙[B, X] -> X = C.andThen(ma.bifunctor.leftMap[B, X, A](iso.from), ma.idl)
           def coidl[X: TC]: X -> ⊙[B, X] = C.andThen(ma.coidl, ma.bifunctor.leftMap[A, X, B](iso.to))
           def idr  [X: TC]: ⊙[X, B] -> X = C.andThen(ma.bifunctor.rightMap[X, B, A](iso.from), ma.idr)

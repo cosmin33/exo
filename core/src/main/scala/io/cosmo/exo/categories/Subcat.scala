@@ -30,7 +30,9 @@ trait SubcatHasId[->[_,_], A] {
   def id: A -> A = s.id(t)
 }
 object SubcatHasId {
-  implicit def impHasId[->[_,_], A, T[_]](implicit sub: Subcat.Aux[->, T], tc: T[A]): SubcatHasId[->, A] =
+  def apply[->[_,_], A](implicit sub: SubcatHasId[->, A]): SubcatHasId[->, A] = sub
+
+  implicit def from[->[_,_], A, T[_]](implicit sub: Subcat.Aux[->, T], tc: T[A]): SubcatHasId[->, A] =
     new SubcatHasId[->, A] { type TC[a] = T[a]; val s = sub; val t = tc }
 }
 

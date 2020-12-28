@@ -11,4 +11,6 @@ package object functors {
   type ExoRepr[==>[_,_], -->[_,_], F[_]] = ∃[λ[R => (Exofunctor[==>, -->, F], ∀[λ[x => Iso[==>, R --> x, F[x]]]])]]
   type Repr[->[_,_], F[_]] = ExoRepr[->, ->, F]
 
+  type StrSemigroupal[==>[_,_], =⊙[_,_], -->[_,_], -⊙[_,_], F[_]] = LaxSemigroupal[==>, =⊙, Iso[-->,*,*], -⊙, F]
+  type StrMonoidal   [==>[_,_], =⊙[_,_], -->[_,_], -⊙[_,_], F[_]] = LaxMonoidal   [==>, =⊙, Iso[-->,*,*], -⊙, F]
 }

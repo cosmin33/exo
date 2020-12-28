@@ -245,8 +245,6 @@ private[exo] object IsoHelperTraits {
     private type <->[a,b] = Iso[->, a, b]
     override def bimap[A, X, B, Y](l: A <-> X, r: B <-> Y): ⊙[A, B] <-> ⊙[X, Y] =
       Iso.unsafe(bif.bimap(l.to, r.to), bif.bimap(l.from, r.from))(cat)
-    def leftMap [A, B, Z](fn: A <-> Z): ⊙[A, B] <-> ⊙[Z, B] = Iso.unsafe(bif.leftMap[A, B, Z](fn.to), bif.leftMap[Z, B, A](fn.from))(cat)
-    def rightMap[A, B, Z](fn: B <-> Z): ⊙[A, B] <-> ⊙[A, Z] = Iso.unsafe(bif.rightMap[A, B, Z](fn.to), bif.rightMap[A, Z, B](fn.from))(cat)
   }
 
   trait IsoGroupoid[->[_,_], T[_]] extends Groupoid[Iso[->, *, *]] {

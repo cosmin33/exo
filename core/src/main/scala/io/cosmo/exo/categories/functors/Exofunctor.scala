@@ -95,8 +95,25 @@ object Exofunctor extends ExofunctorImplicits {
   def semiFaFunCon[->[_,_]: Semicategory]: ∀[λ[a => Exo.Con[->, * -> a]]] = ∀.of[λ[a => Exo.Con[->, * -> a]]](semiFunctorCon)
 
   /** from bifunctor derive left and right functors */
-  implicit def leftFunctorFa [==>[_, _], -->[_, _], >->[_, _], Bi[_, _]](implicit b: Exobifunctor[==>, -->, >->, Bi]): ∀[λ[x => Exo[==>, >->, Bi[*,x]]]] = b.leftForall
-  implicit def rightFunctorFa[==>[_, _], -->[_, _], >->[_, _], Bi[_, _]](implicit b: Exobifunctor[==>, -->, >->, Bi]): ∀[λ[x => Exo[-->, >->, Bi[x,*]]]] = b.rightForall
+  def leftFunctorFa [==>[_, _], -->[_, _], >->[_, _], Bi[_, _], T[_]](implicit
+    b: Exobifunctor[==>, -->, >->, Bi],
+    s: Subcat.Aux[-->, T]
+  ): ∀[λ[x => T[x] => Exo[==>, >->, Bi[*, x]]]] = b.leftForall[T]
+  def rightFunctorFa[==>[_, _], -->[_, _], >->[_, _], Bi[_, _], T[_]](implicit
+    b: Exobifunctor[==>, -->, >->, Bi],
+    s: Subcat.Aux[==>, T]
+  ): ∀[λ[x => T[x] => Exo[-->, >->, Bi[x, *]]]] = b.rightForall[T]
+
+  implicit def leftFunctorFaTriv [==>[_, _], -->[_, _], >->[_, _], Bi[_, _]](implicit
+    b: Exobifunctor[==>, -->, >->, Bi],
+    s: Subcat.Aux[-->, Trivial.T1]
+  ): ∀[λ[x => Exo[==>, >->, Bi[*, x]]]] =
+    ∀.of[λ[x => Exo[==>, >->, Bi[*, x]]]].fromH(t => b.leftForall(s).apply[t.T].apply(implicitly))
+  implicit def rightFunctorFaTriv[==>[_, _], -->[_, _], >->[_, _], Bi[_, _], T[_]](implicit
+    b: Exobifunctor[==>, -->, >->, Bi],
+    s: Subcat.Aux[==>, Trivial.T1]
+  ): ∀[λ[x => Exo[-->, >->, Bi[x, *]]]] =
+    ∀.of[λ[x => Exo[-->, >->, Bi[x, *]]]].fromH(t => b.rightForall(s).apply[t.T].apply(implicitly))
 
   implicit def isoCatsContravariant[F[_]]: Exo.ConF[F] <=> Contravariant[F] =
     Iso.unsafe(

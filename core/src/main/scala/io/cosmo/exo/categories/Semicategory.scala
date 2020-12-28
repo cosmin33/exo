@@ -143,12 +143,7 @@ private[categories] object SemicategoryHelpers {
     override type Id = TypeF[UnitK]
     override type TC[a] = IsTypeF[a]
     override def C: Subcat.Aux[FunK, IsTypeF] = FunK.categ
-    override def bifunctor: Endobifunctor[FunK, Tuple2] = new Exobifunctor[FunK, FunK, FunK, Tuple2] {
-      override def bimap[A, X, B, Y](left:  FunK[A, X], right:  FunK[B, Y]): FunK[(A, B), (X, Y)] =
-        ???
-      override def leftMap [A, B, Z](fn: FunK[A, Z]): FunK[(A, B), (Z, B)] = ???
-      override def rightMap[A, B, Z](fn: FunK[B, Z]): FunK[(A, B), (A, Z)] = ???
-      }
+    override def bifunctor: Endobifunctor[FunK, Tuple2] = ???
     override def fst[A: TC, B]: FunK[(A, B), A] = ???
 //      new FunK[(A, B), A] {
 //        override type TypeA[a] = ???

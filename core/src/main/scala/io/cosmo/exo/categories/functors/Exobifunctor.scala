@@ -10,31 +10,17 @@ import mouse.any._
 
 trait Exobifunctor[==>[_, _], -->[_, _], >->[_, _], Bi[_, _]] { self =>
   def bimap[A, X, B, Y](left: A ==> X, right: B --> Y): Bi[A, B] >-> Bi[X, Y]
-      //C.andThen(leftMap[A, B, X](left), rightMap[X, B, Y](right))
 
-  def leftMap [A, B, Z](fn: A ==> Z): Bi[A, B] >-> Bi[Z, B] //bimap(fn, R.id[B])
-  def rightMap[A, B, Z](fn: B --> Z): Bi[A, B] >-> Bi[A, Z] //bimap(L.id[A], fn)
-  def leftMap1 [A, B, Z, T[_]](fn: A ==> Z)(implicit
-    C: Subcat.Aux[-->, T], t: T[B]
-  ): Bi[A, B] >-> Bi[Z, B] = bimap(fn, C.id[B])
-  def rightMap1[A, B, Z, T[_]](fn: B --> Z)(implicit
-    C: Subcat.Aux[==>, T], t: T[A]
-  ): Bi[A, B] >-> Bi[A, Z] = bimap(C.id[A], fn)
+  def leftMap [A, B, Z](fn: A ==> Z)(implicit C: SubcatHasId[-->, B]): Bi[A, B] >-> Bi[Z, B] = bimap(fn, C.id)
+  def rightMap[A, B, Z](fn: B --> Z)(implicit C: SubcatHasId[==>, A]): Bi[A, B] >-> Bi[A, Z] = bimap(C.id, fn)
 
-  def leftFunctor [X]: Exo[==>, >->, Bi[*, X]] = Exo.unsafe[==>, >->, Bi[*, X]](leftMap)
-  def rightFunctor[X]: Exo[-->, >->, Bi[X, *]] = Exo.unsafe[-->, >->, Bi[X, *]](rightMap)
-  def leftFunctor1 [X, T[_]](implicit
-    C: Subcat.Aux[-->, T], t: T[X]
-  ): Exo[==>, >->, Bi[*, X]] = Exo.unsafe[==>, >->, Bi[*, X]](leftMap1(_)(C, t))
-  def rightFunctor1[X, T[_]](implicit
-    C: Subcat.Aux[==>, T], t: T[X]
-  ): Exo[-->, >->, Bi[X, *]] = Exo.unsafe[-->, >->, Bi[X, *]](rightMap1(_)(C, t))
+  def leftFunctor [X](implicit C: SubcatHasId[-->, X]): Exo[==>, >->, Bi[*, X]] = Exo.unsafe[==>, >->, Bi[*, X]](leftMap(_))
+  def rightFunctor[X](implicit C: SubcatHasId[==>, X]): Exo[-->, >->, Bi[X, *]] = Exo.unsafe[-->, >->, Bi[X, *]](rightMap(_))
 
-  def leftForall:  ∀[λ[x => Exo[==>, >->, Bi[*,x]]]] = ∀.of[λ[x => Exo[==>, >->, Bi[*,x]]]](leftFunctor)
-  def rightForall: ∀[λ[x => Exo[-->, >->, Bi[x,*]]]] = ∀.of[λ[x => Exo[-->, >->, Bi[x,*]]]](rightFunctor)
-  def leftForall1[T[_]](implicit C: Subcat.Aux[-->, T]): ∀[λ[x => T[x] => Exo[==>, >->, Bi[*,x]]]] =
-    ∀.of[λ[x => T[x] => Exo[==>, >->, Bi[*,x]]]](tx => leftFunctor1(C, tx))
-  def rightForall1: ∀[λ[x => Exo[-->, >->, Bi[x,*]]]] = ∀.of[λ[x => Exo[-->, >->, Bi[x,*]]]](rightFunctor)
+  def leftForall [T[_]](implicit C: Subcat.Aux[-->, T]): ∀[λ[x => T[x] => Exo[==>, >->, Bi[*,x]]]] =
+    ∀.of[λ[x => T[x] => Exo[==>, >->, Bi[*,x]]]](tx => leftFunctor(SubcatHasId.from(C, tx)))
+  def rightForall[T[_]](implicit C: Subcat.Aux[==>, T]): ∀[λ[x => T[x] => Exo[-->, >->, Bi[x,*]]]] =
+    ∀.of[λ[x => T[x] => Exo[-->, >->, Bi[x,*]]]](tx => rightFunctor(SubcatHasId.from(C, tx)))
 
 }
 
@@ -50,8 +36,8 @@ object Exobifunctor extends ExobifunctorInstances {
     new Exobifunctor[==>, -->, >->, Bi] {
       def bimap[A, X, B, Y](left: A ==> X, right: B --> Y): Bi[A, B] >-> Bi[X, Y] =
         Semicategory[>->].andThen(leftMap[A, B, X](left), rightMap[X, B, Y](right))
-      def leftMap [A, B, Z](fn: A ==> Z): Bi[A, B] >-> Bi[Z, B] = l[B].map(fn)
-      def rightMap[A, B, Z](fn: B --> Z): Bi[A, B] >-> Bi[A, Z] = r[A].map(fn)
+      def leftMap [A, B, Z](fn: A ==> Z): Bi[A, B] >-> Bi[Z, B] = l.apply[B].map(fn)
+      def rightMap[A, B, Z](fn: B --> Z): Bi[A, B] >-> Bi[A, Z] = r.apply[A].map(fn)
     }
   }
 
@@ -59,8 +45,6 @@ object Exobifunctor extends ExobifunctorInstances {
     def compose[G[_,_]](G: Exobifunctor[==>, ==>, ==>, G]): Exobifunctor[==>, ==>, >->, λ[(α, β) => F[G[α, β], G[α, β]]]] =
       new Exobifunctor[==>, ==>, >->, λ[(α, β) => F[G[α, β], G[α, β]]]] {
         override def bimap[A, X, B, Y](left: A ==> X, right: B ==> Y) = G.bimap(left, right) |> (i => self.bimap(i, i))
-        def leftMap [A, B, Z](fn: A ==> Z) = G.leftMap [A, B, Z](fn) |> (i => self.bimap(i, i))
-        def rightMap[A, B, Z](fn: B ==> Z) = G.rightMap[A, B, Z](fn) |> (i => self.bimap(i, i))
       }
   }
 
@@ -93,8 +77,6 @@ trait ExobifunctorInstances {
     S2: Subcat.Aux[-->, TC],
   ): Exobifunctor[Iso[==>,*,*], Iso[-->,*,*], >->, Bi] =
     new Exobifunctor[Iso[==>,*,*], Iso[-->,*,*], >->, Bi] {
-      override def leftMap [A, B, Z](fn: Iso[==>, A, Z]) = E.leftMap (Dicat[==>, A, Z](fn.to, fn.from))
-      override def rightMap[A, B, Z](fn: Iso[-->, B, Z]) = E.rightMap(Dicat[-->, B, Z](fn.to, fn.from))
       override def bimap[A, X, B, Y](left: Iso[==>, A, X], right: Iso[-->, B, Y]) =
         E.bimap(Dicat[==>, A, X](left.to, left.from), Dicat[-->, B, Y](right.to, right.from))
     }
@@ -103,18 +85,12 @@ trait ExobifunctorInstances {
     new Endobifunctor[* => *, Tuple2] {
       override def bimap[A, X, B, Y](left: A => X, right: B => Y): ((A, B)) => (X, Y) =
         { case (a, b) => (left(a), right(b)) }
-      def leftMap [A, B, Z](fn: A => Z): ((A, B)) => (Z, B) = { case (a, b) => (fn(a), b) }
-      def rightMap[A, B, Z](fn: B => Z): ((A, B)) => (A, Z) = { case (a, b) => (a, fn(b)) }
     }
 
   implicit def eitherEndoBifunctor: Endobifunctor[* => *, Either] =
     new Endobifunctor[* => *, Either] {
       override def bimap[LX, LY, RX, RY](lxy: LX => LY, rxy: RX => RY): Either[LX, RX] => Either[LY, RY] =
         _.fold(x => lxy(x).asLeft, x => rxy(x).asRight)
-      def leftMap [A, B, Z](fn: A => Z): Either[A, B] => Either[Z, B] =
-        _.fold(a => fn(a).asLeft, b => b.asRight)
-      def rightMap[A, B, Z](fn: B => Z): Either[A, B] => Either[A, Z] =
-        _.fold(a => a.asLeft, b => fn(b).asRight)
     }
 
 }

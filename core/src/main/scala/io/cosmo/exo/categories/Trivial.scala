@@ -13,4 +13,5 @@ object Trivial {
   type T322[Alg[_[_]], F[_], G[_]] = Trivial
 
   implicit val trivialInstance: Trivial = new Trivial {}
+
 }
