@@ -26,6 +26,27 @@ object FunK {
       def instance = fn
     }
 
+  trait ProdK[A, B] {
+    type TypeA[_]
+    type TypeB[_]
+    def eqA: TypeF[TypeA] === A
+    def eqB: TypeF[TypeB] === B
+
+    type /\[x] = (TypeA[x], TypeB[x])
+    def typeF: TypeF[λ[x => (TypeA[x], TypeB[x])]]
+    //def instance: ∀[λ[x => (TypeA[x], TypeB[x])]]
+  }
+  trait CoprodK[A, B] {
+    type TypeA[_]
+    type TypeB[_]
+    def eqA: TypeF[TypeA] === A
+    def eqB: TypeF[TypeB] === B
+
+    type \/[x] = Either[TypeA[x], TypeB[x]]
+    def typeF: TypeF[λ[x => Either[TypeA[x], TypeB[x]]]]
+    //def instance: ∀[λ[x => Either[TypeA[x], TypeB[x]]]]
+  }
+
   private def unwrap[F[_], G[_]](fk: FunK[TypeF[F], TypeF[G]]): F ~> G = {
     val i1: fk.TypeA =~= F = TypeF.injectivity(fk.eqA)
     val i2: fk.TypeB =~= G = TypeF.injectivity(fk.eqB)

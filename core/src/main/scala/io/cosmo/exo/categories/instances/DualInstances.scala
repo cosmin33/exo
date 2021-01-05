@@ -95,7 +95,7 @@ private[instances] object DualHelpers {
 
   trait OppBraided[->[_,_], P[_,_], C[_]] extends OppAssociative[->, P, C] with Braided[Opp[->]#l, P] {
     protected def A: Braided.Aux[->, P, C]
-    def braid[A, B]: P[B, A] -> P[A, B] = A.braid
+    def braid[A: C, B: C]: P[B, A] -> P[A, B] = A.braid
   }
 
   trait OppMonoidal[->[_,_], P[_,_], C[_], I] extends OppAssociative[->, P, C] with Monoidal[Opp[->]#l, P] {

@@ -13,6 +13,8 @@ trait ConjunctionModule {
   def bifunctor: Bifunctor[Type]
 
   def unfold[L, R, A](a: A)(al: A => L, ar: A => R): Type[L, R]
+  def unfold3[A, B, C, X](a: X)(f1: X => A, f2: X => B, f3: X => C): Type[A, Type[B, C]]
+  def unfold4[A, B, C, D, X](a: X)(f1: X => A, f2: X => B, f3: X => C, f4: X => D): Type[A, Type[B, Type[C, D]]]
   def first [L, R](p: Type[L, R]): L
   def second[L, R](p: Type[L, R]): R
   def swap[L, R](p: Type[L, R]): Type[R, L]
@@ -40,6 +42,9 @@ object ConjunctionModule {
   implicit def productTypeclass[T[_], A, B](implicit
     L: LaxSemigroupal.Endo[* => *, /\, T], ta: T[A], tb: T[B]
   ): T[A /\ B] = L.product(/\(ta, tb))
+
+  implicit def typeclassFromTuple[TC[_], A, B](implicit t: TC[(A, B)]): TC[A /\ B] =
+    /\.leibniz.subst[λ[f[_,_] => TC[f[A, B]]]](t)
 }
 
 private[exo] object ConjunctionModuleImpl extends ConjunctionModule {
@@ -47,6 +52,8 @@ private[exo] object ConjunctionModuleImpl extends ConjunctionModule {
   def leibniz = =~~=.refl
   def bifunctor = implicitly
   def unfold[L, R, A](a: A)(al: A => L, ar: A => R) = (al(a), ar(a))
+  def unfold3[X, Y, Z, A](a: A)(f1: A => X, f2: A => Y, f3: A => Z) = (f1(a), (f2(a), f3(a)))
+  def unfold4[A, B, C, D, X](a: X)(f1: X => A, f2: X => B, f3: X => C, f4: X => D) = (f1(a), (f2(a), (f3(a), f4(a))))
   def first[L, R](p: (L, R)) = p._1
   def second[L, R](p: (L, R)) = p._2
   def swap[L, R](p: (L, R)) = p.swap

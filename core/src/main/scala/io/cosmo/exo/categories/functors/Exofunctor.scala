@@ -145,7 +145,6 @@ object Exofunctor extends ExofunctorImplicits {
       def foldRight[A, B](fa: F[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = ???
     }
 
-
   implicit def isoCatsFunctorFilter[F[_]]: Exo[λ[(a,b) => a => Option[b]], * => *, F] <=> FunctorFilter[F] =
     Iso.unsafe(
       E => new FunctorFilter[F] {
@@ -159,6 +158,7 @@ object Exofunctor extends ExofunctorImplicits {
   : Exo[λ[(a,b) => a => M[Option[b]]], λ[(a,b) => a => M[b]], F] =
     Exo.unsafe[λ[(a,b) => a => M[Option[b]]], λ[(a,b) => a => M[b]], F](f => _.traverseFilter(f))
 
+  // A => F[B]  to  F[A] => F[B]
   implicit def exoFromCatsFlatMap[F[_]: FlatMap]: Exo[Kleisli[F,*,*], * => *, F] =
       Exo.unsafe[Kleisli[F,*,*], * => *, F](f => _.flatMap(f.run))
   implicit def exoFromFlatMap1[F[_]: FlatMap]: Exo[λ[(a,b) => a => F[b]], * => *, F] =

@@ -146,7 +146,7 @@ private[instances] object ProdcatHelpers {
   {
     protected def a1: Braided.Aux[==>, P, TC0]
     protected def a2: Braided.Aux[-->, P, TC0]
-    def braid[A, B] = (a1.braid, a2.braid)
+    def braid[A: TC, B: TC] = (a1.braid, a2.braid)
   }
 
   trait ProdcatCartesian[==>[_,_], -->[_,_], P[_,_], TC0[_], I]
@@ -177,7 +177,7 @@ private[instances] object ProdcatHelpers {
     def cocartesian: Cocartesian.Aux[Prodcat[==>, -->, *, *], S, TC0, SI] =
         prodcatCartesian(s1.cocartesian, s2.cocartesian) |>
           Prodcat.traverseDualEq[==>, -->].subst[Cartesian.Aux[*[_,_], S, TC0, SI]]
-    def distribute[A, B, C] = (s1.distribute, s2.distribute)
+    def distribute[A: TC, B: TC, C: TC] = (s1.distribute, s2.distribute)
   }
 
   trait ProdcatCcc[==>[_,_], -->[_,_], TC0[_], P[_,_], PI, E[_,_]]

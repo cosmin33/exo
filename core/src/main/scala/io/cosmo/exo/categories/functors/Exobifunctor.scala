@@ -48,6 +48,12 @@ object Exobifunctor extends ExobifunctorInstances {
       }
   }
 
+  def dual[->[_,_], Bi[_,_]](F: Endo[->, Bi]): Endo[Dual[->,*,*], Bi] =
+    new Endo[Dual[->,*,*], Bi] {
+      def bimap[A, X, B, Y](l: Dual[->, A, X], r: Dual[->, B, Y]): Dual[->, Bi[A, B], Bi[X, Y]] =
+        Dual(F.bimap(l.toFn, r.toFn))
+    }
+
   implicit def semicatBifunctor[->[_,_]](implicit s: Semicategory[->]): Exobifunctor[Dual[->,*,*], ->, * => *, ->] =
     Exobifunctor.fromFunctors(Exo.semiFaFunCon[->], Exo.semiFaFunCov[->])
 

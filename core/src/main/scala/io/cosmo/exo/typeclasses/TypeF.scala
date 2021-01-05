@@ -33,6 +33,18 @@ object IsTypeF {
     def is = Is.refl
   }
 
+  def prod[F[_], G[_]]: TypeF[λ[a => (F[a], G[a])]] <=> (TypeF[F], TypeF[G]) =
+    Iso.unsafe(
+      _ => (TypeF[F], TypeF[G]),
+      _ => TypeF[λ[a => (F[a], G[a])]]
+    )
+
+  def coprod[F[_], G[_]]: TypeF[λ[a => Either[F[a], G[a]]]] <=> Either[TypeF[F], TypeF[G]] =
+    Iso.unsafe(
+      t => ???,
+      _ => TypeF[λ[a => Either[F[a], G[a]]]]
+    )
+
   type FF[F[_], a] = IsTypeF[TypeF[F]]#Type[a]
 
   def someStupidRel[F[_], X]: F[X] <~< FF[F, X] = {

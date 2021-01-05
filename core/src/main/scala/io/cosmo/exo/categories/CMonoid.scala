@@ -14,11 +14,17 @@ trait CMonoid[->[_,_], ⊙[_,_], A] extends CSemigroup[->, ⊙, A] {
 
 object CMonoid {
   type Aux[->[_,_], ⊙[_,_], ->#[_], I0, A] = CMonoid[->, ⊙, A] {type TC[a] = ->#[a]; type I = I0}
+  type AuxI[->[_,_], ⊙[_,_], I0, A] = CMonoid[->, ⊙, A] {type I = I0}
 
   def unsafe[->[_,_], ⊙[_,_], A, ->#[_], I0](fe: I0 -> A, f: (A ⊙ A) -> A)(implicit
     m: Monoidal.Aux[->, ⊙, ->#, I0]
   ): CMonoid.Aux[->, ⊙, ->#, I0, A] =
     new CMonoid[->, ⊙, A] {type TC[a] = ->#[a]; type I = I0; val C = m; val id = fe; val op = f}
+
+  def unsafe1[->[_,_], ⊙[_,_], A, I0](fe: I0 -> A, f: (A ⊙ A) -> A)(implicit
+    m: Monoidal.AuxI[->, ⊙, I0]
+  ) =
+    new CMonoid[->, ⊙, A] {type TC[a] = m.TC[a]; type I = I0; val C = m; val id = fe; val op = f}
 
   def fromSemigroup[->[_,_], ⊙[_,_], A, ->#[_], I0](fe: I0 -> A, s: CSemigroup.Aux[->, ⊙, ->#, A])(implicit
     m: Monoidal.Aux[->, ⊙, ->#, I0]

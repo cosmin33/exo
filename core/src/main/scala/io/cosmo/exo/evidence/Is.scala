@@ -60,8 +60,6 @@ object Is extends IsInstances {
 
   implicit def leibnizBifunctor[P[_,_]]: Endobifunctor[===, P] = new Endobifunctor[===, P] {
     override def bimap[A, X, B, Y](left: A === X, right: B === Y): P[A, B] === P[X, Y] = left.lift2[P](right)
-    def leftMap [A, B, Z](fn: A === Z): P[A, B] === P[Z, B] = fn.lift[P[*, B]]
-    def rightMap[A, B, Z](fn: B === Z): P[A, B] === P[A, Z] = fn.lift[P[A, *]]
   }
 
   private final class Refl[A]() extends Is[A, A] {

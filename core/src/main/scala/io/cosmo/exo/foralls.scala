@@ -76,12 +76,6 @@ object foralls {
       def fromK: G ~> F = ∀.mk[G ~> F].fromH(t => iso[t.T].from)
     }
 
-    def mrrr[->[_,_], A, F[_]]: ∀[λ[x => A -> F[x]]] <=> (A -> ∀[F]) = ???
-
-    def mrr1[Bi[_,_], A, F[_]]: ∀[λ[x => Bi[A, F[x]]]] <=> Bi[A, ∀[F]] = ???
-
-    def mrr2[B[_], F[_]]: ∀[λ[x => B[F[x]]]] <=> B[∀[F]] = ???
-
     // https://nokyotsu.com/qscripts/2014/07/distribution-of-quantifiers-over-logic-connectives.html
     ////////////////////////
     def isoDistribFn[A, F[_]]: ∀[λ[x => A => F[x]]] <=> (A => ∀[F]) =
@@ -108,9 +102,25 @@ object foralls {
 
     def fnDistribCartesianToXX[->[_,_], F[_], G[_], ⨂[_,_]](implicit
       cc: Cartesian[->, ⨂],
-      ccc: Ccc[->]
+      ccc: Ccc[->] { type ⊙[a,b] = ⨂[a,b]; type |->[a,b] = ->[a,b] }
     ): ∀[λ[x => F[x] ⨂ G[x]]] -> (∀[F] ⨂ ∀[G]) = {
-      def ff1: ∀[λ[x => F[x] ⨂ G[x]]] -> ∀[F] = ???
+      def ii1: ∀[λ[x => F[x] ⨂ G[x]]] -> ∀[F] = ???
+      def ii2: ∀[λ[x => F[x] ⨂ G[x] -> F[x]]] = ???
+
+
+      def f1[x]: (F[x] ⨂ G[x]) -> F[x] = {
+        val t1: cc.TC[F[x]] = ???
+        val t2: cc.TC[G[x]] = ???
+        cc.fst[F[x], G[x]](t1, t2)
+      }
+      def f2[x]: (F[x] ⨂ G[x]) -> G[x] = {
+        val t1: cc.TC[F[x]] = ???
+        val t2: cc.TC[G[x]] = ???
+        cc.snd[F[x], G[x]](t1, t2)
+      }
+
+      def r1[x]: F[x] -> (G[x] -> F[x]) = ccc.curry[F[x], G[x], F[x]](f1[x])
+      def r2[x]: F[x] -> (G[x] -> G[x]) = ccc.curry[F[x], G[x], G[x]](f2[x])
 
       ???
     }

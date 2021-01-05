@@ -1,8 +1,8 @@
 package io.cosmo.exo.categories.data
 
 import io.cosmo.exo.categories.functors.{LaxSemigroupal, OplaxSemigroupal}
-import io.cosmo.exo.categories.{Cartesian, Endobifunctor, Groupoid, Monoidal, Subcat}
-import io.cosmo.exo.{/\, <=>, Iso, ~>}
+import io.cosmo.exo.categories.{Cartesian, Dual, Endobifunctor, Groupoid, Monoidal, Opp, Subcat}
+import io.cosmo.exo.{-\/, /\, <=>, Disjunction, DisjunctionModule, Iso, \/, \/-, ~>}
 
 final case class EvidenceCat[T[_], A, B](left: T[A], right: T[B]) {
   def andThen[C](that: EvidenceCat[T, B, C]): EvidenceCat[T, A, C] =
@@ -39,35 +39,73 @@ object EvidenceCat {
         f.flip
     }
 
-  implicit def bifunctor[T[_]](implicit
-    L: LaxSemigroupal[* => *, /\, * => *, /\, T]
+  implicit def bifunctorConj[T[_]](implicit
+    L: LaxSemigroupal.Endo[* => *, /\, T]
   ): Endobifunctor[EvidenceCat[T, *, *], /\] = new Endobifunctor[EvidenceCat[T, *, *], /\] {
     def bimap[A, X, B, Y](l: EvidenceCat[T, A, X], r: EvidenceCat[T, B, Y]): EvidenceCat[T, A /\ B, X /\ Y] =
-      fromImplicits[T, A /\ B, X /\ Y](L.product[A, B](/\(l.left, r.left)), L.product(/\(l.right, r.right)))
+      fromImplicits[T, A /\ B, X /\ Y](L.product(/\(l.left, r.left)), L.product(/\(l.right, r.right)))
   }
 
-  def more1[T[_], I](implicit
+  implicit def bifunctorDisj[T[_]](implicit
+    L: LaxSemigroupal[Dual[* => *,*,*], \/, * => *, \/, T]
+  ): Endobifunctor[EvidenceCat[T, *, *], \/] = new Endobifunctor[EvidenceCat[T, *, *], \/] {
+    def bimap[A, X, B, Y](l: EvidenceCat[T, A, X], r: EvidenceCat[T, B, Y]): EvidenceCat[T, A \/ B, X \/ Y] =
+      fromImplicits[T, A \/ B, X \/ Y](L.product[A, B](-\/(l.left)), L.product[X, Y](-\/(l.right)))
+  }
+
+  implicit def bifunctorEither[T[_]](implicit
+    L: LaxSemigroupal[Opp[* => *]#l, \/, * => *, \/, T]
+  ): Endobifunctor[Opp[EvidenceCat[T, *, *]]#l, \/] = new Endobifunctor[Opp[EvidenceCat[T, *, *]]#l, \/] {
+    def bimap[A, X, B, Y](l: EvidenceCat[T, X, A], r: EvidenceCat[T, Y, B]): EvidenceCat[T, X \/ Y, A \/ B] =
+      fromImplicits[T, X \/ Y, A \/ B](L.product[X, Y](-\/(l.left)), L.product[A, B](-\/(l.right)))
+  }
+
+  def cartesian[T[_], I](implicit
     ti: T[I],
-    L: LaxSemigroupal[* => *, /\, * => *, /\, T],
-  ) = {
+    L: LaxSemigroupal[* => *, /\, * => *, /\, T]
+  ) =
     new Cartesian[EvidenceCat[T,*,*], /\] {
       type TC[x] = T[x]
       type Id = I
-      def bifunctor = EvidenceCat.bifunctor
+      def bifunctor = EvidenceCat.bifunctorConj
       def C: Subcat.Aux[EvidenceCat[T, *, *], T] = category[T]
-      def idl  [A : TC]: EvidenceCat[T, I /\ A, A] = fromImplicits
+      def idl  [A: TC]: EvidenceCat[T, I /\ A, A] = fromImplicits
       def coidl[A: TC]: EvidenceCat[T, A, I /\ A] = fromImplicits
       def idr  [A: TC]: EvidenceCat[T, A /\ I, A] = fromImplicits
       def coidr[A: TC]: EvidenceCat[T, A, A /\ I] = fromImplicits
-      def associate  [X: TC, Y: TC, Z: TC]: EvidenceCat[T, X /\ Y /\ Z, X /\ (Y /\ Z)] = EvidenceCat.fromImplicits
-      def diassociate[X: TC, Y: TC, Z: TC]: EvidenceCat[T, X /\ (Y /\ Z), X /\ Y /\ Z] = EvidenceCat.fromImplicits
-      def fst[A: TC, B: TC]: EvidenceCat[T, A /\ B, A] = EvidenceCat.fromImplicits
-      def snd[A: TC, B: TC]: EvidenceCat[T, A /\ B, B] = EvidenceCat.fromImplicits
-      def diag[A: TC]: EvidenceCat[T, A, A /\ A] = EvidenceCat.fromImplicits
+      def associate  [X: TC, Y: TC, Z: TC]: EvidenceCat[T, X /\ Y /\ Z, X /\ (Y /\ Z)] = fromImplicits
+      def diassociate[X: TC, Y: TC, Z: TC]: EvidenceCat[T, X /\ (Y /\ Z), X /\ Y /\ Z] = fromImplicits
+      def fst[A: TC, B: TC]: EvidenceCat[T, A /\ B, A] = fromImplicits
+      def snd[A: TC, B: TC]: EvidenceCat[T, A /\ B, B] = fromImplicits
+      def diag[A: TC]: EvidenceCat[T, A, A /\ A] = fromImplicits
       def &&&[X, Y, Z](f: EvidenceCat[T, X, Y], g: EvidenceCat[T, X, Z]): EvidenceCat[T, X, Y /\ Z] =
-        EvidenceCat[T, X, Y /\ Z](f.left, L.product[Y, Z](/\(f.right, g.right)))
-      def braid[A, B]: EvidenceCat[T, A /\ B, B /\ A] = ???
+        EvidenceCat(f.left, L.product(/\(f.right, g.right)))
+      def braid[A: TC, B: TC]: EvidenceCat[T, A /\ B, B /\ A] = fromImplicits
     }
-  }
+
+  def cocartesian[T[_], I](implicit
+    ti: T[I],
+    L: LaxSemigroupal[Opp[* => *]#l, \/, * => *, \/, T]
+  ) = new Cartesian[Opp[EvidenceCat[T,*,*]]#l, \/] {
+        type Id = I
+        type TC[a] = T[a]
+        def bifunctor = EvidenceCat.bifunctorEither
+        def fst[A: TC, B: TC]: EvidenceCat[T, A, A \/ B] = {
+          //fromImplicits[TC, A, A \/ B]
+          //val tab = DisjunctionModule.primary[A, B]
+          ???
+        }
+        def snd[A: TC, B: TC] = ???
+        def diag[A: TC] = ???
+        def &&&[X, Y, Z](f: EvidenceCat[T, Y, X], g: EvidenceCat[T, Z, X]) = ???
+        def braid[A: TC, B: TC]  = ???
+        def idl[A: TC]  = ???
+        def coidl[A: TC]  = ???
+        def idr[A: TC]  = ???
+        def coidr[A: TC]  = ???
+        def C = ???
+        def associate  [X: TC, Y: TC, Z: TC]  = ???
+        def diassociate[X: TC, Y: TC, Z: TC]  = ???
+      }
 
 }

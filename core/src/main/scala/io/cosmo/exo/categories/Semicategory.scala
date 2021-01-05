@@ -2,7 +2,9 @@ package io.cosmo.exo.categories
 
 import cats.Inject
 import cats.implicits._
-import io.cosmo.exo._
+import io.cosmo
+import io.cosmo.exo
+import io.cosmo.exo.{~>, _}
 import io.cosmo.exo.categories.Trivial.T1
 import io.cosmo.exo.categories._
 import io.cosmo.exo.categories.functors.Exofunctor.{Con, Cov}
@@ -10,6 +12,8 @@ import io.cosmo.exo.categories.functors._
 import io.cosmo.exo.evidence._
 import io.cosmo.exo.typeclasses.{IsTypeF, TypeF}
 import shapeless.the
+
+import scala.util.Either
 
 
 trait Semicategory[->[_, _]] {
@@ -134,7 +138,7 @@ private[categories] object SemicategoryHelpers {
     def terminate[A](implicit A: Trivial.T1[A]): A => Terminal = _ => ()
     def initialTC: Trivial.T1[Nothing] = Trivial.trivialInstance
     def initiate[A](implicit A: Trivial.T1[A]): Nothing => A = identity
-    def distribute[A, B, C]: A ⨂ (B ⨁ C) => A ⨂ B ⨁ (A ⨂ C) =
+    def distribute[A: TC, B: TC, C: TC]: A ⨂ (B ⨁ C) => A ⨂ B ⨁ (A ⨂ C) =
       { case (a, bc) => bc.fold((a, _).asLeft, (a, _).asRight) }
   }
 
@@ -143,11 +147,25 @@ private[categories] object SemicategoryHelpers {
     override type TC[a] = IsTypeF[a]
     override def C: Subcat.Aux[FunK, IsTypeF] = FunK.categ
     override def bifunctor: Endobifunctor[FunK, Tuple2] = ???
-    override def fst[A: TC, B: TC]: FunK[(A, B), A] = ???
+
+    private def fst1[F[_], G[_]]: λ[x => (F[x], G[x])] ~> F = ∀.mk[λ[x => (F[x], G[x])] ~> F].from(p => p._1)
+    override def fst[A: TC, B: TC]: FunK[(A, B), A] = {
+      val tca: IsTypeF[A] = implicitly[TC[A]]
+      val tcb: IsTypeF[B] = implicitly[TC[B]]
+      type F[x] = tca.Type[x]
+      type G[x] = tcb.Type[x]
+      val f1: λ[x => (F[x], G[x])] ~> F = fst1[F, G]
+      val r1: FunK[TypeF[λ[x => (F[x], G[x])]], TypeF[F]] = FunK(f1)
+      val r0: FunK[(TypeF[F], TypeF[G]), TypeF[λ[x => (F[x], G[x])]]] = ???
+      // r0 >>> r1 // the result
+
+      ???
+    }
+
     override def snd[A: TC, B: TC]: FunK[(A, B), B] = ???
     override def diag[A: TC]: FunK[A, (A, A)] = ???
     override def &&&[X, Y, Z](f: FunK[X, Y], g: FunK[X, Z]): FunK[X, (Y, Z)] = ???
-    override def braid[A, B]: FunK[(A, B), (B, A)] = ???
+    override def braid[A: TC, B: TC]: FunK[(A, B), (B, A)] = ???
     override def idl  [A: TC]: FunK[(TypeF[UnitK], A), A] = ???
     override def coidl[A: TC]: FunK[A, (TypeF[UnitK], A)] = ???
     override def idr  [A: TC]: FunK[(A, TypeF[UnitK]), A] = ???
@@ -159,7 +177,7 @@ private[categories] object SemicategoryHelpers {
   trait FunKClass
     extends Terminal[FunK]
     with Initial[FunK]
-    with Ccc[FunK]
+    //with Ccc[FunK]
     with Distributive[FunK]
   {
     override type Terminal = TypeF[UnitK]
@@ -169,8 +187,6 @@ private[categories] object SemicategoryHelpers {
     override type ⨁[a, b] = Either[a, b]
     override type SumId = TypeF[VoidK]
     override type TC[a] = IsTypeF[a]
-    override type |->[a, b] = FunK[a, b]
-    override type ⊙[a, b] = (a, b)
     def terminalTC = IsTypeF[UnitK]
     def terminate[A](implicit A: IsTypeF[A]): FunK[A, TypeF[UnitK]] = {
       val ff: A.Type ~> UnitK = ∀.mk[A.Type ~> UnitK].from(_ => ())
@@ -193,13 +209,27 @@ private[categories] object SemicategoryHelpers {
           .andThen(bc.instance.apply))
     }
 
-
-    override def apply[A, B](implicit t: TC[A |-> B]) = ???
-    def uncurry[A, B, C](f: FunK[A, B |-> C]): FunK[(A, B), C] = ???
-    def curry[A, B, C](f: FunK[A ⊙ B, C]): FunK[A, FunK[B, C]] = ???
     def cartesian: Cartesian.Aux[FunK, Tuple2, IsTypeF, TypeF[UnitK]] = ???
     def cocartesian: Cartesian.Aux[Dual[FunK,*,*], Either, IsTypeF, TypeF[VoidK]] = ???
-    def distribute[A, B, C]: FunK[(A, Either[B, C]), Either[(A, B), (A, C)]] = ???
+
+    def distribute[A: TC, B: TC, C: TC]: FunK[(A, Either[B, C]), Either[(A, B), (A, C)]] = {
+      val tca: IsTypeF[A] = implicitly[TC[A]]
+      val tcb: IsTypeF[B] = implicitly[TC[B]]
+      val tcc: IsTypeF[C] = implicitly[TC[C]]
+      type F[x] = tca.Type[x]
+      type G[x] = tcb.Type[x]
+      type H[x] = tcc.Type[x]
+      val dd: λ[a => (F[a], Either[G[a], H[a]])] ~> λ[a => Either[(F[a], G[a]), (F[a], H[a])]] = distribute1[F, G, H]
+      val rr: FunK[TypeF[λ[a => (F[a], Either[G[a], H[a]])]], TypeF[λ[a => Either[(F[a], G[a]), (F[a], H[a])]]]] = FunK(dd)
+      ???
+    }
+
+    def distribute1[F[_], G[_], H[_]]: λ[a => (F[a], Either[G[a], H[a]])] ~> λ[a => Either[(F[a], G[a]), (F[a], H[a])]] =
+      ∀.mk[λ[a => (F[a], Either[G[a], H[a]])] ~> λ[a => Either[(F[a], G[a]), (F[a], H[a])]]].from({
+        case (f, ei) => ei.bimap(g => (f, g), h => (f, h))
+      })
+
+
   }
 
 

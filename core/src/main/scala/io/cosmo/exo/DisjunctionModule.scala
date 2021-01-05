@@ -1,11 +1,11 @@
 package io.cosmo.exo
 
-import cats.Bifunctor
 import cats.implicits._
-import io.cosmo.exo.categories.Associative
-import io.cosmo.exo.evidence.{===, =~~=, IsK2}
+import cats.{Bifunctor, Contravariant, Order}
+import io.cosmo.exo.categories.functors.LaxSemigroupal
+import io.cosmo.exo.categories.{Associative, Dual, Trivial}
+import io.cosmo.exo.evidence.{=~~=, IsK2}
 import io.estatico.newtype.Coercible
-import shapeless.the
 
 trait DisjunctionModule {
   type Type [L, R]
@@ -56,10 +56,17 @@ object DisjunctionModule extends DisjunctionModule01 {
 
   implicit val iso: Either <~~> \/ = \/.leibniz.toIso
 
-  implicit def primary[A, B](implicit a: A): A \/ B = -\/(a)
+  implicit def coproductTypeclass[T[_], A, B](implicit
+    L: LaxSemigroupal[Dual[* => *,*,*], \/, * => *, \/, T], tab: T[A] \/ T[B]
+  ): T[A \/ B] = L.product(tab)
+
+  implicit def typeclassFromEither[TC[_], A, B](implicit t: TC[Either[A, B]]): TC[A \/ B] =
+    \/.leibniz.subst[λ[f[_,_] => TC[f[A, B]]]](t)
+
+  implicit def primaryImp[A, B](implicit a: A): A \/ B = -\/(a)
 }
 trait DisjunctionModule01 {
-  implicit def secondary[A, B](implicit b: => B): A \/ B = \/-(b)
+  implicit def secondaryImp[A, B](implicit b: => B): A \/ B = \/-(b)
 }
 
 trait DisjunctionSyntax {

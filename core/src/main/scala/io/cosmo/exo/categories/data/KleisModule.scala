@@ -59,6 +59,6 @@ object KleisModule {
       def fst[A: TC, B: TC]: ⨂[A, B] -> F[A] = cc.C.andThen(cc.fst[A, B], mon.pure[A])
       def snd[A: TC, B: TC]: ⨂[A, B] -> F[B] = cc.C.andThen(cc.snd[A, B], mon.pure[B])
       def diag[A: TC]: A -> F[A ⨂ A] = cc.C.andThen(cc.diag[A], mon.pure[⨂[A, A]])
-      def braid[A, B]: (A ⨂ B) -> F[B ⨂ A] = cc.C.andThen(cc.swap, mon.pure[B ⨂ A])
+      def braid[A: TC, B: TC]: (A ⨂ B) -> F[B ⨂ A] = cc.C.andThen(cc.swap, mon.pure[B ⨂ A])
     }
 }

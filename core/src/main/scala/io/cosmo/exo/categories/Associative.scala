@@ -2,11 +2,9 @@ package io.cosmo.exo.categories
 
 import cats.Inject
 import cats.implicits._
-import io.cosmo.exo
 import io.cosmo.exo._
-import io.cosmo.exo.categories.Cartesian.Aux
-import io.cosmo.exo.categories.Trivial.T1
-import io.cosmo.exo.categories.functors.{Endobifunctor, Exobifunctor}
+import io.cosmo.exo.categories.Trivial.trivialInstance
+import io.cosmo.exo.categories.functors.{Endobifunctor, Exo, Exobifunctor}
 
 import scala.{:: => _}
 
@@ -41,17 +39,28 @@ object Associative extends AssociativeImplicits {
 
   def apply[->[_,_], ⊙[_,_]](implicit assoc: Associative[->, ⊙]): Associative.Aux[->, ⊙, assoc.TC] = assoc
 
+  def dual[->[_,_], ⊙[_,_], T[_]](a: Associative.Aux[->, ⊙, T]): Associative.Aux[Dual[->,*,*], ⊙, T] =
+    new Associative[Dual[->,*,*], ⊙] {
+      type TC[a] = T[a]
+      def C: Subcat.Aux[Dual[->, *, *], T] = a.C.dual
+      def bifunctor: Endobifunctor[Dual[->, *, *], ⊙] = Exobifunctor.dual(a.bifunctor)
+      def associate  [X: TC, Y: TC, Z: TC] = Dual(a.diassociate)
+      def diassociate[X: TC, Y: TC, Z: TC] = Dual(a.associate)
+    }
+
 }
 
 trait AssociativeImplicits extends AssociativeImplicits01 {
   val cartesianFn1Tuple: Cartesian.Aux[* => *, Tuple2, Trivial.T1, Unit] =
-      new Cartesian.Proto[* => *, Tuple2, Trivial.T1, Unit] {
-        type ->[a, b] = a => b
+      new Cartesian[* => *, Tuple2] {
+        type TC[a] = Trivial.T1[a]
+        type Id = Unit
+        private type ->[a, b] = a => b
         def C: Subcat.AuxT[* => *] = Semicategory.function1
         def bifunctor = Exobifunctor.tuple2Endobifunctor
         def associate  [X: Trivial.T1, Y: Trivial.T1, Z: Trivial.T1]: ((X, Y), Z) -> (X, (Y, Z)) = { case ((x, y), z) => (x, (y, z)) }
         def diassociate[X: Trivial.T1, Y: Trivial.T1, Z: Trivial.T1]: (X, (Y, Z)) -> ((X, Y), Z) = { case (x, (y, z)) => ((x, y), z) }
-        def braid[A, B]: ((A, B)) => (B, A) = { case (a, b) => (b, a) }
+        def braid[A: TC, B: TC]: ((A, B)) => (B, A) = { case (a, b) => (b, a) }
         def coidl[A: TC]: A -> (Unit, A) = a => ((), a)
         def coidr[A: TC]: A -> (A, Unit) = a => (a, ())
         def idr[A: TC]: (A, Unit) -> A = { case (a, _) => a }
@@ -66,16 +75,18 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
 
   implicit def impCartesianFn1Tuple: Cartesian.Aux[Function1, Tuple2, Trivial.T1, Unit] = cartesianFn1Tuple
 
-  implicit def cartesianFn1Conj: Cartesian.Aux[* => *, /\, T1, Unit] =
+  implicit def cartesianFn1Conj: Cartesian.Aux[* => *, /\, Trivial.T1, Unit] =
     /\.leibniz.subst[Cartesian.Aux[* => *, *[_,_], Trivial.T1, Unit]](cartesianFn1Tuple)
 
   implicit val cocartesianFn1Disj: Cartesian.Aux[Opp[* => *]#l, \/, Trivial.T1, Void] =
-      new Cartesian.Proto[Opp[* => *]#l, \/, Trivial.T1, Void] {
+      new Cartesian[Opp[* => *]#l, \/] {
+        type TC[a] = Trivial.T1[a]
+        type Id = Void
         def C: Subcat.AuxT[Opp[* => *]#l] = DualModule.oppSubcat(implicitly[Subcat.Aux[* => *, Trivial.T1]])
         def bifunctor = DualModule.oppEndobifunctor(Endobifunctor[* => *, \/])
         def diassociate[X: Trivial.T1, Y: Trivial.T1, Z: Trivial.T1]: (X \/ Y \/ Z) => (X \/ (Y \/ Z)) = _.fold(_.fold(_.left[Y \/ Z], _.left[Z].right[X]), _.right[Y].right[X])
         def associate  [X: Trivial.T1, Y: Trivial.T1, Z: Trivial.T1]: (X \/ (Y \/ Z)) => (X \/ Y \/ Z) = _.fold(_.left[Y].left[Z], _.fold(_.right[X].left[Z], _.right[X \/ Y]))
-        def braid[A, B]: (B \/ A) => (A \/ B) = _.fold(_.right, _.left)
+        def braid[A: TC, B: TC]: (B \/ A) => (A \/ B) = _.fold(_.right, _.left)
         def coidr[A: TC]: (A \/ Void) => A = _.fold[A](identity, identity)
         def coidl[A: TC]: (Void \/ A) => A = _.fold[A](identity, identity)
         def idl[A: TC]: A => (Void \/ A) = _.right
@@ -87,6 +98,15 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
         //// overrides for performance
         override def grouped[A, B, X, Y](f: B => A, g: Y => X): (B \/ Y) => (A \/ X) = _.fold(f(_).left, g(_).right)
       }
+
+  implicit val assocFn1Disj: Associative.Aux[* => *, \/, Trivial.T1] =
+    new Associative[* => *, \/] {
+      type TC[a] = Trivial.T1[a]
+      def C = implicitly
+      def bifunctor = implicitly
+      def associate  [X: TC, Y: TC, Z: TC]: X \/ Y \/ Z => X \/ (Y \/ Z) = cocartesianFn1Disj.diassociate(trivialInstance, trivialInstance, trivialInstance)
+      def diassociate[X: TC, Y: TC, Z: TC]: X \/ (Y \/ Z) => X \/ Y \/ Z = cocartesianFn1Disj.associate(trivialInstance, trivialInstance, trivialInstance)
+    }
 
   def cocartesianFn1Either: Cartesian.Aux[Opp[* => *]#l, Either, Trivial.T1, Void] =
     \/.leibniz.flip.subst[Cartesian.Aux[Opp[* => *]#l, *[_,_], Trivial.T1, Void]](cocartesianFn1Disj)
@@ -117,36 +137,18 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
         val inj: A \/ Void => A = _.fold(a => a, v => v)
         val prj: A => Option[A \/ Void] = _.left[Void].some
       }
-      override def braid[A, B]: Inject[B \/ A, A \/ B] = new Inject[B \/ A, A \/ B] {
+      override def braid[A: TC, B: TC]: Inject[B \/ A, A \/ B] = new Inject[B \/ A, A \/ B] {
         val inj: B \/ A => A \/ B = _.swap
         val prj: A \/ B => Option[B \/ A] = _.swap.some
       }
       def C: Subcat.Aux[Opp[Inject]#l, Trivial.T1] = DualModule.oppSubcat(implicitly[Subcat.Aux[Inject, Trivial.T1]])
       def bifunctor: Endobifunctor[Opp[Inject]#l, \/] = new Endobifunctor[Opp[Inject]#l, \/] {
-        val L, R, C = new Semicategory[Opp[Inject]#l] {
-          def andThen[A, B, C](ba: Inject[B, A], cb: Inject[C, B]) = Semicategory[Inject].compose(ba, cb)
-        }
-        def leftMap [A, B, Z](fn: Inject[Z, A]): Inject[Z \/ B, A \/ B] = new Inject[Z \/ B, A \/ B] {
-          val inj: Z \/ B => A \/ B = _.fold(fn.inj(_).left[B], _.right[A])
-          val prj: A \/ B => Option[Z \/ B] = { aub =>
-            val pp: A => Option[Z] = fn.prj
-            def pp1: A => Option[Z] = fn.prj
-            //val rr: Option[Z] = aub.fold(pp1, _.some)
-
-            ???
-          }
-        }
-        def rightMap[A, B, Z](fn: Inject[Z, B]): Inject[A \/ Z, A \/ B] = ???
         override def bimap[A, X, B, Y](left: Inject[X, A], right: Inject[Y, B]): Inject[X \/ Y, A \/ B] = ???
       }
       def associate  [X: TC, Y: TC, Z: TC]: Inject[X \/ (Y \/ Z), X \/ Y \/ Z] = ???
       def diassociate[X: TC, Y: TC, Z: TC]: Inject[X \/ Y \/ Z, X \/ (Y \/ Z)] = ???
     }
 
-
-
-  //  val injMonoidal: Cartesian[Inject, (*, *)] =
-  //    new Cartesian[Inject, (*, *)] {
   implicit val injMonoidalTuple: Monoidal.Aux[Inject, (*, *), Trivial.T1, Unit] with Symmetric.Aux[Inject, (*, *), Trivial.T1] =
     new Monoidal[Inject, (*, *)] with Symmetric[Inject, (*, *)] {
       type Id = Unit
@@ -192,33 +194,10 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
         val prj: (((X, Y), Z)) => Option[(X, (Y, Z))] = { case ((x, y), z) => (x, (y, z)).some }
       }
 
-      def braid[A, B]: Inject[(A, B), (B, A)] = new Inject[(A, B), (B, A)] {
+      def braid[A: TC, B: TC]: Inject[(A, B), (B, A)] = new Inject[(A, B), (B, A)] {
         val inj: ((A, B)) => (B, A) = { case (a, b) => (b, a) }
         val prj: ((B, A)) => Option[(A, B)] = { case (b, a) => (a, b).some }
       }
-
-      //      def fst[A, B]: Inject[(A, B), A] = new Inject[(A, B), A] {
-      //        val inj: ((A, B)) => A = _._1
-      //        val prj: A => Option[(A, B)] = _ => None
-      //      }
-      //      def snd[A, B]: Inject[(A, B), B] = new Inject[(A, B), B] {
-      //        val inj: ((A, B)) => B = _._2
-      //        val prj: B => Option[(A, B)] = _ => None
-      //      }
-      //      def diag[A]: Inject[A, (A, A)] = new Inject[A, (A, A)] {
-      //        val inj: A => (A, A) = a => (a, a)
-      //        val prj: ((A, A)) => Option[A] = _._1.some
-      //      }
-      //      def &&&[X, Y, Z](f: Inject[X, Y], g: Inject[X, Z]): Inject[X, (Y, Z)] =
-      //        new Inject[X, (Y, Z)] {
-      //          val inj: X => (Y, Z) = x => (f(x), g(x))
-      //          val prj: ((Y, Z)) => Option[X] = { case (y, z) => f.prj(y) orElse g.prj(z) }
-      //        }
-      //      override def pair[A, B, X, Y](f: A Inject B, g: X Inject Y): (A, X) Inject (B, Y) =
-      //        new Inject[(A, X), (B, Y)] {
-      //          val inj: ((A, X)) => (B, Y) = { case (a, x) => (f(a), g(x)) }
-      //          val prj: ((B, Y)) => Option[(A, X)] = { case (b, y) => f.prj(b) zip g.prj(y) }
-      //        }
 
     }
 

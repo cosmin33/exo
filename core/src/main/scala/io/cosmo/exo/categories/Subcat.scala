@@ -6,7 +6,7 @@ import io.cosmo.exo.evidence._
 import scala.language.experimental.macros
 
 trait Subcat[->[_, _]] extends Semicategory[->] {
-  type TC[ᵒ]
+  type TC[_]
   def id[A](implicit A: TC[A]): A -> A
 }
 
@@ -17,9 +17,11 @@ object Subcat {
 
   trait Proto[->[_,_], ->#[_]] extends Subcat[->] {type TC[a] = ->#[a]}
 
-  implicit class SubcatOps[->[_,_]](val s: Subcat[->]) extends AnyVal {
-    def opp: Subcat.Aux[Dual[->,*,*], s.TC] = DualModule.dualSubcat[->, s.TC](s)
+  implicit class SubcatOps[->[_,_], T[_]](val s: Subcat.Aux[->, T]) extends AnyVal {
+    def dual: Subcat.Aux[Dual[->,*,*], T] = DualModule.dualSubcat[->, T](s)
   }
+
+  //def fromDual[->[_,_], T[_]](s: Subcat.Aux[Dual[->,*,*], T]): Subcat.Aux[->, T] =
 
 }
 

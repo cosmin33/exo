@@ -20,8 +20,6 @@ trait Cartesian[->[_, _], ⨂[_, _]] extends Monoidal[->, ⨂] with Symmetric[->
 object Cartesian {
   type Aux[->[_, _], ⨂[_, _], TC0[_], I] = Cartesian[->, ⨂] { type TC[a] = TC0[a]; type Id = I }
 
-  trait Proto[->[_, _], ⨂[_, _], TC0[_], I] extends Cartesian[->, ⨂] { type TC[a] = TC0[a]; type Id = I }
-
   implicit class CocartesianOps[->[_, _], ⨁[_, _], C[_], I](val self: Cartesian.Aux[Dual[->,*,*], ⨁, C, I]) extends AnyVal {
     def inl[A: C, B: C]: A -> ⨁[A, B] = self.fst
     def inr[A: C, B: C]: B -> ⨁[A, B] = self.snd
