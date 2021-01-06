@@ -1,10 +1,13 @@
 package io.cosmo.exo.categories.functors
 
-import io.cosmo.exo.categories.{Braided, Monoidal}
+import io.cosmo.exo.categories.Dual
 
 /** https://ncatlab.org/nlab/show/bilax+monoidal+functor */
-// scot mostenirea: strong da isomorfisme iar bilax functioneaza pe monoidale braided, nu se mostenesc unul pe altul
-trait BilaxMonoidal[==>[_,_], ⊙[_,_], -->[_,_], ∪[_,_], F[_]] extends StrongMonoidal[==>, ⊙, -->, ∪, F] {
-//  def M1: Monoidal[==>, ⊙] with Braided[==>, ⊙]
-//  def M2: Monoidal[-->, ∪] with Braided[-->, ∪]
+trait BilaxMonoidal[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends Exofunctor[==>, -->, F]  {
+  def functor: BraidedMonoidal[==>, ⊙=, -->, ⊙-, F]
+  def opFunctor: BraidedMonoidal[Dual[==>,*,*], ⊙=, Dual[-->,*,*], ⊙-, F]
+
+  def product[A, B]: F[A] ⊙- F[B] --> F[A ⊙= B] = functor.product[A, B]
+  def opProduct[A, B]: F[A ⊙= B] --> (F[A] ⊙- F[B]) = opFunctor.opProduct[A, B]
+  // TODO: Laws
 }

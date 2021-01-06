@@ -4,12 +4,10 @@ import cats.Monoid
 import io.cosmo.exo._
 
 trait CMonoid[->[_,_], ⊙[_,_], A] extends CSemigroup[->, ⊙, A] {
-  type TC[_]
   type I
   def C: Monoidal.Aux[->, ⊙, TC, I]
 
   def id: I -> A
-  def op: (A ⊙ A) -> A
 }
 
 object CMonoid {
@@ -34,7 +32,7 @@ object CMonoid {
   implicit def fromCats[A](implicit m: Monoid[A]): CMonoid.Aux[* => *, (*, *), Trivial.T1, Unit, A] =
     unsafe((_: Unit) => m.empty, p => m.combine(p._1, p._2))
 
-  implicit def toCats[A](implicit m: CMonoid.Aux[* => *, (*, *), Trivial.T1, Unit, A]): Monoid[A] =
+  def toCats[A](implicit m: CMonoid.Aux[* => *, (*, *), Trivial.T1, Unit, A]): Monoid[A] =
     Monoid.instance(m.id(()), {case (a, b) => m.op((a, b))})
 
   implicit def isoCats[A]: Monoid[A] <=> CMonoid.Aux[* => *, (*, *), Trivial.T1, Unit, A] =

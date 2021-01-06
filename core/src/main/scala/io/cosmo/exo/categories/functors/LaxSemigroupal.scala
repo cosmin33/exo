@@ -11,7 +11,6 @@ trait LaxSemigroupal[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends Exo
   def M1: Associative.Aux[==>, ⊙=, TC1]
   def M2: Associative.Aux[-->, ⊙-, TC2]
 
-  // (F[A], F[B]) => F[(A, B)]
   def product[A, B]: (F[A] ⊙- F[B]) --> F[A ⊙= B]
 
   def map2[A, B, C](fn: (A ⊙= B) ==> C): (F[A] ⊙- F[B]) --> F[C] = M2.C.andThen(product[A, B], map(fn))
@@ -19,29 +18,35 @@ trait LaxSemigroupal[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends Exo
   def preserveCSemigroup[M](ma: CSemigroup.Aux[==>, ⊙=, TC1, M]): CSemigroup.Aux[-->, ⊙-, TC2, F[M]] =
     CSemigroup.unsafe1(map2(ma.op))(M2)
 
-  def compose[~~>[_,_], ⊙~[_,_], ~>#[_], G[_]](G: LaxSemigroupal.Aux[-->, ⊙-, ~~>, ⊙~, TC2, ~>#, G]
+  def compose[~~>[_,_], ⊙~[_,_], ~>#[_], G[_]](G: LaxSemigroupal.Aux[-->, ⊙-, TC2, ~~>, ⊙~, ~>#, G]
   ) =
     new LaxSemigroupal[==>, ⊙=, ~~>, ⊙~, λ[a => G[F[a]]]] {
       type TC1[a] = self.TC1[a]
       type TC2[a] = ~>#[a]
       def M1: Associative.Aux[==>, ⊙=, TC1] = self.M1
       def M2: Associative.Aux[~~>, ⊙~, TC2] = G.M2
-      def product[A, B]: G[F[A]] ⊙~ G[F[B]] ~~> G[F[A ⊙= B]] = M2.C.andThen(G.product[F[A], F[B]], G.map(self.product[A, B]))
+      def product[A, B]: G[F[A]] ⊙~ G[F[B]] ~~> G[F[A ⊙= B]] = G.map2(self.product[A, B])
       def map[A, B](f: A ==> B): G[F[A]] ~~> G[F[B]] = G.map(self.map(f))
     }
 }
 
 object LaxSemigroupal extends LaxSemigroupalInstances {
-  type Aux[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], =>#[_], ->#[_], F[_]] =
+  type Aux[==>[_,_], ⊙=[_,_], =>#[_], -->[_,_], ⊙-[_,_], ->#[_], F[_]] =
     LaxSemigroupal[==>, ⊙=, -->, ⊙-, F] { type TC1[a] = =>#[a]; type TC2[a] = ->#[a] }
-
   type Endo[->[_, _], ⊙[_, _], F[_]] = LaxSemigroupal[->, ⊙, ->, ⊙, F]
 
-  abstract class ProtoFunctor[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]](F: Exofunctor[==>, -->, F]) extends LaxSemigroupal[==>, ⊙=, -->, ⊙-, F] {
+  implicit class OplaxSemigroupalOps[==>[_,_], =⊙[_,_], -->[_,_], -⊙[_,_], F[_]](
+    l: OplaxSemigroupal[==>, =⊙, -->, -⊙, F]
+  ) {
+    def opProduct[A, B]: F[A =⊙ B] --> (F[A] -⊙ F[B]) = l.product[A, B].toFn
+    def opmap2[A, B, C](fn: C ==> (A =⊙ B)): F[C] --> (F[A] -⊙ F[B]) = l.map2(Dual(fn)).toFn
+  }
+
+  abstract class ProtoFromFunctor[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]](F: Exofunctor[==>, -->, F]) extends LaxSemigroupal[==>, ⊙=, -->, ⊙-, F] {
     def map[A, B](f: A ==> B) = F.map(f)
   }
 
-  implicit def orderTest: LaxSemigroupal.Aux[Dual[* => *, *, *], \/, * => *, /\, Trivial.T1, Trivial.T1, Order] =
+  implicit def orderTest: LaxSemigroupal.Aux[Dual[* => *, *, *], \/, Trivial.T1, * => *, /\, Trivial.T1, Order] =
     new LaxSemigroupal[Dual[* => *,*,*], \/, * => *, /\, Order] {
       type TC1[a] = Trivial.T1[a]
       type TC2[a] = Trivial.T1[a]
@@ -120,11 +125,12 @@ private object LaxSemigroupalHelpers {
 
   trait ImportMonoidal[F[_]] extends ImportSemigroupal[F] {
     protected def F: InvariantMonoidal[F]
-    type I = Unit
-    def id: I => F[I] = F.point(_)
-    override def M2: Monoidal.Aux[* => *, (*, *), λ[a => Trivial.T1[F[a]]], F[Unit]] =
+    type I1 = Unit
+    type I2 = Unit
+    def id: I2 => F[I1] = F.point(_)
+    override def M2: Monoidal.Aux[* => *, (*, *), λ[a => Trivial.T1[F[a]]], Unit] =
       new Monoidal.ProtoFromAssociative[* => *, (*, *), λ[a => Trivial.T1[F[a]]]](Associative[* => *, (*, *)]) {
-        type Id = F[Unit]
+        type Id = Unit
         def idl  [A: TC]: ((Id, A)) => A = _._2
         def coidl[A: TC]: A => (Id, A)   = (F.unit, _)
         def idr  [A: TC]: ((A, Id)) => A = _._1
