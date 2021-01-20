@@ -1,11 +1,9 @@
 package io.cosmo.exo.categories.functors
 
+import cats.implicits._
 import io.cosmo.exo._
 import io.cosmo.exo.categories._
-import io.cosmo.exo.categories.syntax._
 import io.estatico.newtype.Coercible
-import cats.implicits._
-import cats.syntax._
 import mouse.any._
 
 trait Exobifunctor[==>[_, _], -->[_, _], >->[_, _], Bi[_, _]] { self =>
@@ -29,15 +27,18 @@ object Exobifunctor extends ExobifunctorInstances {
   type EndoPro[->[_,_], B[_,_]] = Exobifunctor[Dual[->,*,*], ->, ->, B]
   type Endo[->[_,_], B[_,_]] = Exobifunctor[->, ->, ->, B]
 
+  def apply[=>:[_,_], ->:[_,_], ~>:[_,_], ⊙[_,_]](implicit
+    bi: Exobifunctor[=>:, ->:, ~>:, ⊙]): Exobifunctor[=>:, ->:, ~>:, ⊙] = bi
+
   def fromFunctors[==>[_,_], -->[_,_], >->[_,_]: Semicategory, Bi[_,_]](
-    l: ∀[λ[a => Exo[==>, >->, Bi[*, a]]]],
-    r: ∀[λ[a => Exo[-->, >->, Bi[a, *]]]]
+    L: ∀[λ[a => Exo[==>, >->, Bi[*, a]]]],
+    R: ∀[λ[a => Exo[-->, >->, Bi[a, *]]]]
   ): Exobifunctor[==>, -->, >->, Bi] = {
     new Exobifunctor[==>, -->, >->, Bi] {
       def bimap[A, X, B, Y](left: A ==> X, right: B --> Y): Bi[A, B] >-> Bi[X, Y] =
-        Semicategory[>->].andThen(leftMap[A, B, X](left), rightMap[X, B, Y](right))
-      def leftMap [A, B, Z](fn: A ==> Z): Bi[A, B] >-> Bi[Z, B] = l.apply[B].map(fn)
-      def rightMap[A, B, Z](fn: B --> Z): Bi[A, B] >-> Bi[A, Z] = r.apply[A].map(fn)
+        L.apply[B].map(left) >>>> R.apply[X].map(right)
+      override def leftMap [A, B, Z](fn:  A ==> Z)(implicit C:  SubcatHasId[-->, B]) = L.apply[B].map(fn)
+      override def rightMap[A, B, Z](fn:  B --> Z)(implicit C:  SubcatHasId[==>, A]) = R.apply[A].map(fn)
     }
   }
 
@@ -53,21 +54,6 @@ object Exobifunctor extends ExobifunctorInstances {
       def bimap[A, X, B, Y](l: Dual[->, A, X], r: Dual[->, B, Y]): Dual[->, Bi[A, B], Bi[X, Y]] =
         Dual(F.bimap(l.toFn, r.toFn))
     }
-
-  implicit def semicatBifunctor[->[_,_]](implicit s: Semicategory[->]): Exobifunctor[Dual[->,*,*], ->, * => *, ->] =
-    Exobifunctor.fromFunctors(Exo.semiFaFunCon[->], Exo.semiFaFunCov[->])
-
-  implicit def coercible[->[_,_], P[_,_], R[_,_]](implicit co: Coercible[∀∀[P], ∀∀[R]])
-  : Coercible[Endobifunctor[->, P], Endobifunctor[->, R]] = Coercible.instance
-
-  implicit def impCoerce[->[_,_], P[_,_], R[_,_]](implicit
-    ev: Coercible[Endobifunctor[->, P], Endobifunctor[->, R]],
-    E: Endobifunctor[->, P],
-  ): Endobifunctor[->, R] = ev(E)
-
-  def apply[=>:[_,_], ->:[_,_], ~>:[_,_], ⊙[_,_]](implicit
-    bi: Exobifunctor[=>:, ->:, ~>:, ⊙]): Exobifunctor[=>:, ->:, ~>:, ⊙] = bi
-
 }
 
 object Endobifunctor {
@@ -76,7 +62,7 @@ object Endobifunctor {
 
 trait ExobifunctorInstances {
 
-  def dicatToIso[==>[_, _], -->[_, _], >->[_, _], Bi[_, _], TC[_]](
+  private[exo] def dicatToIso[==>[_, _], -->[_, _], >->[_, _], Bi[_, _], TC[_]](
     E: Exobifunctor[Dicat[==>,*,*], Dicat[-->,*,*], >->, Bi]
   )(implicit
     S1: Subcat.Aux[==>, TC],
@@ -98,5 +84,19 @@ trait ExobifunctorInstances {
       override def bimap[LX, LY, RX, RY](lxy: LX => LY, rxy: RX => RY): Either[LX, RX] => Either[LY, RY] =
         _.fold(x => lxy(x).asLeft, x => rxy(x).asRight)
     }
+
+  implicit def semicatToExobifunctor[->[_,_]](implicit s: Semicategory[->]): Exobifunctor[Dual[->,*,*], ->, * => *, ->] =
+  //    Exobifunctor.fromFunctors(Exo.semiFaFunCon[->], Exo.semiFaFunCov[->])
+    new Exobifunctor[Dual[->,*,*], ->, * => *, ->] {
+      def bimap[A, X, B, Y](left: Dual[->, A, X], right: B -> Y): (A -> B) => (X -> Y) = left.toFn >>>> _ >>>> right
+    }
+
+  implicit def coercible[->[_,_], P[_,_], R[_,_]](implicit co: Coercible[∀∀[P], ∀∀[R]])
+  : Coercible[Endobifunctor[->, P], Endobifunctor[->, R]] = Coercible.instance
+
+  implicit def impCoerce[->[_,_], P[_,_], R[_,_]](implicit
+    ev: Coercible[Endobifunctor[->, P], Endobifunctor[->, R]],
+    E: Endobifunctor[->, P],
+  ): Endobifunctor[->, R] = ev(E)
 
 }

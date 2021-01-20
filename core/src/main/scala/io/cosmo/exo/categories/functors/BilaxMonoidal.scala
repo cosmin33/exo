@@ -11,3 +11,6 @@ trait BilaxMonoidal[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends Exof
   def opProduct[A, B]: F[A ⊙= B] --> (F[A] ⊙- F[B]) = opFunctor.opProduct[A, B]
   // TODO: Laws
 }
+object BilaxMonoidal {
+  type Endo[->[_,_], ⊙[_,_], F[_]] = BilaxMonoidal[->, ⊙, ->, ⊙, F]
+}

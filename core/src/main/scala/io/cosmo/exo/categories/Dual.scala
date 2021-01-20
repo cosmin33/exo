@@ -15,8 +15,11 @@ object DualModule extends DualInstances {
     def toFn: B -> A = Dual.leibniz[->].flip(self)
   }
 
-  implicit def doubleDualEq[->[_,_], A, B]: (A -> B) === Dual[Dual[->,*,*], A, B] =
+  implicit def doubleDualIs[->[_,_], A, B]: (A -> B) === Dual[Dual[->,*,*], A, B] =
     Dual.leibniz[->].subst[λ[f[_,_] => Opp[Opp[->]#l]#l =~~= Dual[f,*,*]]](Dual.leibniz[Opp[->]#l]).is[A, B]
+
+  //implicit def doubleDualIsK2[->[_,_]]: -> =~~= λ[(a,b) => Dual[Dual[->,*,*],a,b]] = ???
+
 
   //implicit def conversion[->[_,_], A, B](ab: B -> A): Dual[->, A, B] = Dual(ab)
 }

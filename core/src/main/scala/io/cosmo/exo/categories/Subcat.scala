@@ -21,8 +21,6 @@ object Subcat {
     def dual: Subcat.Aux[Dual[->,*,*], T] = DualModule.dualSubcat[->, T](s)
   }
 
-  //def fromDual[->[_,_], T[_]](s: Subcat.Aux[Dual[->,*,*], T]): Subcat.Aux[->, T] =
-
 }
 
 trait SubcatHasId[->[_,_], A] {
@@ -40,41 +38,59 @@ object SubcatHasId {
 
 
 trait SubcategorySyntax {
-  implicit final class ToCategoryOps[->[_, _], B, C](self: B -> C) {
-    def compose[A](f: A -> B)(implicit ev: Semicategory[->]): A -> C = macro ops.Ops.ia_1
-    def andThen[D](f: C -> D)(implicit ev: Semicategory[->]): B -> D = macro ops.Ops.ia_1
-    type compose
-    type andThen
-    def <<<<[A](f: A -> B)(implicit ev: Semicategory[->]): A -> C = macro ops.Ops.nia_1[compose]
-    def >>>>[D](f: C -> D)(implicit ev: Semicategory[->]): B -> D = macro ops.Ops.nia_1[andThen]
+  implicit final class ToSemicategoryOps[->[_, _], B, C](self: B -> C) {
+    private def compose[A](f: A -> B)(implicit ev: Semicategory[->]): A -> C = ev.andThen(f, self)
+    private def andThen[D](f: C -> D)(implicit ev: Semicategory[->]): B -> D = ev.andThen(self, f)
+    def <<<<[A](f: A -> B)(implicit ev: Semicategory[->]): A -> C = compose(f)
+    def >>>>[D](f: C -> D)(implicit ev: Semicategory[->]): B -> D = andThen(f)
 
     def followedBy[D](f: C -> D)(implicit ev: Semicategory[->]): B -> D = ev.andThen(self, f)
 
     def flipped(implicit C: Groupoid[->]): C -> B = C.flip(self)
 
-    def associateR[X, Y, Z, F[_, _], TC[_]](implicit
-      A: Associative.Aux[->, F, TC], ev: C === F[F[X, Y], Z], c: Subcat.Aux[->, TC],
-      tx: TC[X], ty: TC[Y], tz: TC[Z]
-    ): B -> F[X, F[Y, Z]] = A.C.andThen(ev.subst[λ[X => B -> X]](self), A.associate[X, Y, Z])
+    def dual: Dual[->, C, B] = Dual(self)
 
-    def diassociateR[X, Y, Z, F[_, _], TC[_]](implicit
-      A: Associative.Aux[->, F, TC], ev: C === F[X, F[Y, Z]], c: Subcat.Aux[->, TC],
+    def associateR[X, Y, Z, ⊙[_,_], TC[_]](implicit
+      A: Associative.Aux[->, ⊙, TC], ev: C === ⊙[⊙[X, Y], Z], c: Subcat.Aux[->, TC],
       tx: TC[X], ty: TC[Y], tz: TC[Z]
-    ): B -> F[F[X, Y], Z] = A.C.andThen(ev.subst[λ[X => B -> X]](self), A.diassociate[X, Y, Z])
+    ): B -> ⊙[X, ⊙[Y, Z]] = A.C.andThen(ev.subst[λ[X => B -> X]](self), A.associate[X, Y, Z])
 
-//    def braidR[X, Y, ⊙[_, _]](implicit
-//      B: Braided[->, ⊙], ev: C === ⊙[X, Y], c: Subcat.Aux[->, TC],
-//      tx: TC[X], ty: TC[Y], tz: TC[Z]
-//    ): B -> ⊙[Y, X] = B.C.andThen(ev.subst[λ[X => B -> X]](self), B.braid[X, Y])
-//
-//    def curry[P[_, _], X, Y, Z, E[_,_]](f: P[X, Y] -> Z)(implicit
-//      C: Ccc[->] {type ⊙[a, b] = P[a, b]; type |->[a, b] = E[a, b]}, c: Subcat.Aux[->, TC],
-//      tx: TC[X], ty: TC[Y], tz: TC[Z]
-//    ): X -> E[Y, Z] = C.curry(f)
-//
-//    def uncurry[X, Y, Z, P[_, _], E[_, _]](f: X -> E[Y, Z])(implicit
-//      C: Ccc[->] {type ⊙[a, b] = P[a, b]; type |->[a, b] = E[a, b]}, c: Subcat.Aux[->, TC],
-//      tx: TC[X], ty: TC[Y], tz: TC[Z]
-//    ): P[X, Y] -> Z = C.uncurry(f)
+    def diassociateR[X, Y, Z, ⊙[_,_], TC[_]](implicit
+      A: Associative.Aux[->, ⊙, TC], ev: C === ⊙[X, ⊙[Y, Z]], c: Subcat.Aux[->, TC],
+      tx: TC[X], ty: TC[Y], tz: TC[Z]
+    ): B -> ⊙[⊙[X, Y], Z] = A.C.andThen(ev.subst[λ[X => B -> X]](self), A.diassociate[X, Y, Z])
+
+    def braid[X, Y, ⊙[_,_]] = new BraidOps[X, Y, ⊙]
+    class BraidOps[X, Y, ⊙[_,_]] {
+      def apply[T[_], BT[_]](implicit
+        B: Braided.Aux[->, ⊙, BT], ev: C === ⊙[X, Y], c: Subcat.Aux[->, T], evb: T =~= BT,
+        tx: T[X], ty: T[Y]
+      ): B -> ⊙[Y, X] = B.C.andThen(ev.subst[λ[α => B -> α]](self), B.braid[X, Y](evb(tx), evb(ty)))
+    }
+
+    def curry[P[_, _], X, Y, Z, E[_,_]](f: P[X, Y] -> Z)(implicit
+      C: Ccc[->] {type ⊙[a, b] = P[a, b]; type |->[a, b] = E[a, b]}
+    ): X -> E[Y, Z] = C.curry(f)
+
+    def uncurry[E[_, _], X, Y, Z, P[_, _]](f: X -> E[Y, Z])(implicit
+      C: Ccc[->] {type ⊙[a, b] = P[a, b]; type |->[a, b] = E[a, b]}
+    ): P[X, Y] -> Z = C.uncurry(f)
+
+    def split[⊙[_,_], D](fn: D -> C)(implicit
+      c: Cocartesian[->, ⊙]
+    ): ⊙[B, D] -> C = c.|||(self, fn)
+
+    def split3[⊙[_,_], D, E](f1: D -> C, f2: E -> C)(implicit
+      c: Cocartesian[->, ⊙]
+    ): ⊙[B, ⊙[D, E]] -> C = c.|||(self, c.|||(f1, f2))
+
+    def merge[⊙[_,_], D](fn: B -> D)(implicit
+      c: Cartesian[->, ⊙]
+    ): B -> ⊙[C, D] = c.&&&(self, fn)
+
+    def merge3[⊙[_,_], D, E](f1: B -> D, f2: B -> E)(implicit
+      c: Cartesian[->, ⊙]
+    ): B -> ⊙[C, ⊙[D, E]] = c.&&&(self, c.&&&(f1, f2))
+
   }
 }

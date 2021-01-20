@@ -29,8 +29,8 @@ private[exo] object DisjunctionModuleImpl extends DisjunctionModule {
   type Type[L, R] = Either[L, R]
   type TypeL[L, R] = Left[L, R]
   type TypeR[L, R] = Right[L, R]
-  def leibniz = IsK2.refl
-  def bifunctor = implicitly
+  val leibniz = IsK2.refl
+  val bifunctor = implicitly
   def fold[L, R, A](d: Either[L, R])(la: L => A, ra: R => A) = d.fold(la, ra)
   def left[L, R](l: L) = Left(l)
   def right[L, R](r: R) = Right(r)
@@ -57,10 +57,10 @@ object DisjunctionModule extends DisjunctionModule01 {
   implicit val iso: Either <~~> \/ = \/.leibniz.toIso
 
   implicit def coproductTypeclass[T[_], A, B](implicit
-    L: LaxSemigroupal[Dual[* => *,*,*], \/, * => *, \/, T], tab: T[A] \/ T[B]
+    L: LaxSemigroupal.Endo[* => *, \/, T], tab: T[A] \/ T[B]
   ): T[A \/ B] = L.product(tab)
 
-  implicit def typeclassFromEither[TC[_], A, B](implicit t: TC[Either[A, B]]): TC[A \/ B] =
+  def typeclassFromEither[TC[_], A, B](implicit t: TC[Either[A, B]]): TC[A \/ B] =
     \/.leibniz.subst[λ[f[_,_] => TC[f[A, B]]]](t)
 
   implicit def primaryImp[A, B](implicit a: A): A \/ B = -\/(a)

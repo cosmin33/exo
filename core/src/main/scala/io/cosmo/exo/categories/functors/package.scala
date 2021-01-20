@@ -12,6 +12,9 @@ package object functors {
   type Repr[->[_,_], F[_]] = ExoRepr[->, ->, F]
 
   type OplaxSemigroupal[==>[_,_], =⊙[_,_], -->[_,_], -⊙[_,_], F[_]] = LaxSemigroupal[Dual[==>,*,*], =⊙, Dual[-->,*,*], -⊙, F]
+  object OplaxSemigroupal {
+    type Endo[->[_,_], ⊙[_,_], F[_]] = OplaxSemigroupal[->, ⊙, ->, ⊙, F]
+  }
   type OplaxMonoidal   [==>[_,_], =⊙[_,_], -->[_,_], -⊙[_,_], F[_]] = LaxMonoidal   [Dual[==>,*,*], =⊙, Dual[-->,*,*], -⊙, F]
 
   type StrongSemigroupal[==>[_,_], =⊙[_,_], -->[_,_], -⊙[_,_], F[_]] = LaxSemigroupal[==>, =⊙, Iso[-->,*,*], -⊙, F]

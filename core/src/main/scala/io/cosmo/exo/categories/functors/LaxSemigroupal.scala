@@ -4,6 +4,7 @@ import cats._
 import cats.implicits._
 import io.cosmo.exo.categories._
 import io.cosmo.exo._
+import io.cosmo.exo.evidence.{===, =~~=, IsK2}
 
 trait LaxSemigroupal[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends Exofunctor[==>, -->, F]  { self =>
   type TC1[_]
@@ -16,7 +17,7 @@ trait LaxSemigroupal[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends Exo
   def map2[A, B, C](fn: (A ⊙= B) ==> C): (F[A] ⊙- F[B]) --> F[C] = M2.C.andThen(product[A, B], map(fn))
 
   def preserveCSemigroup[M](ma: CSemigroup.Aux[==>, ⊙=, TC1, M]): CSemigroup.Aux[-->, ⊙-, TC2, F[M]] =
-    CSemigroup.unsafe1(map2(ma.op))(M2)
+    CSemigroup.unsafe(map2(ma.op))(M2)
 
   def compose[~~>[_,_], ⊙~[_,_], ~>#[_], G[_]](G: LaxSemigroupal.Aux[-->, ⊙-, TC2, ~~>, ⊙~, ~>#, G]
   ) =
@@ -34,6 +35,21 @@ object LaxSemigroupal extends LaxSemigroupalInstances {
   type Aux[==>[_,_], ⊙=[_,_], =>#[_], -->[_,_], ⊙-[_,_], ->#[_], F[_]] =
     LaxSemigroupal[==>, ⊙=, -->, ⊙-, F] { type TC1[a] = =>#[a]; type TC2[a] = ->#[a] }
   type Endo[->[_, _], ⊙[_, _], F[_]] = LaxSemigroupal[->, ⊙, ->, ⊙, F]
+
+  implicit class LaxSemigroupalOps[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]](
+    self: LaxSemigroupal[==>, ⊙=, -->, ⊙-, F]
+  ) {
+    def preserveSemigroup[M](ma: Semigroup[M])(implicit
+      e1: ==> =~~= Function1,
+      e2:  ⊙= =~~= Tuple2,
+      e3: --> =~~= Function1,
+      e4:  ⊙- =~~= Tuple2,
+    ): Semigroup[F[M]] = {
+      val m1 = =~~=.lower4[LaxSemigroupal[*[_,_], *[_,_], *[_,_], *[_,_], F]].on(e1, e2, e3, e4)
+      val ff = m1(self).map2[M, M, M] { case (a, b) => ma.combine(a, b) }
+      Semigroup.instance { case (x, y) => ff((x, y)) }
+    }
+  }
 
   implicit class OplaxSemigroupalOps[==>[_,_], =⊙[_,_], -->[_,_], -⊙[_,_], F[_]](
     l: OplaxSemigroupal[==>, =⊙, -->, -⊙, F]
@@ -54,7 +70,7 @@ object LaxSemigroupal extends LaxSemigroupalInstances {
       def M2: Associative.Aux[* => *, /\, TC2] = implicitly
       def product[A, B]: Order[A] /\ Order[B] => Order[A \/ B] = { p =>
         implicit val (oa1, ob1) = (p._1, p._2)
-        Order[\/[A, B]]
+        \/.leibniz.is[A, B].subst(Order[Either[A, B]])
       }
       def map[A, B](f: Dual[* => *, A, B]): Order[A] => Order[B] = Contravariant[Order].contramap(_)(f)
       //override def map2[A, B, C](fn: Dual[* => *, A \/ B, C]): Order[A] /\ Order[B] => Order[C] = super.map2(fn)

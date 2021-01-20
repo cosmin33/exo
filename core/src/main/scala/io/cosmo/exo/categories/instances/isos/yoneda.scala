@@ -18,16 +18,31 @@ object yoneda {
 
   /** yoneda lemma covariant (generic category) */
   def lemmaYoIso[->[_,_], ->#[_], A, F[_]](implicit
-    C: Subcat.Aux[->, ->#], tc: ->#[A], E : Exo.Cov[->, F]
+    C: Subcat.Aux[->, ->#], tc: ->#[A], E: Exo.Cov[->, F]
   ): ((A -> *) ~> F) <=> F[A] =
 //  ): ∀[λ[x => A -> x => F[x]]] <=> F[A] =
     Iso.unsafe(_[A](C.id), fa => ∀.of[λ[x => A -> x => F[x]]].from(E.map(_)(fa)))
   /** yoneda lemma contravariant (generic category) */
   def lemmaCoyoIso[->[_,_], ->#[_], A, F[_]](implicit
-    C: Subcat.Aux[->, ->#], tc: ->#[A], E : Exo.Con[->, F]
+    C: Subcat.Aux[->, ->#], tc: ->#[A], E: Exo.Con[->, F]
   ): ((* -> A) ~> F) <=> F[A] =
 //  ): ∀[λ[x => x -> A => F[x]]] <=> F[A] =
     Iso.unsafe(_[A](C.id[A]), fa => ∀.of[λ[x => x -> A => F[x]]].from(xa => E.map(Dual(xa))(fa)))
+
+
+
+
+
+  def yoEmbeddingCov_[->[_,_], ->#[_], A, B](implicit
+    C: Subcat.Aux[->, ->#], tc: ->#[A] //, tcb: ->#[B]
+  ): ((A -> *) ~> (B -> *)) <=> (B -> A) =
+    lemmaYoIso[->, ->#, A, B -> *]
+//    lemmaYoIso[->, ->#, A, B -> *](C, tc, Semicategory.profunctorToFunction1[->].rightFunctor[B])
+  def yoEmbeddingCon_[->[_,_], ->#[_], A, B](implicit
+    C: Subcat.Aux[->, ->#], tc: ->#[A] //, tcb: ->#[B]
+  ): ((* -> A) ~> (* -> B)) <=> (A -> B) =
+    lemmaCoyoIso[->, ->#, A, * -> B]
+//    lemmaCoyoIso[->, ->#, A, * -> B](C, tc, Semicategory.profunctorToFunction1[->].leftFunctor[B])
 
   def yoEmbeddingCov[->[_,_], ->#[_], A, B](implicit
     C: Subcat.Aux[->, ->#], tc: ->#[A], E : Exo.Cov[->, B -> *]

@@ -12,7 +12,7 @@ trait LaxMonoidal[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends LaxSem
   def id: I2 --> F[I1]
 
   def preserveCMonoid[M](ma: CMonoid.Aux[==>, ⊙=, TC1, I1, M]): CMonoid.Aux[-->, ⊙-, TC2, I2, F[M]] =
-    CMonoid.unsafe1(M2.C.andThen(id, map(ma.id)), map2(ma.op))(M2)
+    CMonoid.unsafe(M2.C.andThen(id, map(ma.id)), map2(ma.op))(M2)
 
   def compose[~~>[_, _], ⊙~[_, _], TC3[_], I3, G[_]](G: LaxMonoidal.Aux[-->, ⊙-, TC2, I2, ~~>, ⊙~, TC3, I3, G]
   ) =

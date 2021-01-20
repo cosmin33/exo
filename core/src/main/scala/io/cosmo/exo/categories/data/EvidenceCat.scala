@@ -53,7 +53,7 @@ object EvidenceCat {
       fromImplicits[T, A \/ B, X \/ Y](L.product[A, B](-\/(l.left)), L.product[X, Y](-\/(l.right)))
   }
 
-  implicit def bifunctorEither[T[_]](implicit
+  def bifunctorDisjOpp[T[_]](implicit
     L: LaxSemigroupal[Opp[* => *]#l, \/, * => *, \/, T]
   ): Endobifunctor[Opp[EvidenceCat[T, *, *]]#l, \/] = new Endobifunctor[Opp[EvidenceCat[T, *, *]]#l, \/] {
     def bimap[A, X, B, Y](l: EvidenceCat[T, X, A], r: EvidenceCat[T, Y, B]): EvidenceCat[T, X \/ Y, A \/ B] =
@@ -62,7 +62,7 @@ object EvidenceCat {
 
   def cartesian[T[_], I](implicit
     ti: T[I],
-    L: LaxSemigroupal[* => *, /\, * => *, /\, T]
+    L: LaxSemigroupal.Endo[* => *, /\, T]
   ) =
     new Cartesian[EvidenceCat[T,*,*], /\] {
       type TC[x] = T[x]
@@ -85,12 +85,21 @@ object EvidenceCat {
 
   def cocartesian[T[_], I](implicit
     ti: T[I],
-    L: LaxSemigroupal[Opp[* => *]#l, \/, * => *, \/, T]
+//    L: OplaxSemigroupal[* => *, \/, * => *, \/, T]
+//    L: LaxSemigroupal[Opp[* => *]#l, \/, * => *, \/, T]
+    L: LaxSemigroupal.Endo[* => *, \/, T]
   ) = new Cartesian[Opp[EvidenceCat[T,*,*]]#l, \/] {
         type Id = I
         type TC[a] = T[a]
-        def bifunctor = EvidenceCat.bifunctorEither
+        def C = ???
+        def bifunctor = ??? //EvidenceCat.bifunctorDisjOpp
         def fst[A: TC, B: TC]: EvidenceCat[T, A, A \/ B] = {
+          implicitly[T[A]]
+          implicitly[T[B]]
+          val xr = DisjunctionModule.primaryImp[T[A], T[B]]
+          implicitly[T[A] \/ T[B]]
+          implicitly[T[A \/ B]]
+
           //fromImplicits[TC, A, A \/ B]
           //val tab = DisjunctionModule.primary[A, B]
           ???
@@ -99,11 +108,10 @@ object EvidenceCat {
         def diag[A: TC] = ???
         def &&&[X, Y, Z](f: EvidenceCat[T, Y, X], g: EvidenceCat[T, Z, X]) = ???
         def braid[A: TC, B: TC]  = ???
-        def idl[A: TC]  = ???
-        def coidl[A: TC]  = ???
-        def idr[A: TC]  = ???
-        def coidr[A: TC]  = ???
-        def C = ???
+        def idl  [A: TC]: EvidenceCat[T, A, I \/ A] = ???
+        def coidl[A: TC]: EvidenceCat[T, I \/ A, A] = ???
+        def idr  [A: TC]: EvidenceCat[T, A, A \/ I] = ???
+        def coidr[A: TC]: EvidenceCat[T, A \/ I, A] = ???
         def associate  [X: TC, Y: TC, Z: TC]  = ???
         def diassociate[X: TC, Y: TC, Z: TC]  = ???
       }

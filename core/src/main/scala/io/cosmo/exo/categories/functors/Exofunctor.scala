@@ -31,7 +31,7 @@ trait Exofunctor[==>[_,_], -->[_,_], F[_]] { self =>
 object Exofunctor extends ExofunctorImplicits {
   def apply[==>[_,_], -->[_,_], F[_]](implicit E: Exo[==>, -->, F]): Exo[==>, -->, F] = E
 
-  /*implicit*/ class ExofunctorFunSyntax[F[_], A](val fa: F[A]) extends AnyVal {
+  implicit class ExofunctorFunSyntax[F[_], A](val fa: F[A]) extends AnyVal {
     def emap[==>[_,_], B](f: A ==> B)(implicit E: Exofunctor.Cov[==>, F]): F[B] = E.map(f)(fa)
   }
 
@@ -86,20 +86,21 @@ object Exofunctor extends ExofunctorImplicits {
     ): Exo[==>, -->, F] = apply(f(TypeHolder2[X, Y]))
   }
 
-  implicit def exoId: Exo.Cov[* => *, Id] = Exo.unsafe[* => *, * => *, Id](identity)
+  implicit def idEndofunctor[->[_,_]]: Endofunctor[->, Id] = Endofunctor.unsafe[->, Id](identity)
 
-  def semiFunctorCov[->[_,_]: Semicategory, X]: Exo.Cov[->, X -> *] = Exo.unsafe(f => fn => Semicategory[->].andThen(fn, f))
-  def semiFunctorCon[->[_,_]: Semicategory, X]: Exo.Con[->, * -> X] = Exo.unsafe[Dual[->, *, *], * => *, * -> X](f => fn => Semicategory[->].andThen(f.toFn, fn))
-
-  def semiFaFunCov[->[_,_]: Semicategory]: ∀[λ[a => Exo.Cov[->, a -> *]]] = ∀.of[λ[a => Exo.Cov[->, a -> *]]](semiFunctorCov)
-  def semiFaFunCon[->[_,_]: Semicategory]: ∀[λ[a => Exo.Con[->, * -> a]]] = ∀.of[λ[a => Exo.Con[->, * -> a]]](semiFunctorCon)
+  /** from semicategory to left and right functors */
+  implicit def semiFunctorCov[->[_,_]: Semicategory, X]: Exo.Cov[->, X -> *] = Exo.unsafe(f => fn => fn >>>> f)
+  implicit def semiFunctorCon[->[_,_]: Semicategory, X]: Exo.Con[->, * -> X] = Exo.unsafe[Dual[->, *, *], * => *, * -> X](f => fn => f.toFn >>>> fn)
+  /** ... and the forall generic version of functors */
+  implicit def semiFaFunCov[->[_,_]: Semicategory]: ∀[λ[a => Exo.Cov[->, a -> *]]] = ∀.of[λ[a => Exo.Cov[->, a -> *]]](semiFunctorCov)
+  implicit def semiFaFunCon[->[_,_]: Semicategory]: ∀[λ[a => Exo.Con[->, * -> a]]] = ∀.of[λ[a => Exo.Con[->, * -> a]]](semiFunctorCon)
 
   /** from bifunctor derive left and right functors */
-  def leftFunctorFa [==>[_, _], -->[_, _], >->[_, _], Bi[_, _], T[_]](implicit
+  implicit def leftFunctorFa [==>[_, _], -->[_, _], >->[_, _], Bi[_, _], T[_]](implicit
     b: Exobifunctor[==>, -->, >->, Bi],
     s: Subcat.Aux[-->, T]
   ): ∀[λ[x => T[x] => Exo[==>, >->, Bi[*, x]]]] = b.leftForall[T]
-  def rightFunctorFa[==>[_, _], -->[_, _], >->[_, _], Bi[_, _], T[_]](implicit
+  implicit def rightFunctorFa[==>[_, _], -->[_, _], >->[_, _], Bi[_, _], T[_]](implicit
     b: Exobifunctor[==>, -->, >->, Bi],
     s: Subcat.Aux[==>, T]
   ): ∀[λ[x => T[x] => Exo[-->, >->, Bi[x, *]]]] = b.rightForall[T]
@@ -158,7 +159,6 @@ object Exofunctor extends ExofunctorImplicits {
   : Exo[λ[(a,b) => a => M[Option[b]]], λ[(a,b) => a => M[b]], F] =
     Exo.unsafe[λ[(a,b) => a => M[Option[b]]], λ[(a,b) => a => M[b]], F](f => _.traverseFilter(f))
 
-  // A => F[B]  to  F[A] => F[B]
   implicit def exoFromCatsFlatMap[F[_]: FlatMap]: Exo[Kleisli[F,*,*], * => *, F] =
       Exo.unsafe[Kleisli[F,*,*], * => *, F](f => _.flatMap(f.run))
   implicit def exoFromFlatMap1[F[_]: FlatMap]: Exo[λ[(a,b) => a => F[b]], * => *, F] =

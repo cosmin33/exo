@@ -11,7 +11,10 @@ trait Cartesian[->[_, _], ⨂[_, _]] extends Monoidal[->, ⨂] with Symmetric[->
   def merge[X, Y, Z](f: X -> Y, g: X -> Z): X -> ⨂[Y, Z] = &&&(f, g)
   def &&&  [X, Y, Z](f: X -> Y, g: X -> Z): X -> ⨂[Y, Z]
 
-  def isoCart[X, Y, Z]: (X -> Y, X -> Z) <=> (X -> ⨂[Y, Z]) = ???
+  def isoCartTrue[X, Y, Z]: ⨂[X -> Y, X -> Z] <=> (X -> ⨂[Y, Z]) = ???
+
+  def isoCart[X, Y: TC, Z: TC]: (X -> Y, X -> Z) <=> (X -> ⨂[Y, Z]) =
+    Iso.unsafe(p => &&&(p._1, p._2), f => (C.andThen(f, fst[Y, Z]), C.andThen(f, snd[Y, Z])))
 
   def isoCartesian[X, Y: TC, Z: TC]: (X -> Y, X -> Z) <=> (X -> ⨂[Y, Z]) =
     Iso.unsafe(p => &&&(p._1, p._2), fn => (C.andThen(fn, fst[Y, Z]), C.andThen(fn, snd[Y, Z])))
@@ -19,6 +22,7 @@ trait Cartesian[->[_, _], ⨂[_, _]] extends Monoidal[->, ⨂] with Symmetric[->
 
 object Cartesian {
   type Aux[->[_, _], ⨂[_, _], TC0[_], I] = Cartesian[->, ⨂] { type TC[a] = TC0[a]; type Id = I }
+  def apply[->[_, _], ⨂[_, _]](implicit c: Cartesian[->, ⨂]): Cartesian.Aux[->, ⨂, c.TC, c.Id] = c
 
   implicit class CocartesianOps[->[_, _], ⨁[_, _], C[_], I](val self: Cartesian.Aux[Dual[->,*,*], ⨁, C, I]) extends AnyVal {
     def inl[A: C, B: C]: A -> ⨁[A, B] = self.fst
@@ -36,5 +40,6 @@ object Cartesian {
 
 object Cocartesian {
   type Aux[->[_, _], ⨂[_, _], TC0[_], I] = Cocartesian[->, ⨂] { type TC[a] = TC0[a]; type Id = I }
+  def apply[->[_, _], ⨂[_, _]](implicit c: Cartesian[Dual[->,*,*], ⨂]): Cartesian.Aux[Dual[->,*,*], ⨂, c.TC, c.Id] = c
 }
 

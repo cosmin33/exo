@@ -43,7 +43,7 @@ object ConjunctionModule {
     L: LaxSemigroupal.Endo[* => *, /\, T], ta: T[A], tb: T[B]
   ): T[A /\ B] = L.product(/\(ta, tb))
 
-  implicit def typeclassFromTuple[TC[_], A, B](implicit t: TC[(A, B)]): TC[A /\ B] =
+  def typeclassFromTuple[TC[_], A, B](implicit t: TC[(A, B)]): TC[A /\ B] =
     /\.leibniz.subst[λ[f[_,_] => TC[f[A, B]]]](t)
 }
 

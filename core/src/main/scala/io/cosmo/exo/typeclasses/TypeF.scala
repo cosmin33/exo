@@ -23,6 +23,7 @@ object TypeF {
 trait IsTypeF[A] {
   type Type[a]
   def is: TypeF[Type] === A
+  //def iso: TypeF[Type] <=> A
 }
 object IsTypeF {
   def apply[F[_]]: IsTypeF[TypeF[F]] = impl[F]

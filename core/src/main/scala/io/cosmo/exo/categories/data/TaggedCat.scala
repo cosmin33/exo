@@ -18,10 +18,6 @@ object Tagged {
     C: Subcat.Aux[->, T], e: EvidenceCat[T, A, B]
   ): TaggedCat[->, T, A, B] =
     TaggedCat(run, e)
-//  def fromArrow[->[_,_], T[_], A, B](run: A -> B)(implicit
-//    C: Subcat.Aux[->, T], ta: T[A], tb: T[B]
-//  ): TaggedCat[->, T, A, B] =
-//    TaggedCat[->, T, A, B](run, EvidenceCat(ta, tb))
 
   def taggedFunctionCategory[T[_]]: Subcat.Aux[TaggedCat[* => *, T, *, *], T] =
     new Subcat[TaggedCat[* => *, T, *, *]] {

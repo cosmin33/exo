@@ -41,4 +41,18 @@ object IsK2 {
   /** Given `F =~= G` we can prove that `A[F] === A[G]`. */
   def lower[A[_[_,_]], F[_,_], G[_,_]](ab: F =~~= G): A[F] === A[G] = ab.subst[λ[a[_,_] => A[F] === A[a]]](Is.refl[A[F]])
 
+  def lower4[A[_[_,_], _[_,_], _[_,_], _[_,_]]] = new Lower4Op[A] {}
+  class Lower4Op[A[_[_,_], _[_,_], _[_,_], _[_,_]]] {
+    def on[F[_,_], F1[_,_], G[_,_], G1[_,_], H[_,_], H1[_,_], I[_,_], I1[_,_]](
+    ff: F =~~= F1,
+    fg: G =~~= G1,
+    fh: H =~~= H1,
+    fi: I =~~= I1
+  ): A[F, G, H, I] === A[F1, G1, H1, I1] =
+    ff.lower[A[*[_,_], G, H, I]] andThen
+      fg.lower[A[F1, *[_,_], H, I]] andThen
+      fh.lower[A[F1, G1, *[_,_], I]] andThen
+      fi.lower[A[F1, G1, H1, *[_,_]]]
+  }
+
 }

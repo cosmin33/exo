@@ -31,7 +31,7 @@ trait Iso[->[_,_], A, B] { ab =>
   }
 
   /** If A <-> B then having a function B -> B we can obtain A -> A */
-  def teleport(f: A -> A)(implicit C: Semicategory[->]): B -> B = C.andThen(ab.from, C.andThen(f, ab.to))
+  def teleport(f: A -> A): B -> B = cat.andThen(ab.from, cat.andThen(f, ab.to))
 
   /** Having A <-> B searches implicits for B <-> C to obtain A <-> C */
   def chain[C](implicit i: HasIso[->, B, C]): A <-> C = ab.andThen(i)
@@ -69,6 +69,7 @@ trait Iso[->[_,_], A, B] { ab =>
 
 object Iso extends IsoInstances {
   def apply[->[_,_], A, B](implicit iso: HasIso[->, A, B]): Iso[->, A, B] = iso.iso
+  def apply[A]: Iso[* => *, A, A] = refl[A]
 
   def liftIsoFnToIso[==>[_,_], -->[_,_]](iso: ==> <~~> -->)(implicit
     c1: Subcat[==>], c2: Subcat[-->]
@@ -85,8 +86,6 @@ object Iso extends IsoInstances {
     }
 
   def refl[A]: Iso[* => *, A, A] = reflAny.asInstanceOf[Iso[* => *, A, A]]
-
-  def apply[A]: Iso[* => *, A, A] = refl[A]
 
   def refl[->[_,_], A, TC[_]](implicit c: Subcat.Aux[->, TC], tc: TC[A]): Iso[->, A, A] =
     new Iso[->, A, A] {val cat = c; val to, from = c.id[A]}
@@ -122,7 +121,7 @@ object Iso extends IsoInstances {
 
   def isoUnitToA[A]:     (Unit => A) <=> A         = Iso.unsafe(_(()), a => _ => a)
   def isoAToUnit[A]:     (A => Unit) <=> Unit      = Iso.unsafe(_ => (), _ => _ => ())
-  def isoVoidToA[A]:   (Void => A) <=> Unit      = Iso.unsafe(_ => (), _ => a => a)
+  def isoVoidToA[A]:     (Void => A) <=> Unit      = Iso.unsafe(_ => (), _ => a => a)
   def isoVoidUnit[A, B]: (A => Unit) <=> (Void => B) = Iso.unsafe(_ => v => v, _ => _ => ())
 
   def isoTerminalInitial[->[_,_], T, I, A, TC[_]](implicit
@@ -162,8 +161,8 @@ object Iso extends IsoInstances {
     final def commute[A, B]: (A \/ B) <=> (B \/ A) = unsafe((e: A \/ B) => e.swap, (e: B \/ A) => e.swap)
     final def unitL[A]: A <=> (Void \/ A) = unsafe(a => \/-(a), _.fold((n: A) => n, identity))
     final def unitR[A]: A <=> (A \/ Void) = unsafe(a => -\/(a), _.fold(identity, (n: A) => n))
-    final def first [A, B, C](iso: A <=> C): (A \/ B) <=> (C \/ B) = iso.or_(refl[B])(Associative.cocartesianFn1DisjDual)
-    final def second[A, B, C](iso: B <=> C): (A \/ B) <=> (A \/ C) = refl[A].or_(iso)(Associative.cocartesianFn1DisjDual)
+    final def first [A, B, C](iso: A <=> C): (A \/ B) <=> (C \/ B) = iso.or_(refl[B])
+    final def second[A, B, C](iso: B <=> C): (A \/ B) <=> (A \/ C) = refl[A].or_(iso)
   }
 
   @newtype case class HasIso[->[_,_], A, B](iso: Iso[->, A, B])
@@ -178,8 +177,8 @@ object Iso extends IsoInstances {
 
   @newtype private[exo] case class ReflImpIso[->[_,_], A, B](iso: Iso[->, A, B])
   private[exo] object ReflImpIso {
-    implicit def impl[->[_,_], A, C[_]](implicit s: Subcat.Aux[->, C], t: C[A]): ReflImpIso[->, A, A] =
-      ReflImpIso(Iso.refl[->, A, C])
+    implicit def impl[->[_,_], A, T[_]](implicit s: Subcat.Aux[->, T], t: T[A]): ReflImpIso[->, A, A] =
+      ReflImpIso(Iso.refl[->, A, T])
   }
 
   @newtype private[exo] case class EqImpIso[->[_,_], A, B](iso: Iso[->, A, B])

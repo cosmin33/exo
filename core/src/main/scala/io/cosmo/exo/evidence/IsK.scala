@@ -68,11 +68,6 @@ object IsK {
   def isoTypeFInjectivity[F[_], G[_]]: (TypeF[F] === TypeF[G]) <=> (F =~= G) =
     Iso.unsafe(TypeF.injectivity(_), _.lower[TypeF])
 
-//  def isoInjectivity[F[_], G[_], X[_]]: (F =~= G) <=> (λ[a => X[F[a]]] =~= λ[a => X[G[a]]]) =
-//    Iso.unsafe[* => *, F =~= G, λ[a => X[F[a]]] =~= λ[a => X[G[a]]]](
-//
-//    )
-
   implicit def proposition[A[_], B[_]]: Proposition[A =~= B] =
     (p: ¬¬[A =~= B]) => Axioms.isKConsistency[A, B](p.run)
 
