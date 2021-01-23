@@ -17,36 +17,19 @@ import shapeless.Refute
 
 class IsoTests extends AnyFunSuite with Matchers {
 
-  test("chain") {
-    // Isomorphisms from categorical constructs
-    Iso[String].chain[(String, Unit)].chain[String].chain[(Unit, String)]
-    Iso[String].chain[String /\ Unit].chain[String].chain[Unit /\ String]
-    Iso[String => Unit].chain[Unit].chain[Int => Unit]
-    Iso[Void => String].chain[Unit].chain[Void => Int].chain[Int => Unit]
-    Iso[(String => Int, Long => Int)].chain[String \/ Long => Int]
-    Iso[(String => Int, String => Long)].chain[String => (Int, Long)]
-    Iso[(String, Int)].chain[(Int, String)].chain[Int /\ String]
-    //Iso[(String, Int \/ Long)].chain[(String, Int) \/ (String, Long)]
-    //Iso[String /\ (Int \/ Long)].chain[(String /\ Int) \/ (String /\ Long)]
-    implicitly[Distributive[* => *]]
-//    implicitly[Distributive.Aux1[* => *, Trivial.T1, /\, \/]]
-//    val xx: Iso[* => *, String /\ (Int \/ Long), (String /\ Int) \/ (String /\ Long)] =
-//      Iso.isoDistributive[* => *, /\, \/, String, Int, Long, Trivial.T1]
+  // incorrect isos, but doesn't matter, they work for these tests..
+  implicit val isoIL: Int <=> Long = Iso.unsafe(_.toLong, _.toInt)
+  implicit val isoSI: String <=> Int = Iso.unsafe(_.toInt, _.toString)
 
-//    implicit val isoIL: Int <=> Long = Iso.unsafe(_.toLong, _.toInt)
-//    implicit val isoSI: String <=> Int = Iso.unsafe(_.toInt, _.toString)
-//    assert(Iso[String].chain[Int].chain[Long].flip.chain[String].chain[String].apply(4L) == "4")
+  test("chain") {
+    assert(Iso[String].chain[Int].chain[Long].flip.chain[String].chain[String].apply(4L) == "4")
   }
 
   test("Iso syntax") {
-    implicit val isoIL: Int <=> Long = Iso.unsafe(_.toLong, _.toInt)
-    implicit val isoSI: String <=> Int = Iso.unsafe(_.toInt, _.toString)
     assert(6.isoTo[String] == "6")
   }
 
   test("derive") {
-    implicit val isoIL: Int <=> Long = Iso.unsafe(_.toLong, _.toInt)
-    implicit val isoSI: String <=> Int = Iso.unsafe(_.toInt, _.toString)
 
     isoSI.flip.derive[Semigroup]
     val sl: Semigroup[Long] = isoIL.derive[Semigroup]
@@ -54,8 +37,6 @@ class IsoTests extends AnyFunSuite with Matchers {
   }
 
   test("HasIso implicit search") {
-    implicit val isoIL: Int <=> Long = Iso.unsafe(_.toLong, _.toInt)
-    implicit val isoSI: String <=> Int = Iso.unsafe(_.toInt, _.toString)
 
     Iso[String].chain[Int].chain[Long]
 
@@ -70,6 +51,17 @@ class IsoTests extends AnyFunSuite with Matchers {
     Iso[Iso[* => *, String, Int]].chain[HasIso[* => *, String, Int]]
 
     def mrr1[->[_,_], A, B] = implicitly[HasIso[* => *, HasIso[->, A, B], Iso[->, A, B]]]
+
+    // Isomorphisms from categorical constructs
+    Iso[String].chain[(String, Unit)].chain[String].chain[(Unit, String)]
+    Iso[String].chain[String /\ Unit].chain[String].chain[Unit /\ String]
+    Iso[String => Unit].chain[Unit].chain[Int => Unit]
+    Iso[Void => String].chain[Unit].chain[Void => Int].chain[Int => Unit]
+    Iso[(String => Int, Long => Int)].chain[String \/ Long => Int]
+    Iso[(String => Int, String => Long)].chain[String => (Int, Long)]
+    Iso[(String, Int)].chain[(Int, String)].chain[Int /\ String]
+    Iso[String /\ (Int \/ Long)].chain[(String /\ Int) \/ (String /\ Long)]
+    Iso[(String, Either[Int, Long])].chain[Either[(String, Int), (String, Long)]]
 
     // Isomorphisms derived from lifting equality
     type Int1 = InstanceOf[Int]

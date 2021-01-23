@@ -52,6 +52,8 @@ trait SemicategoryImplicits extends SemicategoryImplicits01 {
 }
 trait SemicategoryImplicits01 extends SemicategoryImplicits02 {
   implicit def distFunc1: Distributive.Aux[* => *, Trivial.T1, (*, *), Unit, Either, Void] = function1Class
+  implicit def distFunc2: Distributive.Aux[* => *, Trivial.T1, /\, Unit, \/, Void] =
+    IsK2.lower2[Distributive.Aux[* => *, Trivial.T1, *[_,_], Unit, *[_,_], Void]].on(/\.leibniz, \/.leibniz)(function1Class)
   implicit def leibnizConcrete: Concrete.AuxT[===] = leibnizClass
   implicit def liskovTerminal: Terminal.Aux[<~<, Trivial.T1, Any] = liskovClass
 }
@@ -121,13 +123,11 @@ private[categories] object SemicategoryHelpers {
     extends Terminal[* => *]
       with Initial[* => *]
       with Ccc[* => *]
-      with Distributive[* => *]
+      with Distributive[* => *, Tuple2, Either]
   {
     override type Terminal = Unit
     override type Initial = Void
-    override type ⨂[a, b] = (a, b)
     override type ProductId = Unit
-    override type ⨁[a, b] = Either[a, b]
     override type SumId = Void
     override type TC[a] = Trivial.T1[a]
     override type |->[a,b] = a => b
@@ -143,8 +143,7 @@ private[categories] object SemicategoryHelpers {
     def terminate[A](implicit A: Trivial.T1[A]): A => Terminal = _ => ()
     def initialTC: Trivial.T1[Nothing] = Trivial.trivialInstance
     def initiate[A](implicit A: Trivial.T1[A]): Nothing => A = identity
-    def distribute[A: TC, B: TC, C: TC]: A ⨂ (B ⨁ C) => A ⨂ B ⨁ (A ⨂ C) =
-      { case (a, bc) => bc.fold((a, _).asLeft, (a, _).asRight) }
+    override def distribute[A: T1, B: T1, C: T1] = { case (a, bc) => bc.fold((a, _).asLeft, (a, _).asRight) }
   }
 
 

@@ -11,7 +11,7 @@ private[exo] trait FunctionHKObject {
   def initiate [A[_[_]]]: VoidHK ≈> A = ∀~.mk[VoidHK ≈> A].from(identity)
   def terminate[A[_[_]]]: A ≈> UnitHK = ∀~.mk[A ≈> UnitHK].from(_ => ())
   def distribute[A[_[_]], B[_[_]], C[_[_]]]: λ[f[_] => (A[f], Either[B[f], C[f]])] ≈> λ[f[_] => Either[(A[f], B[f]), (A[f], C[f])]] =
-    ∀~.mk[λ[f[_] => (A[f], Either[B[f], C[f]])] ≈> λ[f[_] => Either[(A[f], B[f]), (A[f], C[f])]]].from(Distributive[* => *].distribute)
+    ∀~.mk[λ[f[_] => (A[f], Either[B[f], C[f]])] ≈> λ[f[_] => Either[(A[f], B[f]), (A[f], C[f])]]].from(Distributive[* => *, Tuple2, Either].distribute)
   object product {
     def associate  [A[_[_]], B[_[_]], C[_[_]]]: λ[f[_] => ((A[f], B[f]), C[f])] ≈> λ[f[_] => (A[f], (B[f], C[f]))] =
       ∀~.mk[λ[f[_] => ((A[f], B[f]), C[f])] ≈> λ[f[_] => (A[f], (B[f], C[f]))]].from(Associative[* => *, (*, *)].associate)

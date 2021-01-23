@@ -3,11 +3,9 @@ package io.cosmo.exo.categories
 import cats.implicits._
 import io.cosmo.exo._
 
-trait Distributive[->[_, _]] extends Subcat[->] {
+trait Distributive[->[_, _], ⨂[_, _], ⨁[_, _]] extends Subcat[->] {
   type ProductId
-  type ⨂[_, _]
   type SumId
-  type ⨁[_, _]
   def cartesian: Cartesian.Aux[->, ⨂, TC, ProductId]
   def cocartesian: Cocartesian.Aux[->, ⨁, TC, SumId]
 
@@ -25,18 +23,10 @@ trait Distributive[->[_, _]] extends Subcat[->] {
     Iso.unsafe(distribute(a, b, c), codistribute(a, b, c))(this)
 }
 object Distributive {
-  type Aux[==>[_, _], =>#[_], P[_, _], PI, S[_, _], SI] = Distributive[==>] {
-    type TC[a] = =>#[a]
-    type ProductId = PI; type ⨂[A, B] = P[A, B]
-    type SumId     = SI; type ⨁[A, B] = S[A, B]
+  type Aux[==>[_, _], =>#[_], P[_, _], PI, S[_, _], SI] = Distributive[==>, P, S] {
+    type TC[a] = =>#[a]; type ProductId = PI; type SumId = SI
   }
-  type Aux1[==>[_, _], =>#[_], P[_, _], S[_, _]] = Distributive[==>] {
-    type TC[a] = =>#[a]
-    type ⨂[A, B] = P[A, B]
-    type ⨁[A, B] = S[A, B]
-  }
-  type AuxTC[==>[_,_], =>#[_]] = Distributive[==>] {type TC[a] = =>#[a]}
-
+  type Aux1[==>[_, _], =>#[_], P[_, _], S[_, _]] = Distributive[==>, P, S] { type TC[a] = =>#[a] }
 
   case class SingleOf[T, U <: {type TC[_]; type ProductId; type ⨂[_,_]; type SumId; type ⨁[_,_]}](
     widen: T {
@@ -53,9 +43,9 @@ object Distributive {
     ): SingleOf[T, t.type] = SingleOf(t)
   }
 
-  trait Proto[->[_, _], C[_], P[_, _], PI, S[_, _], SI] extends Distributive[->] with Subcat.Proto[->, C]{
-    type ProductId = PI; type ⨂[A, B] = P[A, B]
-    type SumId = SI;     type ⨁[A, B] = S[A, B]
+  trait Proto[->[_, _], C[_], P[_, _], PI, S[_, _], SI] extends Distributive[->, P, S] with Subcat.Proto[->, C] {
+    type ProductId = PI
+    type SumId = SI
   }
 
   def unsafe[->[_,_], ⨂[_,_], ⨁[_,_], ->#[_], PI, SI](
@@ -72,9 +62,9 @@ object Distributive {
       def distribute[A: TC, B: TC, C: TC] = ft[A, B, C]
     }
 
-  def apply[->[_, _]](implicit
-    D: Distributive[->]
-  ): Distributive.Aux[->, D.TC, D.⨂, D.ProductId, D.⨁, D.SumId] = D
+  def apply[->[_, _], P[_,_], S[_,_]](implicit
+    D: Distributive[->, P, S]
+  ): Distributive.Aux[->, D.TC, P, D.ProductId, S, D.SumId] = D
 
 }
 

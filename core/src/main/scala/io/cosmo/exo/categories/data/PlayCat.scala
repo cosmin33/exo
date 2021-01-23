@@ -242,10 +242,8 @@ object PlayCatHelpers {
       Dual(PlayCat(F.product[Y, Z].toFn >>> Cocartesian[* => *, \/].|||(f.fn, g.fn)))
   }
 
-  trait DistribPlayCat[F[_]] extends SubcatPlayCat[F] with Distributive[PlayCat[F,*,*]] {
-    type ⨂[a, b] = a /\ b
+  trait DistribPlayCat[F[_]] extends SubcatPlayCat[F] with Distributive[PlayCat[F,*,*], /\, \/] {
     type ProductId = Unit
-    type ⨁[a, b] = a \/ b
     type SumId = Void
     protected def F: Endofunctor[* => *, F]
     def distribute[A: TC, B: TC, C: TC]: PlayCat[F, A /\ (B \/ C), A /\ B \/ (A /\ C)] =

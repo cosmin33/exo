@@ -164,14 +164,12 @@ private[instances] object ProdcatHelpers {
 
   trait ProdcatDistributive[==>[_,_], -->[_,_], P[_,_], PI, S[_,_], SI, TC0[_]]
     extends ProdcatSubcat[==>, -->, TC0]
-    with Distributive[Prodcat[==>, -->, *, *]]
+    with Distributive[Prodcat[==>, -->, *, *], P, S]
   {
     protected def s1: Distributive.Aux[==>, TC0, P, PI, S, SI]
     protected def s2: Distributive.Aux[-->, TC0, P, PI, S, SI]
     type ProductId = PI
-    type ⨂[a, b] = P[a, b]
     type SumId = SI
-    type ⨁[a, b] = S[a, b]
     def cartesian: Cartesian.Aux[Prodcat[==>, -->, *, *], P, TC0, PI] =
       prodcatCartesian[==>, -->, P, TC0, PI](s1.cartesian, s2.cartesian)
     def cocartesian: Cocartesian.Aux[Prodcat[==>, -->, *, *], S, TC0, SI] =

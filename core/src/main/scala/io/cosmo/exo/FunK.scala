@@ -78,7 +78,7 @@ object FunK {
 }
 
 private[exo] object FunktionHelpers {
-  trait FunkSubcat extends Distributive[FunK] with Initial[FunK]  with Terminal[FunK] {
+  trait FunkSubcat extends Distributive[FunK, Tuple2, Either] with Initial[FunK]  with Terminal[FunK] {
     type TC[a] = IsKind[a]
     type ProductId = TypeF[UnitK]
     type ⨂[a,b] = (a, b)

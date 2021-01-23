@@ -10,7 +10,7 @@ private[exo] trait FunctionKObject {
   def initiate[F[_]]: VoidK ~> F = ∀.mk[VoidK ~> F].from(identity)
   def terminate[F[_]]: F ~> UnitK = ∀.mk[F ~> UnitK].from(_ => ())
   def distribute[F[_], G[_], H[_]]: λ[a => (F[a], Either[G[a], H[a]])] ~> λ[a => Either[(F[a], G[a]), (F[a], H[a])]] =
-    ∀.mk[λ[a => (F[a], Either[G[a], H[a]])] ~> λ[a => Either[(F[a], G[a]), (F[a], H[a])]]].from(Distributive[* => *].distribute)
+    ∀.mk[λ[a => (F[a], Either[G[a], H[a]])] ~> λ[a => Either[(F[a], G[a]), (F[a], H[a])]]].from(Distributive[* => *, Tuple2, Either].distribute)
   object product {
     def associate  [F[_], G[_], H[_]]: λ[a => ((F[a], G[a]), H[a])] ~> λ[a => (F[a], (G[a], H[a]))] =
       ∀.mk[λ[a => ((F[a], G[a]), H[a])] ~> λ[a => (F[a], (G[a], H[a]))]].from(Associative[* => *, (*, *)].associate)

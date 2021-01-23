@@ -30,15 +30,15 @@ class CategoriesTests  extends AnyFunSuite with Matchers {
   implicitly[Monoidal.Aux[Prodcat[* => *, * => *, *, *], (*, *), Trivial.T1, Unit]]
   implicitly[Cartesian[Prodcat[* => *, * => *, *, *], (*, *)]]
   implicitly[Cartesian.Aux[Prodcat[* => *, * => *, *, *], (*, *), Trivial.T1, Unit]]
-  implicitly[Distributive[Prodcat[* => *, * => *, *, *]]]
+  implicitly[Distributive[Prodcat[* => *, * => *, *, *], Tuple2, Either]]
   implicitly[Distributive.Aux[Prodcat[* => *, * => *, *, *], Trivial.T1, (*, *), Unit, Either, Nothing]]
   implicitly[Endobifunctor[Prodcat[* => *, * => *, *, *], (*, *)]]
   implicitly[Groupoid[Prodcat[===, ===, *, *]]]
   implicitly[Groupoid.Aux[Prodcat[===, ===, *, *], Trivial.T1]]
 
-  def getDist[->[_,_], A, B, C[_], P[_,_], PI, S[_,_], SI](fn: A -> B)(implicit
-    d: Distributive.Aux[->, C, P, PI, S, SI]
-  ): Distributive.Aux[->, C, P, PI, S, SI] = d
+  def getDist[->[_,_], A, B, C[_], PI, SI](fn: A -> B)(implicit
+    d: Distributive.Aux[->, C, Tuple2, PI, Either, SI]
+  ): Distributive.Aux[->, C, Tuple2, PI, Either, SI] = d
 
   val fn = (i: Int) => i + 1
   val dd1 = getDist(fn)
