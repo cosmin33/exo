@@ -2,8 +2,8 @@ package io.cosmo.exo.typeclasses
 
 import io.cosmo.exo._
 import io.cosmo.exo.categories.functors.Exofunctor
-import io.cosmo.exo.categories.{Subcat, Ccc, Trivial}
-import io.cosmo.exo.evidence.{===, Is}
+import io.cosmo.exo.categories.{Ccc, Subcat, Trivial}
+import io.cosmo.exo.evidence.{===, =~=, Is}
 import shapeless.the
 
 trait HasTc[TC[_[_]], TF] {
@@ -22,7 +22,7 @@ object HasTc {
     new HasTc[TC, TypeF[F0]] {type F[x] = F0[x]; val leibniz = Is.refl; val instance = source}
 
   def isoCanonic[TC[_[_]], FF[_]]: TC[FF] <=> HasTc[TC, TypeF[FF]] =
-    Iso.unsafe(HasTc.steal(_), h => TypeF.injectivity(h.leibniz).subst(h.instance))
+    Iso.unsafe(HasTc.steal(_), h => h.leibniz.isoTo[h.F =~= FF].subst(h.instance))
 
   private def exofunc[->[_,_], TC[_[_]]](implicit
     c: Subcat.Aux[->, IsTypeF],

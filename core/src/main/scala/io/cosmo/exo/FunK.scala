@@ -1,5 +1,6 @@
 package io.cosmo.exo
 
+import io.cosmo.exo.Iso.{HasIso, HasIsoK}
 import io.cosmo.exo.categories.{Cartesian, Cocartesian, Distributive, Dual, DualModule, Endobifunctor, Initial, Opp, Subcat, Terminal}
 import io.cosmo.exo.categories.functors.Endobifunctor
 import io.cosmo.exo.evidence.{===, =~=, IsK}
@@ -51,9 +52,11 @@ object FunK {
       def fn = f
     }
 
+  implicit def impIsoFunK[F[_], G[_]](implicit i: F <~> G): Iso[FunK, TypeF[F], TypeF[G]] = isoKIso[F, G].flip(i)
+
   implicit def isoToFun[F[_], G[_]]: FunK[TypeF[F], TypeF[G]] <=> (F ~> G) = Iso.unsafe(_.unapply, apply)
-  implicit def isoKIso[F[_], G[_]]: Iso[FunK, TypeF[F], TypeF[G]] <=> (F <~> G) =
-    Iso.unsafe(ifk => <~>.unsafe(ifk.to.unapply, ifk.from.unapply), ifg => Iso.unsafe(apply(ifg.toK), apply(ifg.fromK)))
+  implicit def isoKIso[F[_], G[_]]: IsoFunK[TypeF[F], TypeF[G]] <=> (F <~> G) =
+    Iso.unsafe(i => <~>.unsafe(i.to.unapply, i.from.unapply), i => Iso.unsafe(apply(i.toK), apply(i.fromK)))
 
   import io.cosmo.exo.FunktionHelpers._
 

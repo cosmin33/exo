@@ -1,6 +1,5 @@
 package io.cosmo.exo.categories
 
-import io.cosmo.exo._
 import io.cosmo.exo.evidence._
 
 import scala.language.experimental.macros
@@ -19,6 +18,7 @@ object Subcat {
 
   implicit class SubcatOps[->[_,_], T[_]](val s: Subcat.Aux[->, T]) extends AnyVal {
     def dual: Subcat.Aux[Dual[->,*,*], T] = DualModule.dualSubcat[->, T](s)
+    def opp: Subcat.Aux[Opp[->]#l, T] = DualModule.oppSubcat[->, T](s)
   }
 
 }

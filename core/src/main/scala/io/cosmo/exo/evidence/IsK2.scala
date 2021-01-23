@@ -40,19 +40,40 @@ object IsK2 {
 
   /** Given `F =~= G` we can prove that `A[F] === A[G]`. */
   def lower[A[_[_,_]], F[_,_], G[_,_]](ab: F =~~= G): A[F] === A[G] = ab.subst[λ[a[_,_] => A[F] === A[a]]](Is.refl[A[F]])
-
+  def lower2[A[_[_,_], _[_,_]]] = new Lower2Op[A] {}
+  class Lower2Op[A[_[_,_], _[_,_]]] {
+    def on[F[_,_], F1[_,_], G[_,_], G1[_,_]](
+      ff: F =~~= F1, fg: G =~~= G1,
+    ): A[F, G] === A[F1, G1] = ff.lower[A[*[_,_], G]] andThen fg.lower[A[F1, *[_,_]]]
+  }
+  def lower3[A[_[_,_], _[_,_], _[_,_]]] = new Lower3Op[A] {}
+  class Lower3Op[A[_[_,_], _[_,_], _[_,_]]] {
+    def on[F[_,_], F1[_,_], G[_,_], G1[_,_], H[_,_], H1[_,_]](
+    ff: F =~~= F1, fg: G =~~= G1, fh: H =~~= H1
+  ): A[F, G, H] === A[F1, G1, H1] =
+      ff.lower[A[*[_,_], G, H]] andThen fg.lower[A[F1, *[_,_], H]] andThen fh.lower[A[F1, G1, *[_,_]]]
+  }
   def lower4[A[_[_,_], _[_,_], _[_,_], _[_,_]]] = new Lower4Op[A] {}
   class Lower4Op[A[_[_,_], _[_,_], _[_,_], _[_,_]]] {
     def on[F[_,_], F1[_,_], G[_,_], G1[_,_], H[_,_], H1[_,_], I[_,_], I1[_,_]](
-    ff: F =~~= F1,
-    fg: G =~~= G1,
-    fh: H =~~= H1,
-    fi: I =~~= I1
+    ff: F =~~= F1, fg: G =~~= G1, fh: H =~~= H1, fi: I =~~= I1
   ): A[F, G, H, I] === A[F1, G1, H1, I1] =
-    ff.lower[A[*[_,_], G, H, I]] andThen
-      fg.lower[A[F1, *[_,_], H, I]] andThen
-      fh.lower[A[F1, G1, *[_,_], I]] andThen
-      fi.lower[A[F1, G1, H1, *[_,_]]]
+    ff.lower[A[*[_,_], G, H, I]] andThen fg.lower[A[F1, *[_,_], H, I]] andThen
+      fh.lower[A[F1, G1, *[_,_], I]] andThen fi.lower[A[F1, G1, H1, *[_,_]]]
+  }
+  def lower5[A[_[_,_], _[_,_], _[_,_], _[_,_], _[_,_]]] = new Lower5Op[A] {}
+  class Lower5Op[A[_[_,_], _[_,_], _[_,_], _[_,_], _[_,_]]] {
+    def on[F[_,_], F1[_,_], G[_,_], G1[_,_], H[_,_], H1[_,_], I[_,_], I1[_,_], J[_,_], J1[_,_]](
+    ff: F =~~= F1, fg: G =~~= G1, fh: H =~~= H1, fi: I =~~= I1, fj: J =~~= J1
+  ): A[F, G, H, I, J] === A[F1, G1, H1, I1, J1] =
+    ff.lower[A[*[_,_], G, H, I, J]] andThen fg.lower[A[F1, *[_,_], H, I, J]] andThen
+      fh.lower[A[F1, G1, *[_,_], I, J]] andThen fi.lower[A[F1, G1, H1, *[_,_], J]] andThen
+      fj.lower[A[F1, G1, H1, I1, *[_,_]]]
   }
 
+  implicit def isoExtensionality[F[_,_], G[_,_]]: ∀∀[λ[(a,b) => F[a,b] === G[a,b]]] <=> (F =~~= G) =
+    Iso.unsafe(
+      fa => Axioms.tcExtensionality2[F, G].applyT(t => fa[t.A, t.B]),
+      fg => ∀∀.of[λ[(a,b) => F[a,b] === G[a,b]]].from(fg.is)
+    )
 }

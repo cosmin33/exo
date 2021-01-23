@@ -34,6 +34,7 @@ trait PlayCat1Implicits extends PlayCat1Implicits01 {
     }
 
 
+
 }
 trait PlayCat1Implicits01 extends PlayCat1Implicits02 {
 
@@ -51,48 +52,48 @@ object PlayCat1Helpers {
     def andThen[A, B, C](ab: PlayCat1[->, F, A, B], bc: PlayCat1[->, F, B, C]): PlayCat1[->, F, A, C] = PlayCat1(sub.andThen(ab.fn, bc.fn))
   }
 
-  trait AssocPlayCatConj[->[_,_], T[_], F[_]] extends Associative[PlayCat1[->,F,*,*], /\] {
+  trait AssocPlayCatConj[->[_,_], ⨂[_,_], T[_], F[_]] extends Associative[PlayCat1[->,F,*,*], ⨂] {
     type TC[a] = T[a]
     protected def F: Endofunctor[->, F]
-    protected def P: Associative.Aux[->, /\, T]
+    protected def P: Associative.Aux[->, ⨂, T]
     implicit protected def sub: Subcat.Aux[->, T]
     implicit protected def ft: T ~> λ[a => T[F[a]]]
     def C: Subcat.Aux[PlayCat1[->, F,*,*], TC] = implicitly
-    def associate  [X: TC, Y: TC, Z: TC]: PlayCat1[->, F, X /\ Y /\ Z, X /\ (Y /\ Z)] =
-      PlayCat1(F.map[X /\ Y /\ Z, X /\ (Y /\ Z)](P.associate[X, Y, Z]))
-    def diassociate[X: TC, Y: TC, Z: TC]: PlayCat1[->, F, X /\ (Y /\ Z), X /\ Y /\ Z] =
-      PlayCat1(F.map[X /\ (Y /\ Z), X /\ Y /\ Z](P.diassociate[X, Y, Z]))
+    def associate  [X: TC, Y: TC, Z: TC]: PlayCat1[->, F, X ⨂ Y ⨂ Z, X ⨂ (Y ⨂ Z)] =
+      PlayCat1(F.map[X ⨂ Y ⨂ Z, X ⨂ (Y ⨂ Z)](P.associate[X, Y, Z]))
+    def diassociate[X: TC, Y: TC, Z: TC]: PlayCat1[->, F, X ⨂ (Y ⨂ Z), X ⨂ Y ⨂ Z] =
+      PlayCat1(F.map[X ⨂ (Y ⨂ Z), X ⨂ Y ⨂ Z](P.diassociate[X, Y, Z]))
   }
 
-  trait MonoPlayCatConj[->[_,_], T[_], F[_], I] extends AssocPlayCatConj[->,T,F]
-    with  Monoidal[PlayCat1[->, F,*,*], /\]
+  trait MonoPlayCatConj[->[_,_], ⨂[_,_], T[_], F[_], I] extends AssocPlayCatConj[->,⨂,T,F]
+    with  Monoidal[PlayCat1[->, F,*,*], ⨂]
   {
     type Id = I
-    protected def P: Monoidal.Aux[->, /\, T, I]
-    def idl  [A: TC]: PlayCat1[->, F, Id /\ A, A] = PlayCat1(F.map[Id /\ A, A](P.idl))
-    def coidl[A: TC]: PlayCat1[->, F, A, Id /\ A] = PlayCat1(F.map[A, Id /\ A](P.coidl))
-    def idr  [A: TC]: PlayCat1[->, F, A /\ Id, A] = PlayCat1(F.map[A /\ Id, A](P.idr))
-    def coidr[A: TC]: PlayCat1[->, F, A, A /\ Id] = PlayCat1(F.map[A, A /\ Id](P.coidr))
+    protected def P: Monoidal.Aux[->, ⨂, T, I]
+    def idl  [A: TC]: PlayCat1[->, F, Id ⨂ A, A] = PlayCat1(F.map[Id ⨂ A, A](P.idl))
+    def coidl[A: TC]: PlayCat1[->, F, A, Id ⨂ A] = PlayCat1(F.map[A, Id ⨂ A](P.coidl))
+    def idr  [A: TC]: PlayCat1[->, F, A ⨂ Id, A] = PlayCat1(F.map[A ⨂ Id, A](P.idr))
+    def coidr[A: TC]: PlayCat1[->, F, A, A ⨂ Id] = PlayCat1(F.map[A, A ⨂ Id](P.coidr))
   }
 
-  trait BraidPlayCatConj[->[_,_], T[_], F[_]] extends AssocPlayCatConj[->, T, F] with Braided[PlayCat1[->, F,*,*], /\] {
-    protected def P: Braided.Aux[->, /\, T]
-    def braid[A: TC, B: TC]: PlayCat1[->, F, A /\ B, B /\ A] = PlayCat1(F.map[A /\ B, B /\ A](P.braid))
+  trait BraidPlayCatConj[->[_,_], ⨂[_,_], T[_], F[_]] extends AssocPlayCatConj[->, ⨂, T, F] with Braided[PlayCat1[->, F,*,*], ⨂] {
+    protected def P: Braided.Aux[->, ⨂, T]
+    def braid[A: TC, B: TC]: PlayCat1[->, F, A ⨂ B, B ⨂ A] = PlayCat1(F.map[A ⨂ B, B ⨂ A](P.braid))
   }
 
-  trait SymmPlayCatConj[->[_,_], T[_], F[_]] extends BraidPlayCatConj[->, T, F] with Symmetric[PlayCat1[->, F,*,*], /\] {
-    protected def P: Symmetric.Aux[->, /\, T]
+  trait SymmPlayCatConj[->[_,_], ⨂[_,_], T[_], F[_]] extends BraidPlayCatConj[->, ⨂, T, F] with Symmetric[PlayCat1[->, F,*,*], ⨂] {
+    protected def P: Symmetric.Aux[->, ⨂, T]
   }
 
-  trait CartesianPlayCatConj[->[_,_], T[_], F[_], I] extends MonoPlayCatConj[->, T, F, I] //with SymmPlayCatConj[->, T, F]
-    with Cartesian[PlayCat1[->, F,*,*], /\]
+  trait CartesianPlayCatConj[->[_,_], ⨂[_,_], T[_], F[_], I] extends MonoPlayCatConj[->, ⨂, T, F, I]
+    with Cartesian[PlayCat1[->, F,*,*], ⨂]
   {
-    protected def F: LaxSemigroupal.Endo[->, /\, F]
-    protected def P: Cartesian.Aux[->, /\, T, I]
-    def fst[A: TC, B: TC]: PlayCat1[->, F, A /\ B, A] = PlayCat1(F.map(P.fst[A, B]))
-    def snd[A: TC, B: TC]: PlayCat1[->, F, A /\ B, B] = PlayCat1(F.map(P.snd[A, B]))
-    def diag[A: TC]: PlayCat1[->, F, A, A /\ A] = PlayCat1(F.map(P.diag[A]))
-    def &&&[X, Y, Z](f: PlayCat1[->, F, X, Y], g: PlayCat1[->, F, X, Z]): PlayCat1[->, F, X, Y /\ Z] =
+    protected def F: LaxSemigroupal.Endo[->, ⨂, F]
+    protected def P: Cartesian.Aux[->, ⨂, T, I]
+    def fst[A: TC, B: TC]: PlayCat1[->, F, A ⨂ B, A] = PlayCat1(F.map(P.fst[A, B]))
+    def snd[A: TC, B: TC]: PlayCat1[->, F, A ⨂ B, B] = PlayCat1(F.map(P.snd[A, B]))
+    def diag[A: TC]: PlayCat1[->, F, A, A ⨂ A] = PlayCat1(F.map(P.diag[A]))
+    def &&&[X, Y, Z](f: PlayCat1[->, F, X, Y], g: PlayCat1[->, F, X, Z]): PlayCat1[->, F, X, Y ⨂ Z] =
       PlayCat1(P.C.andThen(P.&&&(f.fn, g.fn), F.product[Y, Z]))
   }
 
@@ -108,8 +109,6 @@ trait PlayCatImplicits extends PlayCatImplicits01 {
     OS: OplaxSemigroupal.Endo[* => *, /\, F]
   ): Endobifunctor[PlayCat[F,*,*], /\] =
     new Endobifunctor[PlayCat[F,*,*], /\] {
-      def x1[X, Y]: F[X] /\ F[Y] => F[X /\ Y] = LS.product[X, Y]
-      def x2[A, B]: F[A /\ B] => F[A] /\ F[B] = OS.opProduct[A, B]
       def bimap[A, X, B, Y](left: PlayCat[F, A, X], right: PlayCat[F, B, Y]): PlayCat[F, A /\ B, X /\ Y] =
         PlayCat(OS.opProduct[A, B] >>> Endobifunctor[* => *, /\].bimap(left.fn, right.fn) >>> LS.product[X, Y])
     }
@@ -168,7 +167,9 @@ trait PlayCatImplicits extends PlayCatImplicits01 {
           val pp: T[A \/ B] => T[A] \/ T[B] = L.opProduct[A, B]
           val x1: T[A] \/ T[B] = pp(p._1)
           val x2: A \/ B = p._2
-          ???
+          // ((A \/ B), (C \/ D)) => (A, C) \/ (B, D) Impossible!!!!!!!!
+          val r: (T[A], A) \/ (T[B], B) = ???
+          r
         })
       }
 

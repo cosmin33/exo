@@ -23,7 +23,7 @@ object CSemigroup {
   def toCats[A](implicit m: CSemigroup.Aux[* => *, (*, *), Trivial.T1, A]): Semigroup[A] =
     Semigroup.instance({case (a, b) => m.op((a, b))})
 
-  implicit def iso[A]: Semigroup[A] <=> CSemigroup.Aux[* => *, (*, *), Trivial.T1, A] =
+  implicit def isoCats[A]: Semigroup[A] <=> CSemigroup.Aux[* => *, (*, *), Trivial.T1, A] =
     Iso.unsafe(fromCats(_), toCats(_))
 
 }

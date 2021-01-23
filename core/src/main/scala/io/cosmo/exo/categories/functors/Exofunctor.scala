@@ -14,18 +14,6 @@ trait Exofunctor[==>[_,_], -->[_,_], F[_]] { self =>
 
   final def compose[|->[_,_], G[_]](G: Exo[|->, ==>, G]): Exofunctor[|->, -->, λ[α => F[G[α]]]] =
     Exo.unsafe[|->, -->, λ[α => F[G[α]]]](f => map(G.map(f)))
-
-  final def composeContra[|->[_,_], G[_]](G: Exofunctor[Dual[|->,*,*], ==>, G]): Exofunctor[Dual[|->,*,*], -->, λ[α => F[G[α]]]] =
-    Exo.unsafe[Dual[|->,*,*], -->, λ[α => F[G[α]]]](f => map(G.map(f)))
-
-  def tupleRight[A, B, P[_,_], U[_,_]](implicit
-    C: Cartesian[==>, P],
-    cc: Ccc[==>],
-    C1: Cartesian[-->, U],
-    cc1: Ccc[-->],
-    T: Terminal[==>]
-  ): U[F[A], B] --> F[P[A, B]] = ???
-
 }
 
 object Exofunctor extends ExofunctorImplicits {
@@ -88,6 +76,11 @@ object Exofunctor extends ExofunctorImplicits {
 
   implicit def idEndofunctor[->[_,_]]: Endofunctor[->, Id] = Endofunctor.unsafe[->, Id](identity)
 
+  implicit def bifunctor[->[_,_]: Semicategory]: Exobifunctor[Dual[->,*,*], ->, * => *, ->] =
+    new Exobifunctor[Dual[->,*,*], ->, * => *, ->] {
+      def bimap[A, X, B, Y](left: Dual[->, A, X], right: B -> Y): A -> B => (X -> Y) = f => left.toFn >>>> f >>>> right
+    }
+
   /** from semicategory to left and right functors */
   implicit def semiFunctorCov[->[_,_]: Semicategory, X]: Exo.Cov[->, X -> *] = Exo.unsafe(f => fn => fn >>>> f)
   implicit def semiFunctorCon[->[_,_]: Semicategory, X]: Exo.Con[->, * -> X] = Exo.unsafe[Dual[->, *, *], * => *, * -> X](f => fn => f.toFn >>>> fn)
@@ -95,7 +88,7 @@ object Exofunctor extends ExofunctorImplicits {
   implicit def semiFaFunCov[->[_,_]: Semicategory]: ∀[λ[a => Exo.Cov[->, a -> *]]] = ∀.of[λ[a => Exo.Cov[->, a -> *]]](semiFunctorCov)
   implicit def semiFaFunCon[->[_,_]: Semicategory]: ∀[λ[a => Exo.Con[->, * -> a]]] = ∀.of[λ[a => Exo.Con[->, * -> a]]](semiFunctorCon)
 
-  /** from bifunctor derive left and right functors */
+  /** from bifunctor derive left and right forall functors */
   implicit def leftFunctorFa [==>[_, _], -->[_, _], >->[_, _], Bi[_, _], T[_]](implicit
     b: Exobifunctor[==>, -->, >->, Bi],
     s: Subcat.Aux[-->, T]

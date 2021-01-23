@@ -16,10 +16,10 @@ class ForallSomeTests extends AnyFunSuite with Matchers {
     val it /*: ∀[λ[x => Inhabited[Int]]]*/ = Forall.of[λ[x => Inhabited[Int]]].from(implicitly)
 
     val f1: ∀[Foo] = ∀.of(new Foo)
-    val f2: ∀[Foo] = Forall.of(new Foo)
-    val f3: ∀[Foo] = Forall.of[Foo].from(new Foo)
-    val f4: ∀[Foo] = Forall.of[Foo].from(new Foo)
-    val f5: ∀[Foo] = Forall.from(new ∀.Prototype[Foo] {
+    val f2: ∀[Foo] = ∀.of(new Foo)
+    val f3: ∀[Foo] = ∀.of[Foo].from(new Foo)
+    val f4: ∀[Foo] = ∀.of[Foo].from(new Foo)
+    val f5: ∀[Foo] = ∀.from(new ∀.Prototype[Foo] {
       override def apply[X]: Foo[X] = new Foo
     })
     val f7 = ∀.of[Foo].from(new Foo)

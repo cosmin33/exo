@@ -15,11 +15,11 @@ object DualModule extends DualInstances {
     def toFn: B -> A = Dual.leibniz[->].flip(self)
   }
 
-  implicit def doubleDualIs[->[_,_], A, B]: (A -> B) === Dual[Dual[->,*,*], A, B] =
+  implicit def doubleDualIsNoDual[->[_,_], A, B]: (A -> B) === Dual[Dual[->,*,*], A, B] =
     Dual.leibniz[->].subst[λ[f[_,_] => Opp[Opp[->]#l]#l =~~= Dual[f,*,*]]](Dual.leibniz[Opp[->]#l]).is[A, B]
 
-  //implicit def doubleDualIsK2[->[_,_]]: -> =~~= λ[(a,b) => Dual[Dual[->,*,*],a,b]] = ???
-
+  //TODO: to code once this bug is resolved: https://github.com/scala/bug/issues/8252
+  //implicit def doubleDualIsK2[->[_,_]]: -> =~~= λ[(a,b) => Dual[Dual[->,*,*], a, b]] = ???
 
   //implicit def conversion[->[_,_], A, B](ab: B -> A): Dual[->, A, B] = Dual(ab)
 }

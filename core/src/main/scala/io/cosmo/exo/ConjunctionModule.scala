@@ -35,7 +35,8 @@ object ConjunctionModule {
 
   implicit val co: Coercible[∀∀[Tuple2], ∀∀[/\]] = Coercible.instance
 
-  implicit val iso: (*, *) <~~> /\ = /\.leibniz.toIso
+  implicit def iso[A, B]: (A, B) <=> (A /\ B) = /\.leibniz.is[A, B].toIso
+  implicit val isoK2: (*, *) <~~> /\ = /\.leibniz.toIso
 
   implicit def bothImp[A, B](implicit a: A, b: B): A /\ B = /\(a, b)
 

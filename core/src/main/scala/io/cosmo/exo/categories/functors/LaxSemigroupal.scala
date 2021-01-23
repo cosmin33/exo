@@ -39,15 +39,14 @@ object LaxSemigroupal extends LaxSemigroupalInstances {
   implicit class LaxSemigroupalOps[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]](
     self: LaxSemigroupal[==>, ⊙=, -->, ⊙-, F]
   ) {
-    def preserveSemigroup[M](ma: Semigroup[M])(implicit
+    def preserveSemigroup[M](S: Semigroup[M])(implicit
       e1: ==> =~~= Function1,
       e2:  ⊙= =~~= Tuple2,
       e3: --> =~~= Function1,
       e4:  ⊙- =~~= Tuple2,
     ): Semigroup[F[M]] = {
-      val m1 = =~~=.lower4[LaxSemigroupal[*[_,_], *[_,_], *[_,_], *[_,_], F]].on(e1, e2, e3, e4)
-      val ff = m1(self).map2[M, M, M] { case (a, b) => ma.combine(a, b) }
-      Semigroup.instance { case (x, y) => ff((x, y)) }
+      val eq = =~~=.lower4[LaxSemigroupal[*[_,_], *[_,_], *[_,_], *[_,_], F]].on(e1, e2, e3, e4)
+      Semigroup.instance { case (x, y) => eq(self).map2[M, M, M]((S.combine _).tupled)((x, y)) }
     }
   }
 

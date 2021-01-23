@@ -39,11 +39,10 @@ object Associative extends AssociativeImplicits {
 
   def apply[->[_,_], ⊙[_,_]](implicit assoc: Associative[->, ⊙]): Associative.Aux[->, ⊙, assoc.TC] = assoc
 
-  def duag[->[_,_], ⊙[_,_], T[_]](a: Associative.Aux[Dual[->,*,*], ⊙, T]): Associative.Aux[->, ⊙, T] = {
-    //val ee = DualModule.doubleDualEq[->, ]
-    val xx = dual(a)
-    ???
-  }
+  def dualdual[->[_,_], ⊙[_,_], T[_]](a: Associative.Aux[Dual[->,*,*], ⊙, T]): Associative.Aux[->, ⊙, T] =
+    //TODO: remove asInstanceOf and use DualModule.doubleDualIsK2 once is repaired
+    dual(a).asInstanceOf[Associative.Aux[->, ⊙, T]]
+
   def dual[->[_,_], ⊙[_,_], T[_]](a: Associative.Aux[->, ⊙, T]): Associative.Aux[Dual[->,*,*], ⊙, T] =
     new Associative[Dual[->,*,*], ⊙] {
       type TC[a] = T[a]

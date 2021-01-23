@@ -90,6 +90,15 @@ object Is extends IsInstances {
     mn.subst[f3](ij.subst[f2](ab.subst[f1](refl)))
   }
 
+  def lift4[F[_,_,_,_], A, X, B, Y, C, Z, D, T]
+  (ax: A === X, by: B === Y, cz: C === Z, dt: D === T): F[A, B, C, D] === F[X, Y, Z, T] = {
+    type f1[α] = F[A, B, C, D] === F[α, B, C, D]
+    type f2[α] = F[A, B, C, D] === F[X, α, C, D]
+    type f3[α] = F[A, B, C, D] === F[X, Y, α, D]
+    type f4[α] = F[A, B, C, D] === F[X, Y, Z, α]
+    dt.subst[f4](cz.subst[f3](by.subst[f2](ax.subst[f1](refl))))
+  }
+
   def fromPredef[A, B](eq: A =:= B): A === B = Axioms.predefEq(eq)
 
   implicit def proposition[A, B]: Proposition[Is[A, B]] =

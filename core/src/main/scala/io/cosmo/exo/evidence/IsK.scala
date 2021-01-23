@@ -53,19 +53,19 @@ object IsK {
 
   private type Canonic[F[_], G[_]] = ∀≈[λ[a[_[_]] => a[F] => a[G]]]
 
-  def isoCanonic[F[_], G[_]]: Canonic[F, G] <=> (F =~= G) =
+  implicit def isoCanonic[F[_], G[_]]: Canonic[F, G] <=> (F =~= G) =
     Iso.unsafe(
       fa => new IsK[F, G] { def subst[Alg[_[_]]](f: Alg[F]): Alg[G] = fa.apply[Alg](f) },
       ev => ∀≈.mk[Canonic[F, G]].from(ev.subst(_))
     )
 
-  def isoExtensionality[F[_], G[_]]: ∀[λ[a => F[a] === G[a]]] <=> (F =~= G) =
+  implicit def isoExtensionality[F[_], G[_]]: ∀[λ[a => F[a] === G[a]]] <=> (F =~= G) =
     Iso.unsafe(
       fa => Axioms.tcExtensionality[F, G].applyT(t => fa[t.T]),
       fg => ∀.of[λ[a => F[a] === G[a]]].from(fg.is)
     )
 
-  def isoTypeFInjectivity[F[_], G[_]]: (TypeF[F] === TypeF[G]) <=> (F =~= G) =
+  implicit def isoTypeFInjectivity[F[_], G[_]]: (TypeF[F] === TypeF[G]) <=> (F =~= G) =
     Iso.unsafe(TypeF.injectivity(_), _.lower[TypeF])
 
   implicit def proposition[A[_], B[_]]: Proposition[A =~= B] =
@@ -75,29 +75,33 @@ object IsK {
 
   implicit def refl[A[_]]: A =~= A = forall.apply[A]
 
-  /** Given `F =~= G` we can prove that `A[F] === A[G]`. */
-  def lower[A[_[_]], F[_], G[_]](ab: F =~= G): A[F] === A[G] = ab.subst[λ[a[_] => A[F] === A[a]]](Is.refl[A[F]])
-
   def const[A, B](ab: A === B): λ[x => A] =~= λ[x => B] = {
     type f[a] = λ[x => A] =~= λ[x => a]
     ab.subst[f](IsK.refl[λ[x => A]])
   }
 
-  /** Given `A =~= B` and `I =~= J` we can prove that `F[A, I] === F[B, J]`. */
+  /** Given `F =~= G` we can prove that `A[F] === A[G]`. */
+  def lower[A[_[_]], F[_], G[_]](ab: F =~= G): A[F] === A[G] = ab.subst[λ[a[_] => A[F] === A[a]]](Is.refl[A[F]])
   def lower2[F[_[_], _[_]], A[_], B[_], I[_], J[_]]
   (ab: A =~= B, ij: I =~= J): F[A, I] === F[B, J] = {
     type f1[a[_]] = F[A, I] === F[a, I]
     type f2[i[_]] = F[A, I] === F[B, i]
     ij.subst[f2](ab.subst[f1](Is.refl))
   }
-
-  /** Given `A =~= B`, `I =~= J`, and `M =~= N` we can prove that `F[A, I] === F[B, J]`. */
   def lower3[F[_[_], _[_], _[_]], A[_], B[_], I[_], J[_], M[_], N[_]]
   (ab: A =~= B, ij: I =~= J, mn: M =~= N): F[A, I, M] === F[B, J, N] = {
     type f1[a[_]] = F[A, I, M] === F[a, I, M]
     type f2[i[_]] = F[A, I, M] === F[B, i, M]
     type f3[j[_]] = F[A, I, M] === F[B, J, j]
     mn.subst[f3](ij.subst[f2](ab.subst[f1](Is.refl)))
+  }
+  def lower4[F[_[_], _[_], _[_], _[_]], A[_], X[_], B[_], Y[_], C[_], Z[_], D[_], T[_]]
+  (ax: A =~= X, by: B =~= Y, cz: C =~= Z, dt: D =~= T): F[A, B, C, D] === F[X, Y, Z, T] = {
+    type f1[a[_]] = F[A, B, C, D] === F[a, B, C, D]
+    type f2[a[_]] = F[A, B, C, D] === F[X, a, C, D]
+    type f3[a[_]] = F[A, B, C, D] === F[X, Y, a, D]
+    type f4[a[_]] = F[A, B, C, D] === F[X, Y, Z, a]
+    dt.subst[f4](cz.subst[f3](by.subst[f2](ax.subst[f1](Is.refl))))
   }
 
   /** Given `A =~= B` we can prove that `F[A, ?] =~= F[B, ?]`. */

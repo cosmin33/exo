@@ -13,12 +13,27 @@ trait Distributive[->[_, _]] extends Subcat[->] {
 
   /** (A, (B \/ C) => (A, B) \/ (A, C) */
   def distribute[A: TC, B: TC, C: TC]: ⨂[A, ⨁[B, C]] -> ⨁[⨂[A, B], ⨂[A, C]]
+
+  def codistribute[A: TC, B: TC, C: TC]: ⨁[⨂[A, B], ⨂[A, C]] -> ⨂[A, ⨁[B, C]] =
+    cartesian.&&&(
+      cocartesian.|||(cartesian.fst[A, B], cartesian.fst[A, C]),
+      cocartesian.bifunctor.bimap(Dual(cartesian.snd[A, B]), Dual(cartesian.snd[A, C])).toFn
+    )
+
+  private type <->[a, b] = Iso[->, a, b]
+  def isoDistributive[A, B, C](implicit a: TC[A], b: TC[B], c: TC[C]): ⨂[A, ⨁[B, C]] <-> ⨁[⨂[A, B], ⨂[A, C]] =
+    Iso.unsafe(distribute(a, b, c), codistribute(a, b, c))(this)
 }
 object Distributive {
   type Aux[==>[_, _], =>#[_], P[_, _], PI, S[_, _], SI] = Distributive[==>] {
     type TC[a] = =>#[a]
     type ProductId = PI; type ⨂[A, B] = P[A, B]
     type SumId     = SI; type ⨁[A, B] = S[A, B]
+  }
+  type Aux1[==>[_, _], =>#[_], P[_, _], S[_, _]] = Distributive[==>] {
+    type TC[a] = =>#[a]
+    type ⨂[A, B] = P[A, B]
+    type ⨁[A, B] = S[A, B]
   }
   type AuxTC[==>[_,_], =>#[_]] = Distributive[==>] {type TC[a] = =>#[a]}
 

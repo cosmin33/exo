@@ -3,6 +3,7 @@ package io.cosmo.exo.categories.functors
 import cats.implicits._
 import io.cosmo.exo._
 import io.cosmo.exo.categories._
+import io.cosmo.exo.evidence.=~~=
 import io.estatico.newtype.Coercible
 import mouse.any._
 
@@ -54,6 +55,8 @@ object Exobifunctor extends ExobifunctorInstances {
       def bimap[A, X, B, Y](l: Dual[->, A, X], r: Dual[->, B, Y]): Dual[->, Bi[A, B], Bi[X, Y]] =
         Dual(F.bimap(l.toFn, r.toFn))
     }
+
+  def opp[->[_,_], Bi[_,_]](F: Endo[->, Bi]): Endo[Opp[->]#l, Bi] = Dual.leibniz[->].flip.subst[Endo[*[_,_], Bi]](dual(F))
 }
 
 object Endobifunctor {

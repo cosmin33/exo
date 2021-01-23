@@ -1,6 +1,5 @@
 package io.cosmo.exo.categories
 
-import io.cosmo.exo
 import io.cosmo.exo._
 
 trait Cartesian[->[_, _], ⨂[_, _]] extends Monoidal[->, ⨂] with Symmetric[->, ⨂] {
@@ -10,11 +9,7 @@ trait Cartesian[->[_, _], ⨂[_, _]] extends Monoidal[->, ⨂] with Symmetric[->
 
   def merge[X, Y, Z](f: X -> Y, g: X -> Z): X -> ⨂[Y, Z] = &&&(f, g)
   def &&&  [X, Y, Z](f: X -> Y, g: X -> Z): X -> ⨂[Y, Z]
-
-  def isoCartTrue[X, Y, Z]: ⨂[X -> Y, X -> Z] <=> (X -> ⨂[Y, Z]) = ???
-
-  def isoCart[X, Y: TC, Z: TC]: (X -> Y, X -> Z) <=> (X -> ⨂[Y, Z]) =
-    Iso.unsafe(p => &&&(p._1, p._2), f => (C.andThen(f, fst[Y, Z]), C.andThen(f, snd[Y, Z])))
+  //def &&&  [X: TC, Y, Z](f: X -> Y, g: X -> Z): X -> ⨂[Y, Z] = C.andThen(diag[X], bifunctor.bimap(f, g))
 
   def isoCartesian[X, Y: TC, Z: TC]: (X -> Y, X -> Z) <=> (X -> ⨂[Y, Z]) =
     Iso.unsafe(p => &&&(p._1, p._2), fn => (C.andThen(fn, fst[Y, Z]), C.andThen(fn, snd[Y, Z])))
