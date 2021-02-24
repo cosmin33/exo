@@ -22,6 +22,9 @@ class ForallSomeTests extends AnyFunSuite with Matchers {
     val f5: ∀[Foo] = ∀.from(new ∀.Prototype[Foo] {
       override def apply[X]: Foo[X] = new Foo
     })
+    val ff5: ∀[Foo] = new ∀.Prototype[Foo] {
+      override def apply[X]: Foo[X] = new Foo
+    }.make
     val f7 = ∀.of[Foo].from(new Foo)
     val f10 = Forall.of[Foo].from(new Foo)
     val f11 = Forall.from(new Forall.Prototype[Foo] {
@@ -34,7 +37,6 @@ class ForallSomeTests extends AnyFunSuite with Matchers {
   }
 
   test("forall stuff...") {
-    type ~>[F[_], G[_]] = ∀[λ[a => F[a] => G[a]]]
     type T[a] = List[a] => Option[a]
     type W = Forall[λ[a => List[a] => Option[a]]]
     val nil: ∀[List] =  ∀.of[List].from(Nil)

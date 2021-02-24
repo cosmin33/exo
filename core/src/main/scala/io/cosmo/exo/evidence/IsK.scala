@@ -2,7 +2,7 @@ package io.cosmo.exo.evidence
 
 import io.cosmo.exo
 import io.cosmo.exo._
-import io.cosmo.exo.typeclasses.TypeF
+import io.cosmo.exo.typeclasses.TypeK
 
 sealed abstract class IsK[F[_], G[_]] private[IsK]() { ab =>
   import IsK._
@@ -64,9 +64,6 @@ object IsK {
       fa => Axioms.tcExtensionality[F, G].applyT(t => fa[t.T]),
       fg => ∀.of[λ[a => F[a] === G[a]]].from(fg.is)
     )
-
-  implicit def isoTypeFInjectivity[F[_], G[_]]: (TypeF[F] === TypeF[G]) <=> (F =~= G) =
-    Iso.unsafe(TypeF.injectivity(_), _.lower[TypeF])
 
   implicit def proposition[A[_], B[_]]: Proposition[A =~= B] =
     (p: ¬¬[A =~= B]) => Axioms.isKConsistency[A, B](p.run)

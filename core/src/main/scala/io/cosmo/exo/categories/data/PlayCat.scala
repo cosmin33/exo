@@ -24,8 +24,8 @@ trait PlayCat1Implicits extends PlayCat1Implicits01 {
 
   implicit def bifunctorProd[==>[_,_], -->[_,_], ~~>[_,_], ⊙[_,_], T[_], F[_]](implicit
     S: Semicategory[~~>],
-    LS: LaxSemigroupal.Endo[~~>, ⊙, F],   // LaxSemigroupal[Any2, /\, ~~>, /\, F] //would suffice
-    OS: OplaxSemigroupal.Endo[~~>, ⊙, F], // LaxSemigroupal[Any2, /\, ~~>, /\, F] //would suffice
+    LS: LaxSemigroupal.Endo[~~>, ⊙, F],   //   LaxSemigroupal[Any2, /\, ~~>, /\, F] //would suffice
+    OS: OplaxSemigroupal.Endo[~~>, ⊙, F], // OplaxSemigroupal[Any2, /\, ~~>, /\, F] //would suffice
     F: Exobifunctor[==>, -->, ~~>, ⊙]
   ): Exobifunctor[PlayCat1[==>, F,*,*], PlayCat1[-->, F,*,*], PlayCat1[~~>, F,*,*], ⊙] =
     new Exobifunctor[PlayCat1[==>, F,*,*], PlayCat1[-->, F,*,*], PlayCat1[~~>, F,*,*], ⊙] {
@@ -219,7 +219,6 @@ object PlayCatHelpers {
     type TC[a] = Trivial.T1[a]
     type Id = Void
     protected def F: Endofunctor[Dual[* => *,*,*], F]
-    //def bifunctor: Endobifunctor[Dual[PlayCat[F, *, *], *, *], \/] = Exobifunctor.dual(PlayCat.bifunctorDisj[F])
     def C: Subcat.Aux[Dual[PlayCat[F, *, *], *, *], TC] = implicitly
     def associate  [X:TC, Y: TC, Z: TC]: Dual[PlayCat[F, *, *], X \/ Y \/ Z, X \/ (Y \/ Z)] =
       Dual(PlayCat(F.map[X \/ Y \/ Z, X \/ (Y \/ Z)](Dual(Associative[* => *, \/].diassociate[X, Y, Z](trivialInstance, trivialInstance, trivialInstance)))))

@@ -3,6 +3,8 @@ package io.cosmo.exo.evidence.variance
 import io.cosmo.exo._
 import io.cosmo.exo.evidence._
 import cats.implicits._
+import io.cosmo.exo.categories.Dual
+import io.cosmo.exo.categories.functors.Exo
 
 trait IsContravariant[F[_]] { F =>
 

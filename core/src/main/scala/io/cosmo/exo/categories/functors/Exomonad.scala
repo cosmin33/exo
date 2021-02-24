@@ -2,16 +2,26 @@ package io.cosmo.exo.categories.functors
 
 import cats._
 import io.cosmo.exo._
-import io.cosmo.exo.categories.Endofunctor
+import io.cosmo.exo.categories.{Endofunctor, Subcat, Trivial}
 
 import scala.annotation.tailrec
 
-trait Exomonad[-->[_,_], I[_], F[_]] extends Endofunctor[-->, F] {
-  def pure[A: I]: A --> F[A]
+trait Exomonad[-->[_,_], TC[_], F[_]] extends Endofunctor[-->, F] {
+  def pure[A: TC]: A --> F[A]
   def bind[A, B](f: A --> F[B]): F[A] --> F[B]
 }
 
 object Exomonad {
+
+  type ExoM[->[_,_], TC[_], F[_]] = Exo[λ[(a,b) => a -> F[b]], ->, F] with Subcat.Aux[λ[(a,b) => a -> F[b]], TC]
+  def testExoM[F[_]](implicit M: Monad[F]): ExoM[* => *, Trivial.T1, F] =
+    new Exofunctor[λ[(a,b) => a => F[b]], * => *, F] with Subcat[λ[(a,b) => a => F[b]]] {
+      type TC[a] = Trivial.T1[a]
+      def id[A](implicit tc: TC[A]): A => F[A] = M.pure
+      def map[A, B](f: A => F[B]): F[A] => F[B] = M.flatMap(_)(f)
+      def andThen[A, B, C](ab: A => F[B], bc: B => F[C]): A => F[C] = a => M.flatMap(ab(a))(bc)
+    }
+
   implicit def isoMonad2Exomonad[F[_]]: Monad[F] <=> Exomonad[* => *, Id, F] =
     Iso.unsafe(
       (M: cats.Monad[F]) =>

@@ -37,13 +37,10 @@ trait Ccc[->[_, _]] extends Subcat[->] {
   def postcmp[A, B, C](f: A -> B)(implicit t: TC[B |-> C]): (B |-> C) -> (A |-> C) =
     curry(andThen(cartesian.grouped(id[B |-> C], f), apply[B, C]))
 
-  def promap1[A, B, C, D](f: A -> B, g: C -> D)(implicit
-    tca: TC[C |-> A], tda: TC[D |-> A]
-  ): (D |-> A) -> (C |-> B) =
+  def promap1[A, B, C, D](f: A -> B, g: C -> D)(implicit tca: TC[C |-> A], tda: TC[D |-> A]): (D |-> A) -> (C |-> B) =
     compose(precmp[A, B, C](f), postcmp[C, D, A](g))
-  def promap2[A, B, C, D](f: A -> B, g: C -> D)(implicit
-    tac: TC[A |-> C], tbc: TC[B |-> C]
-  ): (B |-> C) -> (A |-> D) = promap1(g, f)
+  def promap2[A, B, C, D](f: A -> B, g: C -> D)(implicit tac: TC[A |-> C], tbc: TC[B |-> C]): (B |-> C) -> (A |-> D) =
+    promap1(g, f)
 
   // Cartesian Closed Functor Laws: (to be deleted once I code the functor)
   // F(B -> A) => F(B) -> F(A)
@@ -60,6 +57,8 @@ object Ccc {
     type TC[x] = ->#[x]
     type ProductId = PI
   }
+  type Aux1[->[_,_], ->#[_], P[_,_], E[_,_]] =
+    Ccc[->] {type |->[A, B] = E[A, B]; type ⊙[A, B] = P[A, B]; type TC[x] = ->#[x]}
 
   //type Homoiconic[->[_,_]] = InstanceOf[CccClass.Homoiconic[->]]
 

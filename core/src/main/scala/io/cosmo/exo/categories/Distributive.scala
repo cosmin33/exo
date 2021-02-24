@@ -1,6 +1,5 @@
 package io.cosmo.exo.categories
 
-import cats.implicits._
 import io.cosmo.exo._
 
 trait Distributive[->[_, _], ⨂[_, _], ⨁[_, _]] extends Subcat[->] {
@@ -9,7 +8,6 @@ trait Distributive[->[_, _], ⨂[_, _], ⨁[_, _]] extends Subcat[->] {
   def cartesian: Cartesian.Aux[->, ⨂, TC, ProductId]
   def cocartesian: Cocartesian.Aux[->, ⨁, TC, SumId]
 
-  /** (A, (B \/ C) => (A, B) \/ (A, C) */
   def distribute[A: TC, B: TC, C: TC]: ⨂[A, ⨁[B, C]] -> ⨁[⨂[A, B], ⨂[A, C]]
 
   def codistribute[A: TC, B: TC, C: TC]: ⨁[⨂[A, B], ⨂[A, C]] -> ⨂[A, ⨁[B, C]] =

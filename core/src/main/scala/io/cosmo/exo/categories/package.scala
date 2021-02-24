@@ -9,11 +9,9 @@ import mouse.any._
 
 package object categories extends ProdcatInstances with categories.syntax {
 
-  type Tuple2Bi[B1[_,_], B2[_,_], A, B] = (B1[A, B], B2[A, B])
-
-  /** alias for Tuple2Bi */
   type Prodcat[==>[_,_], -->[_,_], A, B] = (A ==> B, A --> B)
   object Prodcat {
+    /** Product category of duals is the same as dual of product category */
     def traverseDualEq[==>[_,_], -->[_,_]]: Prodcat[Dual[==>,*,*], Dual[-->,*,*], *, *] =~~= Dual[Prodcat[==>,-->,*,*], *, *] =
       Dual.leibniz[==>].subst[λ[f[_,_] => Prodcat[f, Opp[-->]#l, *, *] =~~= Opp[Prodcat[==>,-->,*,*]]#l]](=~~=.refl) |>
         Dual.leibniz[-->].subst[λ[f[_,_] => Prodcat[Dual[==>,*,*], f, *, *] =~~= Opp[Prodcat[==>, -->, *, *]]#l]] |>
@@ -34,9 +32,15 @@ package object categories extends ProdcatInstances with categories.syntax {
   type Opp[->[_,_]] = {type l[A, B] = B -> A}
 
   type Cocartesian[->[_,_], ⨂[_,_]] = Cartesian[Dual[->, *, *], ⨂]
-  type Endofunctor[->[_,_], F[_]] = Exofunctor[->, ->, F]
 
-  type Endobifunctor[->[_,_], ⊙[_,_]] = Exobifunctor[->, ->, ->, ⊙]
+  type Endofunctor[->[_,_], F[_]] = Exofunctor[->, ->, F]
+  type Exomonad1[->[_,_], TC[_], F[_]] = Subcat.Aux[Kleis[->,F,*,*], TC] /\ Exo[Kleis[->,F,*,*], ->, F]
+//  type Exomonad1[->[_,_], TC[_], F[_]] = Subcat.Aux[λ[(a,b) => a -> F[b]], TC] /\ Exo[λ[(a,b) => a -> F[b]], ->, F]
+
+  type Endobifunctor [->[_,_], ⊙[_,_]] = Exobifunctor[->, ->, ->, ⊙]
   type Endoprofunctor[->[_,_], ⊙[_,_]] = Exobifunctor[Dual[->,*,*], ->, ->, ⊙]
+
+  type CSemigroupK[->[_,_], ⊙[_,_], F[_]] = ∀[λ[a => CSemigroup[->, ⊙, F[a]]]]
+  type CMonoidK   [->[_,_], ⊙[_,_], F[_]] = ∀[λ[a => CMonoid   [->, ⊙, F[a]]]]
 
 }

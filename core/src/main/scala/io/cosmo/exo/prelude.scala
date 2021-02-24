@@ -1,5 +1,7 @@
 package io.cosmo.exo
 
+import io.cosmo.exo.categories.functors.ExofunctorSyntax
+
 trait BaseDataAliases {
 
 }
@@ -12,6 +14,7 @@ trait AllSyntax
   extends DisjunctionSyntax
      with ConjunctionSyntax
      with IsoSyntax
+     with ExofunctorSyntax
 
 trait PreludeLowPriority extends BaseHierarchy with BaseDataAliases
 

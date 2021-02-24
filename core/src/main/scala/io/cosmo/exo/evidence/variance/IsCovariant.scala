@@ -3,6 +3,7 @@ package io.cosmo.exo.evidence.variance
 import cats.Id
 import cats.implicits._
 import io.cosmo.exo._
+import io.cosmo.exo.categories.functors.Exo
 import io.cosmo.exo.evidence._
 
 trait IsCovariant[F[_]] { F =>
@@ -53,4 +54,5 @@ object IsCovariant {
     (A: ¬¬[IsCovariant[F]]) => new IsCovariant[F] {
       override def apply[A, B](implicit ev: A <~< B): F[A] <~< F[B] = A.map(_[A, B]).proved
     }
+
 }

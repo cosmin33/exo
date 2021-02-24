@@ -1,17 +1,15 @@
 package io.cosmo.exo.categories
 
 
-import cats.{Functor, Id}
+import cats.Functor
+import cats.data.OptionT
 import cats.implicits._
-import io.cosmo.exo.{<=>, Iso, Pi, SingleOf}
-import io.cosmo.exo.categories.Subcat.Aux
-import io.cosmo.exo.categories.Trivial.T1
-import io.cosmo.exo.categories.functors.Exofunctor.CovF
-import io.cosmo.exo.evidence.{<~<, ===, =~=, IsK}
-import io.cosmo.exo.typeclasses.TypeF
-import org.scalatest.matchers.should.Matchers
+import io.cosmo.exo.evidence.<~<
+import io.cosmo.exo.syntax._
+import io.cosmo.exo.typeclasses.{HasTc, TypeK}
+import io.cosmo.exo.{<=>, <~>, Iso, IsoFunK, ~>, ∀}
 import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.dsl.ResultOfTheTypeInvocation
+import org.scalatest.matchers.should.Matchers
 //import shapeless.Refute
 import io.cosmo.exo.categories.functors._
 
@@ -23,6 +21,21 @@ class FunctorsTests  extends AnyFunSuite with Matchers {
   implicitly[Endofunctor[<~<, λ[a => 1]]] // constant
 
   import io.cosmo.exo.categories.conversions.CatsInstances._
+
+  // IsoFunctorK syntax + typeclass derivation test
+  implicit val ilv: List <~> Vector = ∀.mk[List <~> Vector].from(Iso.unsafe(_.toVector, _.toList))
+  val fv1: Functor[Vector] = Functor[List].imapK(ilv)
+  val fv2: Functor[Vector] = IsoFunK(ilv).deriveK[Functor]
+  val fv3: Functor[Vector] = Functor[List].deriveK[Vector]
+  assert(fv1.map(Vector(1, 2))(i => i + i).eqv(Vector(2, 4)))
+  assert(fv2.map(Vector(1))(_.toString).eqv(Vector("1")))
+
+  // FunctorK syntax test
+  val ot: OptionT[List, Int] = OptionT(List(1.some))
+  val ov: OptionT[Vector, Int] = FunctorK[OptionT[*[_], Int]].mapK(ilv.to)(ot)
+  type O[F[_]] = OptionT[F, Int]
+  val ov1: OptionT[Vector, Int] = (ot: O[List]).emapK(ilv.to)
+  assert(ov1.eqv(OptionT(Vector(1.some))))
 
 //  def ffo[F[_], A,
 //    EF <: Exofunctor[* => *, * => *, F] {type TC1[_]; type TC2[_]},
@@ -88,66 +101,4 @@ class FunctorsTests  extends AnyFunSuite with Matchers {
   assert(F.map((a: Int) => a * 2)(List(1, 2, 3)) == List(2, 4, 6))
 
 
-}
-
-object Iaca {
-  // A couple of type classes with type members ...
-  trait Foo[T] {
-    type A
-  }
-
-  object Foo {
-    implicit val fooIS = new Foo[Int] { type A = String }
-  }
-
-  trait Bar[T] {
-    type B
-    val value: B
-  }
-
-  object Bar {
-    implicit val barSB = new Bar[String] {
-      type B = Boolean
-      val value = true
-    }
-  }
-
-  // What we want to write ...
-  //
-  //  def run[T](t: T)(implicit foo: Foo[T], bar: Bar[foo.A]): bar.B = bar.value
-  //
-  // or maybe ...
-  //
-  //  def run[T](t: T)(implicit foo: Foo[T])(implicit bar: Bar[foo.A]): bar.B = bar.value
-  //
-  // but can't ... in the first case the compiler complains about a dependent type (foo.A)
-  // appearing in the same parameter block as its prefix (foo); in the second the compiler
-  // chokes on the multiple implicit parameter blocks.
-
-  // But we can encode the above with the help of singleton types ...
-
-  // SingletonOf[T, U] represents an implicit value of type T narrowed to its
-  // singleton type U.
-  case class SingletonOf[T, U](value: U)
-  object SingletonOf {
-    implicit def mkSingletonOf[T <: AnyRef](implicit t: T): SingletonOf[T, t.type] = SingletonOf(t)
-  }
-
-  // The implicit resolution of SingletonOf[Foo[T], fooT] will result in the type
-  // fooT being inferred as the singleton type of the in-scope Foo[T] value.
-  // We then rely on the equivalence between,
-  //
-  //   foo.A
-  //
-  // and,
-  //
-  //   foo.type#A
-  //
-  // to rewrite the problematic dependently chained parameter block to a form
-  // that scalac is happy to digest ...
-  def run[T, fooT <: { type A }](t: T)
-    (implicit sFoo: SingletonOf[Foo[T], fooT], bar: Bar[fooT#A]): bar.B = bar.value
-
-  val value = run(23)
-  assert(value: Boolean)
 }

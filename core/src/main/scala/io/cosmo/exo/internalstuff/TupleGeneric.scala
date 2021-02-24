@@ -1,7 +1,7 @@
 package io.cosmo.exo.internalstuff
 
 import shapeless._
-import ops.hlist.Tupler
+import shapeless.ops.hlist.Tupler
 
 /** Isomorphism between a case class and the corresponding tuple */
 trait TupleGeneric[C <: Product] extends Serializable {

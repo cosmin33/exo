@@ -2,8 +2,6 @@ package io.cosmo.exo.categories
 
 import io.cosmo.exo.evidence._
 
-import scala.language.experimental.macros
-
 trait Subcat[->[_, _]] extends Semicategory[->] {
   type TC[_]
   def id[A](implicit A: TC[A]): A -> A

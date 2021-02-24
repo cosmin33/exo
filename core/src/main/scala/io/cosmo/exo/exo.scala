@@ -1,7 +1,9 @@
 package io.cosmo
 
 import cats.implicits._
-import io.cosmo.exo.categories.{Associative, Cartesian, Cocartesian, Distributive, Dual}
+import io.cosmo.exo.Iso.{HasIso, HasIsoK}
+import io.cosmo.exo.categories.{Associative, Cartesian, Cocartesian, Distributive, Dual, Trivial}
+import io.cosmo.exo.typeclasses.TypeK
 
 package object exo extends Existence with syntax {
   val InstanceOf: InstanceOfModule = InstanceOfImpl
@@ -70,14 +72,19 @@ package object exo extends Existence with syntax {
 
   type VoidK[x] = Void
   type UnitK[x] = Unit
+  type VoidK2[x,y] = Void
+  type UnitK2[x,y] = Unit
   type VoidHK[f[_]] = Void
   type UnitHK[f[_]] = Unit
 
-  type Any1[α]       = Any
-  type Any2[f[_]]    = Any
+  type AnyK[x]        = Any
+  type AnyHK[f[_]]    = Any
 
   // morphisms and isomorphisms
   type IsoFunK[A, B] = Iso[FunK, A, B]
+  object IsoFunK {
+    def apply[F[_], G[_]](i: F <~> G): IsoFunK[TypeK[F], TypeK[G]] = FunK.impIsoFunK(i)
+  }
 
   type IsoK [->[_,_], F[_], G[_]]       =  ∀[λ[a     => Iso[->, F[a], G[a]]]]
   type IsoK2[->[_,_], F[_,_], G[_,_]]   = ∀∀[λ[(a,b) => Iso[->, F[a,b], G[a,b]]]]
@@ -85,26 +92,36 @@ package object exo extends Existence with syntax {
 
   type <==[A, B] = Dual[* => *, A, B]
   type <=>[A, B] = Iso[* => *, A, B]
+  object <=> {
+    def apply[A]: A <=> A = Iso.refl
+    def apply[A, B](implicit h: HasIso[* => *, A, B]): A <=> B = h.iso
+    def unsafe[A, B](ab: A => B, ba: B => A): A <=> B = Iso.unsafe(ab, ba)
+  }
   type ~>[F[_], G[_]] = ∀[λ[α => F[α] => G[α]]]
   object ~> extends internalstuff.FunctionKObject
   type <~ [F[_], G[_]] = ∀[λ[α => Dual[* => *, F[α], G[α]]]]
   type <~>[F[_], G[_]] = ∀[λ[α => F[α] <=> G[α]]]
-  object IsoK {
-    def unsafe[F[_], G[_]](fg: F ~> G, gf: G ~> F): F <~> G = ∀.mk[F <~> G].fromH(t => Iso.unsafe(fg[t.T], gf[t.T]))
+  object <~> {
+    def apply[F[_]]: F <~> F = apply[F, F]
+    def apply[F[_], G[_]](implicit h: HasIsoK[* => *, F, G]): F <~> G = h.iso
+    def unsafe[F[_], G[_]](fg: F ~> G, gf: G ~> F): F <~> G = ∀.mk[F <~> G].from(Iso.unsafe(fg.apply, gf.apply))
   }
-  val <~> : IsoK.type = IsoK
   type ~~> [F[_,_], G[_,_]] = ∀∀[λ[(a,b) => F[a,b] =>  G[a,b]]]
+  object ~~> extends internalstuff.FunctionK2Object
   type <~~ [F[_,_], G[_,_]] = ∀∀[λ[(a,b) => Dual[* => *, F[a,b], G[a,b]]]]
   type <~~>[F[_,_], G[_,_]] = ∀∀[λ[(a,b) => F[a,b] <=> G[a,b]]]
-  object IsoK2 {
-    def unsafe[F[_,_], G[_,_]](fg: F ~~> G, gf: G ~~> F): F <~~> G =
-      ∀∀.mk[F <~~> G].fromH(t => Iso.unsafe(fg[t.A, t.B], gf[t.A, t.B]))
+  object <~~> {
+    def apply[F[_,_]]: F <~~> F = ∀∀.mk[F <~~> F].from(Iso.unsafe(identity, identity))
+    def unsafe[F[_,_], G[_,_]](fg: F ~~> G, gf: G ~~> F): F <~~> G = ∀∀.mk[F <~~> G].from(Iso.unsafe(fg.apply, gf.apply))
   }
-  val <~~> : IsoK2.type = IsoK2
   type ≈>  [A[_[_]], B[_[_]]] = ∀~[λ[f[_]  => A[f] =>  B[f]]]
   type <≈  [A[_[_]], B[_[_]]] = ∀~[λ[f[_]  => Dual[* => *, A[f], B[f]]]]
   object ≈> extends internalstuff.FunctionHKObject
   type <≈> [A[_[_]], B[_[_]]] = ∀~[λ[f[_]  => A[f] <=> B[f]]]
+  object <≈> {
+    def apply[A[_[_]]]: A <≈> A = ∀~.mk[A <≈> A].from(Iso.unsafe(identity, identity))
+    def unsafe[A[_[_]], B[_[_]]](ab: A ≈> B, ba: B ≈> A): A <≈> B = ∀~.mk[A <≈> B].from(Iso.unsafe(ab.apply, ba.apply))
+  }
   type ≈≈>  [A[_[_],_[_]], B[_[_],_[_]]] = ∀~∀~[λ[(f[_],g[_]) => A[f, g] =>  B[f, g]]]
   type <≈≈  [A[_[_],_[_]], B[_[_],_[_]]] = ∀~∀~[λ[(f[_],g[_]) => Dual[* => *, A[f, g], B[f, g]]]]
   type <≈≈> [A[_[_],_[_]], B[_[_],_[_]]] = ∀~∀~[λ[(f[_],g[_]) => A[f, g] <=> B[f, g]]]

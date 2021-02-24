@@ -3,9 +3,10 @@ package io.cosmo.exo
 import io.cosmo.exo.Iso.HasIso
 import io.cosmo.exo.categories._
 import io.cosmo.exo.categories.functors.Exo
+import io.cosmo.exo.categories.instances.isos.yoneda
 import io.cosmo.exo.evidence.{=:!=, ===, =~=, =~~=, Is}
 import io.cosmo.exo.internalstuff.TupleGeneric
-import io.cosmo.exo.typeclasses.{HasTc, TypeF}
+import io.cosmo.exo.typeclasses.{HasTc, TypeK}
 import io.estatico.newtype.macros.newtype
 import shapeless.Generic
 
@@ -15,7 +16,7 @@ trait Iso[->[_,_], A, B] { ab =>
   def to:   A -> B
   def from: B -> A
 
-  private type <->[X, Y] = Iso[->, X, Y]
+  private type <->[a, b] = Iso[->, a, b]
 
   final def apply(a: A)(implicit ev: =~~=[->, * => *]): B = ev(to)(a)
 
@@ -37,40 +38,38 @@ trait Iso[->[_,_], A, B] { ab =>
   def chain[C](implicit i: HasIso[->, B, C]): A <-> C = ab.andThen(i)
 
   /** Having F <~> G searches implicits for G <~> H to obtain F <~> H */
-  def chainK[C[_]](implicit i: HasIso[->, B, TypeF[C]]): A <-> TypeF[C] = ab.andThen(i)
+  def chainK[C[_]](implicit i: HasIso[->, B, TypeK[C]]): A <-> TypeK[C] = ab.andThen(i)
 
-  /** For some invariant F[_] if we have an F[A] we can obtain an F[B] using A <-> B */
+  /** For some F[_] that has an iso functor, if we have an F[A] we can obtain an F[B] using A <-> B */
   def derive[F[_]](implicit fa: F[A], I: Exo.IsoFun[->, F]): F[B] = I.map(ab)(fa)
 
   /** Typeclass derivation: having TypeF[F] <-> TypeF[G] we can obtain HasTc[TC, A] => HasTc[TC, B] */
-  def deriveK[TC[_[_]]](implicit tc: HasTc[TC, A], E: Exo.IsoFun[->, HasTc[TC, *]]): HasTc[TC, B] = E.map(ab)(tc)
+  def deriveK[TC[_[_]]](implicit
+    tc: HasTc[TC, A],
+    E: Exo.IsoFun[->, HasTc[TC, *]],
+    k: IsKind[B]
+  ): TC[k.Type] = E.map(ab)(tc).instanceFor(k)
 
-  /** From A <-> B, X <-> Y we can obtain (A ⨂ X) <-> (B ⨂ Y) if -> has a Cartesian instance with ⨂ */
+  /** From A <-> B, X <-> Y we can obtain (A ⨂ X) <-> (B ⨂ Y) if -> has an Associative instance with ⨂ */
   def grouped[⨂[_,_]] = new GroupedPartial[⨂]
   class GroupedPartial[⨂[_,_]] {
     def apply[I, J](ij: I <-> J)(implicit A: Associative[->, ⨂]): ⨂[A, I] <-> ⨂[B, J] =
-      Iso.unsafe(A.grouped(ab.to, ij.to), A.grouped(ab.from, ij.from))(A.C)
+      Associative[Iso[->,*,*], ⨂].grouped(ab, ij)
   }
 
   /** From A <-> B, X <-> Y we can obtain (A, X) <-> (B, Y) if -> has an Associative instance with Tuple2 */
-  def and[I, J](ij: I <-> J)(implicit C: Associative[->, Tuple2]): (A, I) <-> (B, J) = grouped[Tuple2](ij)
+  def and [I, J](ij: I <-> J)(implicit C: Associative[->, Tuple2]): (A, I) <-> (B, J) = grouped[Tuple2](ij)
+  def and_[I, J](ij: I <-> J)(implicit C: Associative[->, /\]): (A /\ I) <-> (B /\ J) = grouped[/\](ij)
 
   /** From A <-> B, X <-> Y we can obtain (A \/ X) <-> (B \/ Y) if -> has an associative instance with \/ */
-  def or[I, J](ij: I <-> J)(implicit C: Associative[->, \/]): (A \/ I) <-> (B \/ J) = grouped[\/](ij)
+  def or [I, J](ij: I <-> J)(implicit C: Associative[->, Either]): (A Either I) <-> (B Either J) = grouped[Either](ij)
+  def or_[I, J](ij: I <-> J)(implicit C: Associative[->, \/]): (A \/ I) <-> (B \/ J) = grouped[\/](ij)
 
 }
 
 object Iso extends IsoInstances with IsoInstancesEq {
   def apply[->[_,_], A, B](implicit iso: HasIso[->, A, B]): Iso[->, A, B] = iso.iso
   def apply[A]: Iso[* => *, A, A] = refl[A]
-
-  def liftIsoFnToIso[==>[_,_], -->[_,_]](iso: ==> <~~> -->)(implicit
-    c1: Subcat[==>], c2: Subcat[-->]
-  ): Iso[==>,*,*] <~~> Iso[-->,*,*] =
-    <~~>.unsafe(
-      ∀∀.mk[Iso[==>,*,*] ~~> Iso[-->,*,*]].from(i => Iso.unsafe(iso.to.exec(i.to),   iso.to.exec(i.from))),
-      ∀∀.mk[Iso[-->,*,*] ~~> Iso[==>,*,*]].from(i => Iso.unsafe(iso.from.exec(i.to), iso.from.exec(i.from)))
-    )
 
   private val reflAny: Iso[* => *, Any, Any] =
     new Iso[* => *, Any, Any] { val cat = Subcat[* => *]; val to, from = identity[Any] }
@@ -80,10 +79,17 @@ object Iso extends IsoInstances with IsoInstancesEq {
   def refl[->[_,_], A, TC[_]](implicit c: Subcat.Aux[->, TC], tc: TC[A]): Iso[->, A, A] =
     new Iso[->, A, A] {val cat = c; val to, from = c.id[A]}
 
-  /** create an isomorphism given the two complementary functions as long as you promise to uphold the iso laws */
+  /** create an isomorphism given the two complementary functions as long as you promise they uphold the iso laws */
   def unsafe[->[_,_], A, B](ab: A -> B, ba: B -> A)(implicit C: Subcat[->]): Iso[->, A, B] =
-    new Iso[->, A, B] {val (cat, to, from) = (C, ab, ba)}
-  //def unsafe[->[_,_], A, B](pair: (A -> B, B -> A))(implicit C: Subcat[->]): Iso[->, A, B] = unsafe(pair._1, pair._2)
+    new Iso[->, A, B] { val (cat, to, from) = (C, ab, ba) }
+
+  /** if I can transform an arrow into another then I can also transform the corresponding isomorphisms */
+  def liftFnFnToFnIso[==>[_,_]: Subcat, -->[_,_]: Subcat](fn: ==> ~~> -->): Iso[==>,*,*] ~~> Iso[-->,*,*] =
+    ∀∀.mk[Iso[==>,*,*] ~~> Iso[-->,*,*]].from(i => Iso.unsafe(fn.exec(i.to),   fn.exec(i.from)))
+
+  /** If two arrow are isomorphic then those arrows isomorphisms are isomorphic */
+  implicit def liftIsoFnToIso[==>[_,_]: Subcat, -->[_,_]: Subcat](iso: ==> <~~> -->): Iso[==>,*,*] <~~> Iso[-->,*,*] =
+    <~~>.unsafe(liftFnFnToFnIso(iso.to), liftFnFnToFnIso(iso.from))
 
   /** Isomorphism between a case class and a tuple of the proper arity (using shapeless) */
   implicit def forCaseClass[S <: Product](implicit ev: TupleGeneric[S]): Iso[* => *, S, ev.Repr] =
@@ -108,34 +114,66 @@ object Iso extends IsoInstances with IsoInstancesEq {
   /** Isomorphisms from categoric constructs */
   implicit def isoAssociator[->[_,_], ⊙[_,_], A, B, C, T[_]](implicit
     A: Associative.Aux[->, ⊙, T], a: T[A], b: T[B], c: T[C]
-  ): Iso[->, ⊙[⊙[A, B], C], ⊙[A, ⊙[B, C]]] = A.isoAssociator(a, b, c)
+  ): Iso[->, (A ⊙ B) ⊙ C, A ⊙ (B ⊙ C)] = A.isoAssociator(a, b, c)
   implicit def isoSymmetric[->[_,_], ⊙[_,_], A, B, T[_]](implicit
     S: Symmetric.Aux[->, ⊙, T], a: T[A], b: T[B]
-  ): Iso[->, ⊙[A, B], ⊙[B, A]] = S.isoSymmetric(a, b)
+  ): Iso[->, A ⊙ B, B ⊙ A] = S.isoSymmetric(a, b)
   implicit def isoUnitorL[->[_,_], ⊙[_,_], A, T[_], I](implicit
     M: Monoidal.Aux[->, ⊙, T, I], a: T[A]
-  ): Iso[->, ⊙[I, A], A] = M.isoUnitorL(a)
+  ): Iso[->, I ⊙ A, A] = M.isoUnitorL(a)
   implicit def isoUnitorR[->[_,_], ⊙[_,_], A, T[_], I](implicit
     M: Monoidal.Aux[->, ⊙, T, I], a: T[A]
-  ): Iso[->, ⊙[A, I], A] = M.isoUnitorR(a)
+  ): Iso[->, A ⊙ I, A] = M.isoUnitorR(a)
   implicit def isoCartesian[->[_,_], ⊙[_,_], A, B, C, T[_]](implicit
-    C: Cartesian[->, ⊙] {type TC[a] = T[a]}, a: T[A], b: T[B], c: T[C]
+    C: Cartesian[->, ⊙] {type TC[a] = T[a]}, b: T[B], c: T[C]
   ): (A -> B, A -> C) <=> (A -> ⊙[B, C]) = C.isoCartesian(b, c)
   implicit def isoCocartesian[->[_,_], ⊙[_,_], A, B, C, T[_]](implicit
-    C: Cocartesian[->, ⊙] {type TC[a] = T[a]}, a: T[A], b: T[B], c: T[C]
+    C: Cocartesian[->, ⊙] {type TC[a] = T[a]}, a: T[A], b: T[B]
   ): (A -> C, B -> C) <=> ((A ⊙ B) -> C) = C.isoCocartesian(a, b)
   implicit def isoDistributive[->[_,_], ⨂[_,_], ⨁[_,_], A, B, C, T[_]](implicit
     D: Distributive.Aux1[->, T, ⨂, ⨁], a: T[A], b: T[B], c: T[C]
   ): Iso[->, ⨂[A, ⨁[B, C]], ⨁[⨂[A, B], ⨂[A, C]]] = D.isoDistributive(a, b, c)
   implicit def isoTerminalUnit[->[_,_], T, A, TC[_]](implicit
-    C: Subcat.Aux[->, TC], T: Terminal.Aux[->, TC, T], a: TC[A],
+    T: Terminal.Aux[->, TC, T], a: TC[A],
   ): (A -> T) <=> Unit = Iso.unsafe(_ => (), _ => T.terminate)
   implicit def isoInitialUnit[->[_,_], I, A, TC[_]](implicit
-    C: Subcat.Aux[->, TC], I: Initial.Aux[->, TC, I], a: TC[A],
+    I: Initial.Aux[->, TC, I], a: TC[A],
   ): (I -> A) <=> Unit = Iso.unsafe(_ => (), _ => I.initiate)
   implicit def isoTerminalInitial[->[_,_], T, I, A, B, TC[_]](implicit
     T: Terminal.Aux[->, TC, T], I: Initial.Aux[->, TC, I], a: TC[A], b: TC[B]
   ): (A -> T) <=> (I -> B) = Iso.unsafe(_ => I.initiate, _ => T.terminate)
+  implicit def isoCccAdjunction[->[_,_], ⊙[_,_], |->[_,_], A, B, C, TC[_]](implicit
+    c: Ccc.Aux1[->, TC, ⊙, |->]
+  ): (A ⊙ B) -> C <=> (A -> (B |-> C)) = c.isoClosedAdjunction[A, B, C]
+  implicit def isoGroupoid[->[_,_], A, B](implicit
+    G: Groupoid[->]
+  ): (A -> B) <=> Iso[->, A, B] = Iso.unsafe(eq => Iso.unsafe(eq, G.flip(eq)), ieq => ieq.to)
+  implicit def isoGroupoidFlip[->[_,_], A, B](implicit
+    G: Groupoid[->]
+  ): (A -> B) <=> (B -> A) = Iso.unsafe(Groupoid[->].flip, Groupoid[->].flip)
+
+  /** Isomorphisms from yoneda lemma and corollaries */
+  implicit def isoYoLemma[->[_,_], ->#[_], A, F[_]](implicit
+    C: SubcatHasId[->, A], E: Exo.Cov[->, F]
+  ): ((A -> *) ~> F) <=> F[A] = yoneda.lemmaYoIso
+  implicit def isoCoyoLemma[->[_,_], ->#[_], A, F[_]](implicit
+    C: SubcatHasId[->, A], E: Exo.Con[->, F]
+  ): ((* -> A) ~> F) <=> F[A] = yoneda.lemmaCoyoIso
+  implicit def isoYoEmbeddingCov[->[_,_], ->#[_], A, B](implicit
+    C: SubcatHasId[->, A]
+  ): ((A -> *) ~> (B -> *)) <=> (B -> A) = yoneda.yoEmbeddingCov[->, A, B]
+  implicit def isoYoEmbeddingCon[->[_,_], ->#[_], A, B](implicit
+    C: SubcatHasId[->, A]
+  ): ((* -> A) ~> (* -> B)) <=> (A -> B) = yoneda.yoEmbeddingCon[->, A, B]
+  implicit def isoYoDoubleEmbed[->[_,_], A, B](implicit
+    cat: Subcat[->]
+  ): (A -> B) <=> ∀~[λ[f[_] => Endofunctor[->, f] => f[A] -> f[B]]] = yoneda.yoDoubleEmbed
+  implicit def isoYoCorolCov[->[_,_], ->#[_], A, B](implicit
+    C: Subcat.Aux[->, ->#], tca: ->#[A], tcb: ->#[B],
+  ): ((A -> *) <~> (B -> *)) <=> Iso[->, B, A] = yoneda.yoCorol1Cov
+  implicit def isoYoCorolCon[->[_,_], ->#[_], A, B](implicit
+    C: Subcat.Aux[->, ->#], tca: ->#[A], tcb: ->#[B],
+  ): ((* -> A) <~> (* -> B)) <=> Iso[->, A, B] = yoneda.yoCorol1Con
 
   implicit def isoUnitToA[A]: (Unit => A) <=> A = Iso.unsafe(_(()), a => _ => a)
 
@@ -158,8 +196,8 @@ object Iso extends IsoInstances with IsoInstancesEq {
     final def commute[A, B]: (A \/ B) <=> (B \/ A) = unsafe((e: A \/ B) => e.swap, (e: B \/ A) => e.swap)
     final def unitL[A]: A <=> (Void \/ A) = unsafe(a => \/-(a), _.fold((n: A) => n, identity))
     final def unitR[A]: A <=> (A \/ Void) = unsafe(a => -\/(a), _.fold(identity, (n: A) => n))
-    final def first [A, B, C](iso: A <=> C): (A \/ B) <=> (C \/ B) = iso.or(refl[B])
-    final def second[A, B, C](iso: B <=> C): (A \/ B) <=> (A \/ C) = refl[A].or(iso)
+    final def first [A, B, C](iso: A <=> C): (A \/ B) <=> (C \/ B) = iso.grouped(refl[B])
+    final def second[A, B, C](iso: B <=> C): (A \/ B) <=> (A \/ C) = refl[A].grouped(iso)
   }
 
   /** Class equivalent to an Iso; useful for implicit searching of isomorphisms as it searches also for flipped iso and for reflective iso */
@@ -174,6 +212,8 @@ object Iso extends IsoInstances with IsoInstancesEq {
   }
   @newtype private[exo] case class ReflImpIso[->[_,_], A](iso: Iso[->, A, A])
   private[exo] object ReflImpIso {
+//    implicit def impl[->[_,_], A](implicit s: SubcatHasId[->, A]): ReflImpIso[->, A] =
+//      ReflImpIso(Iso.refl[->, A, s.TC](s.s, s.t))
     implicit def impl[->[_,_], A, T[_]](implicit s: Subcat.Aux[->, T], t: T[A]): ReflImpIso[->, A] =
       ReflImpIso(Iso.refl[->, A, T])
   }
@@ -184,23 +224,23 @@ object Iso extends IsoInstances with IsoInstancesEq {
   }
 
   /** Class equivalent to an IsoK; useful for implicit searching of isomorphisms as it searches also for flipped iso and for reflective iso */
-  @newtype case class HasIsoK[->[_,_], F[_], G[_]](iso: ∀[λ[a => Iso[->, F[a], G[a]]]])
+  @newtype case class HasIsoK[->[_,_], F[_], G[_]](iso: IsoK[->, F, G])
   object HasIsoK {
     implicit def impl[->[_,_], F[_], G[_]](implicit
-      e: EqImpIsoK[->, F, G] \/ ∀[λ[a => Iso[->, F[a], G[a]]]] \/ ∀[λ[a => Iso[->, G[a], F[a]]]]
+      e: EqImpIsoK[->, F, G] \/ IsoK[->, F, G] \/ IsoK[->, G, F]
     ): HasIsoK[->, F, G] =
       e.fold3(
         ei => HasIsoK(ei.iso),
         ab => HasIsoK(ab),
-        ba => HasIsoK(∀.of[λ[a => Iso[->, F[a], G[a]]]].fromH(t => ba.apply[t.T].flip))
+        ba => HasIsoK(∀.mk[IsoK[->, F, G]].from(ba.apply.flip))
       )
 
     implicit def conversionToIso[->[_, _], F[_], G[_]](hi: HasIsoK[->, F, G]): ∀[λ[a => Iso[->, F[a], G[a]]]] = hi.iso
   }
   @newtype private[exo] case class ReflImpIsoK[->[_,_], F[_]](iso: ∀[λ[a => Iso[->, F[a], F[a]]]])
   private[exo] object ReflImpIsoK {
-    implicit def impl[->[_,_], F[_], T[_]](implicit s: Subcat.Aux[->, λ[a => T[F[a]]]], tc: ∀[λ[a => T[F[a]]]]): ReflImpIsoK[->, F] =
-      ReflImpIsoK(∀.of[λ[a => Iso[->, F[a], F[a]]]].fromH(t => Iso.refl[->, F[t.T], λ[a => T[F[a]]]](s, tc[F[t.T]])))
+    implicit def impl[->[_,_], F[_], T[_]](implicit s: Subcat.Aux[->, T], tc: ∀[λ[a => T[F[a]]]]): ReflImpIsoK[->, F] =
+      ReflImpIsoK(∀.of[λ[a => Iso[->, F[a], F[a]]]].fromH(t => Iso.refl[->, F[t.T], T](s, tc[t.T])))
   }
   @newtype private[exo] case class EqImpIsoK[->[_,_], F[_], G[_]](iso: ∀[λ[a => Iso[->, F[a], G[a]]]])
   private[exo] object EqImpIsoK {
@@ -213,17 +253,17 @@ object Iso extends IsoInstances with IsoInstancesEq {
 
 trait IsoSyntax {
   implicit def toIsoOps[A](self: A): IsoSyntaxOps[A] = new IsoSyntaxOps(self)
-  implicit def toIsokOps[F[_]](self: TypeF[F]): IsokSyntaxOps[F] = new IsokSyntaxOps(self)
+  implicit def toIsokOps[F[_]](self: TypeK[F]): IsokSyntaxOps[F] = new IsokSyntaxOps(self)
 }
 
-final class IsokSyntaxOps[F[_]](val self: TypeF[F]) extends AnyVal {
-  def isoWith[G[_]](implicit h: HasIso[FunK, TypeF[F], TypeF[G]]): F <~> G = FunK.isoKIso(h.iso)
+final class IsokSyntaxOps[F[_]](val self: TypeK[F]) extends AnyVal {
+  def isoWith[G[_]](implicit h: HasIso[FunK, TypeK[F], TypeK[G]]): F <~> G = FunK.isoKIso(h.iso)
 }
 final class IsoSyntaxOps[A](val self: A) extends AnyVal {
   def isoTo[B](implicit h: Iso.HasIso[* => *, A, B]): B = h(self)
 }
 
-/** Isomorphism derived from lifting equalities */
+/** Isomorphisms derived from lifting equalities */
 trait IsoInstancesEq extends IsoInstancesEq1 {
   implicit def eqLift1[F[_], A, X](implicit eq: A === X): F[A] <=> F[X] = Is.lift(eq).toIso
   implicit def eqKLift1[A[_[_]], F[_], F1[_]](implicit eq: F =~= F1): A[F] <=> A[F1] = =~=.lower(eq).toIso
@@ -273,27 +313,23 @@ trait IsoInstances extends IsoInstances1 {
   implicit def isoGroupoid[->[_,_], T[_]](implicit C: Subcat.Aux[->, T]
   ): Groupoid.Aux[Iso[->, *, *], T] = new IsoGroupoid[->, T] {val cat = C}
 
-  implicit def isoAssoc[->[_,_], ⊙[_,_], T[_]](implicit
-    a: Associative.Aux[->, ⊙, T],
-    b: Endobifunctor[->, ⊙],
-  ): Associative.Aux[Iso[->, *, *], ⊙, T] = new IsoAssoc[->, T, ⊙] {val A = a; val bif = b}
+  implicit def isoAssoc[->[_,_], ⊙[_,_]](implicit
+    a: Associative[->, ⊙]
+  ): Associative.Aux[Iso[->, *, *], ⊙, a.TC] = new IsoAssoc[->, a.TC, ⊙] {val A = a}
 }
 trait IsoInstances1 extends IsoInstances2 {
-  implicit def isoBraided[->[_,_], ⊙[_,_], T[_]](implicit
-    a: Braided.Aux[->, ⊙, T],
-    b: Endobifunctor[->, ⊙],
-  ): Braided.Aux[Iso[->, *, *], ⊙, T] = new IsoBraided[->, ⊙, T] {val A = a; val bif = b}
+  implicit def isoBraided[->[_,_], ⊙[_,_]](implicit
+    a: Braided[->, ⊙]
+  ): Braided.Aux[Iso[->, *, *], ⊙, a.TC] = new IsoBraided[->, ⊙, a.TC] {val A = a}
 
-  implicit def isoMonoidal[->[_,_], ⊙[_,_], T[_], I](implicit
-    a: Monoidal.Aux[->, ⊙, T, I],
-    b: Endobifunctor[->, ⊙],
-  ): Monoidal.Aux[Iso[->, *, *], ⊙, T, I] = new IsoMonoidal[->, ⊙, T, I] {val A = a; val bif = b}
+  implicit def isoMonoidal[->[_,_], ⊙[_,_]](implicit
+    a: Monoidal[->, ⊙]
+  ): Monoidal.Aux[Iso[->, *, *], ⊙, a.TC, a.Id] = new IsoMonoidal[->, ⊙, a.TC, a.Id] {val A = a}
 }
 trait IsoInstances2 extends IsoInstances3 {
-  implicit def isoSymmetric[->[_,_], ⊙[_,_], T[_]](implicit
-    a: Symmetric.Aux[->, ⊙, T],
-    b: Endobifunctor[->, ⊙],
-  ): Symmetric.Aux[Iso[->, *, *], ⊙, T] = new IsoSymmetric[->, ⊙, T] {val A = a; val bif = b}
+  implicit def isoSymmetric[->[_,_], ⊙[_,_]](implicit
+    a: Symmetric[->, ⊙]
+  ): Symmetric.Aux[Iso[->, *, *], ⊙, a.TC] = new IsoSymmetric[->, ⊙, a.TC] {val A = a}
 }
 trait IsoInstances3 {
 
@@ -313,18 +349,15 @@ private[exo] object IsoHelperTraits {
     def cat: Subcat.Aux[->, T]
     type TC[a] = T[a]
     def id[A](implicit A: T[A]): Iso[->, A, A] = Iso.refl[->, A, TC](cat, A)
-
     def flip[A, B](f: Iso[->, A, B]): Iso[->, B, A] = f.flip
-
     def andThen[A, B, C](ab: Iso[->, A, B], bc: Iso[->, B, C]): Iso[->, A, C] = ab.andThen(bc)
   }
 
   trait IsoAssoc[->[_,_], T[_], ⊙[_,_]] extends Associative[Iso[->, *, *], ⊙] {
     def A: Associative.Aux[->, ⊙, T]
-    def bif: Endobifunctor[->, ⊙]
     type TC[a] = T[a]
     def C = Iso.isoGroupoid(A.C)
-    def bifunctor = Iso.isoBifunctor(A.C, bif)
+    def bifunctor = Iso.isoBifunctor(A.C, A.bifunctor)
     def associate  [X: TC, Y: TC, Z: TC]  : Iso[->, X ⊙ Y ⊙ Z, X ⊙ (Y ⊙ Z)] = Iso.unsafe(A.associate[X, Y, Z], A.diassociate[X, Y, Z])(A.C)
     def diassociate[X: TC, Y: TC, Z: TC]: Iso[->, X ⊙ (Y ⊙ Z), X ⊙ Y ⊙ Z] = Iso.unsafe(A.diassociate[X, Y, Z], A.associate[X, Y, Z])(A.C)
   }

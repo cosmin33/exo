@@ -1,114 +1,73 @@
 package io.cosmo.exo.categories.instances.isos
 
-import cats.arrow.Category
-import cats.free.{Coyoneda, Yoneda}
 import cats.implicits._
-import cats.{Contravariant, Functor, Id}
 import io.cosmo.exo._
 import io.cosmo.exo.categories._
 import io.cosmo.exo.categories.functors._
-import io.cosmo.exo.evidence.{<~<, ===, Is}
-import io.cosmo.exo.categories.conversions.CatsInstances._
-import io.cosmo.exo.evidence.variance.IsCovariant
+import io.cosmo.exo.evidence.{<~<, ===}
 
 object yoneda {
-
-  implicit def yonedaIso1  [F[_]: Functor, A]: F[A] <=> Yoneda[F, A]   = Iso.unsafe(Yoneda(_), _(identity))
-  implicit def coyonedaIso1[F[_]: Functor, A]: F[A] <=> Coyoneda[F, A] = Iso.unsafe(Coyoneda.lift, _.run)
-
-  /** yoneda lemma covariant (generic category) */
-  def lemmaYoIso[->[_,_], ->#[_], A, F[_]](implicit
-    C: Subcat.Aux[->, ->#], tc: ->#[A], E: Exo.Cov[->, F]
-  ): ((A -> *) ~> F) <=> F[A] =
-//  ): ∀[λ[x => A -> x => F[x]]] <=> F[A] =
-    Iso.unsafe(_[A](C.id), fa => ∀.of[λ[x => A -> x => F[x]]].from(E.map(_)(fa)))
-  /** yoneda lemma contravariant (generic category) */
-  def lemmaCoyoIso[->[_,_], ->#[_], A, F[_]](implicit
-    C: Subcat.Aux[->, ->#], tc: ->#[A], E: Exo.Con[->, F]
+  /** yoneda lemma for covariant functor */
+  def lemmaYoIso[->[_,_], A, F[_]](implicit
+    C: SubcatHasId[->, A], E: Exo.Cov[->, F]
+  ): ((A -> *) ~> F) <=> F[A] = Iso.unsafe(_[A](C.id), fa => ∀.of[λ[x => A -> x => F[x]]].from(E.map(_)(fa)))
+  /** yoneda lemma for contravariant functor */
+  def lemmaCoyoIso[->[_,_], A, F[_]](implicit
+    C: SubcatHasId[->, A], E: Exo.Con[->, F]
   ): ((* -> A) ~> F) <=> F[A] =
-//  ): ∀[λ[x => x -> A => F[x]]] <=> F[A] =
-    Iso.unsafe(_[A](C.id[A]), fa => ∀.of[λ[x => x -> A => F[x]]].from(xa => E.map(Dual(xa))(fa)))
+    Iso.unsafe(_[A](C.id), fa => ∀.of[λ[x => x -> A => F[x]]].from(xa => E.map(Dual(xa))(fa)))
 
+  def yoEmbeddingCov[->[_,_], A, B](implicit
+    C: SubcatHasId[->, A]
+  ): ((A -> *) ~> (B -> *)) <=> (B -> A) = lemmaYoIso[->, A, B -> *](C, Exo.semiFunctorCov(C.s))
+  def yoEmbeddingCon[->[_,_], A, B](implicit
+    C: SubcatHasId[->, A]
+  ): ((* -> A) ~> (* -> B)) <=> (A -> B) = lemmaCoyoIso[->, A, * -> B](C, Exo.semiFunctorCon(C.s))
 
-
-
-
-  def yoEmbeddingCov_[->[_,_], ->#[_], A, B](implicit
-    C: Subcat.Aux[->, ->#], tc: ->#[A] //, tcb: ->#[B]
-  ): ((A -> *) ~> (B -> *)) <=> (B -> A) =
-    lemmaYoIso[->, ->#, A, B -> *]
-//    lemmaYoIso[->, ->#, A, B -> *](C, tc, Semicategory.profunctorToFunction1[->].rightFunctor[B])
-  def yoEmbeddingCon_[->[_,_], ->#[_], A, B](implicit
-    C: Subcat.Aux[->, ->#], tc: ->#[A] //, tcb: ->#[B]
-  ): ((* -> A) ~> (* -> B)) <=> (A -> B) =
-    lemmaCoyoIso[->, ->#, A, * -> B]
-//    lemmaCoyoIso[->, ->#, A, * -> B](C, tc, Semicategory.profunctorToFunction1[->].leftFunctor[B])
-
-  def yoEmbeddingCov[->[_,_], ->#[_], A, B](implicit
-    C: Subcat.Aux[->, ->#], tc: ->#[A], E : Exo.Cov[->, B -> *]
-  ): ((A -> *) ~> (B -> *)) <=> (B -> A) = lemmaYoIso[->, ->#, A, B -> *]
-  def yoEmbeddingCon[->[_,_], ->#[_], A, B](implicit
-    C: Subcat.Aux[->, ->#], tc: ->#[A], E : Exo.Con[->, * -> B]
-  ): ((* -> A) ~> (* -> B)) <=> (A -> B) = lemmaCoyoIso[->, ->#, A, * -> B]
-
-  def yoEmbedCovTo[->[_,_], ->#[_], A, B](fa: (A -> *) ~> (B -> *))(implicit
-    C: Subcat.Aux[->, ->#], tc: ->#[A], E: Exo.Cov[->, B -> *]
-  ): B -> A = yoEmbeddingCov[->, ->#, A, B].to(fa)
-  def yoEmbedConTo[->[_,_], ->#[_], A, B](fa: (* -> A) ~> (* -> B))(implicit
-    C: Subcat.Aux[->, ->#], tc: ->#[A], E: Exo.Con[->, * -> B]
-  ): A -> B = yoEmbeddingCon[->, ->#, A, B].to(fa)
-  def yoEmbedCovFrom[->[_,_], ->#[_], A, B](ba: B -> A)(implicit
-    C: Subcat.Aux[->, ->#], tc: ->#[A], E: Exo.Cov[->, B -> *]
-  ): (A -> *) ~> (B -> *) = yoEmbeddingCov[->, ->#, A, B].from(ba)
-  def yoEmbedConFrom[->[_,_], ->#[_], A, B](ab: A -> B)(implicit
-    C: Subcat.Aux[->, ->#], tc: ->#[A], E: Exo.Con[->, * -> B]
-  ): (* -> A) ~> (* -> B) = yoEmbeddingCon[->, ->#, A, B].from(ab)
-
-  def yoDoubleEmbed[->[_,_], ->#[_], A, B](implicit
-    cat: Subcat.Aux[->, ->#],
-    F: Endofunctor[->, λ[a => a]]
+  def yoDoubleEmbed[->[_,_], A, B](implicit
+    cat: Subcat[->]
   ): (A -> B) <=> ∀~[λ[f[_] => Endofunctor[->, f] => f[A] -> f[B]]] =
     Iso.unsafe(
       ab => ∀~.of[λ[f[_] => Endofunctor[->, f] => f[A] -> f[B]]].from(_.map(ab)),
-      fa => fa.apply[λ[a => a]](F)
+      fa => fa.apply[λ[a => a]](Exo.idEndofunctor)
     )
 
-  def yoCorol1Cov[->[_,_], ->#[_], A, B](implicit
-    C: Subcat.Aux[->, ->#], tca: ->#[A], tcb: ->#[B],
-    E: ∀[λ[a => Exo.Cov[->, a -> *]]]
+  def yoCorol1Cov[->[_,_], A, B](implicit
+    ca: SubcatHasId[->, A], cb: SubcatHasId[->, B]
   ): ((A -> *) <~> (B -> *)) <=> Iso[->, B, A] =
       Iso.unsafe(
-        fa => Iso.unsafe(fa[A].to(C.id[A]), fa[B].from(C.id[B])),
-        ba => <~>.unsafe[A -> *, B -> *](yoEmbedCovFrom(ba.to)(C, tca, E[B]), yoEmbedCovFrom(ba.from)(C, tcb, E[A]))
+        i => Iso.unsafe(i.apply[A].to(ca.id), i.apply[B].from(cb.id))(ca.s),
+        i => <~>.unsafe(yoEmbeddingCov[->, A, B].from(i.to), yoEmbeddingCov[->, B, A].from(i.from))
       )
 
-  def yoCorol1Con[->[_,_], ->#[_], A, B](implicit
-    C: Subcat.Aux[->, ->#], tca: ->#[A], tcb: ->#[B],
-    E: ∀[λ[a => Exo.Con[->, * -> a]]]
+  def yoCorol1Con[->[_,_], A, B](implicit
+    ca: SubcatHasId[->, A], cb: SubcatHasId[->, B]
   ): ((* -> A) <~> (* -> B)) <=> Iso[->, A, B] =
     Iso.unsafe(
-      i => Iso.unsafe(i[A].to(C.id[A]), i[B].from(C.id[B])),
-      i => <~>.unsafe[* -> A, * -> B](yoEmbedConFrom(i.to)(C, tca, E[B]), yoEmbedConFrom(i.from)(C, tcb, E[A]))
+      i => Iso.unsafe(i.apply[A].to(ca.id), i.apply[B].from(cb.id))(ca.s),
+      i => <~>.unsafe(yoEmbeddingCon[->, A, B].from(i.to), yoEmbeddingCon[->, B, A].from(i.from))
     )
 
-  def isoIndirectLiskov[A, B]: ((A <~< *) ~> (B <~< *)) <=> (B <~< A) = yoEmbeddingCov[<~<, Trivial.T1, A, B]
+  def isoIndirectLiskov[A, B]: ((A <~< *) ~> (B <~< *)) <=> (B <~< A) = yoEmbeddingCov
   def isoIndirectLeibniz[A, B]: ((A === *) <~> (B === *)) <=> (A === B) =
-    yoCorol1Cov[===, Trivial.T1, A, B] andThen Groupoid.isoIso[===, B, A].flip andThen Groupoid.isoFlip
+    yoCorol1Cov[===, A, B] andThen Iso.isoGroupoid[===, B, A].flip andThen Iso.isoGroupoidFlip
+    // yoCorol1Cov[===, A, B].chain[B === A].chain[A === B] // strange compile error for this one but it should work, I think it's a scala bug ?!?!
+    // TODO: investigate why the above doesn't work
 
   /** object containing all general yoneda isomorphisms applied to Function1 */
   object function1 {
     /** yoneda lemma covariant for Function1 */
-    def lemmaYoIso[A, F[_]: Exo.CovF]: ((A => *) ~> F) <=> F[A] =   yoneda.lemmaYoIso[* => *, Trivial.T1, A, F]
+    def lemmaYoIso  [A, F[_]: Exo.CovF]: ((A => *) ~> F) <=> F[A] = yoneda.lemmaYoIso
     /** yoneda lemma contravariant for Function1 */
-    def lemmaCoyoIso[A, F[_]: Exo.ConF]: ((* => A) ~> F) <=> F[A] = yoneda.lemmaCoyoIso[* => *, Trivial.T1, A, F]
+    def lemmaCoyoIso[A, F[_]: Exo.ConF]: ((* => A) ~> F) <=> F[A] = yoneda.lemmaCoyoIso
     /** yoneda embedding - covariant for Function1 */
     def yoEmbedding  [A, B]: ((A => *) ~> (B => *)) <=> (B => A) = lemmaYoIso  [A, B => *]
     /** yoneda embedding - contravariant for Function1 */
     def coyoEmbedding[A, B]: ((* => A) ~> (* => B)) <=> (A => B) = lemmaCoyoIso[A, * => B]
     /** yoneda embedding corollary 1 - covariant for Function1 */
-    def yoCorol1Cov[A, B]: ((A => *) <~> (B => *)) <=> (B <=> A) = yoneda.yoCorol1Cov[* => *, Trivial.T1, A, B]
+    def yoCorol1Cov[A, B]: ((A => *) <~> (B => *)) <=> (B <=> A) = yoneda.yoCorol1Cov
     /** yoneda embedding corollary 1 - contravariant for Function1 */
-    def yoCorol1Con[A, B]: ((* => A) <~> (* => B)) <=> (A <=> B) = yoneda.yoCorol1Con[* => *, Trivial.T1, A, B]
+    def yoCorol1Con[A, B]: ((* => A) <~> (* => B)) <=> (A <=> B) = yoneda.yoCorol1Con
   }
 
 }

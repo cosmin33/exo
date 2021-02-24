@@ -72,8 +72,9 @@ object foralls {
     }
 
     implicit class IsoKOps[F[_], G[_]](val iso: F <~> G) {
-      def toK:   F ~> G = ∀.mk[F ~> G].fromH(t => iso[t.T].to)
-      def fromK: G ~> F = ∀.mk[G ~> F].fromH(t => iso[t.T].from)
+      def flip: G <~> F = ∀.mk[G <~> F].fromH(t => iso[t.T].flip)
+      def to:   F ~> G = ∀.mk[F ~> G].fromH(t => iso[t.T].to)
+      def from: G ~> F = ∀.mk[G ~> F].fromH(t => iso[t.T].from)
     }
 
     // https://nokyotsu.com/qscripts/2014/07/distribution-of-quantifiers-over-logic-connectives.html
@@ -84,14 +85,8 @@ object foralls {
         aff => ∀.of[λ[x => A => F[x]]].from(a => aff(a).apply)
       )
 
-    def isoDistribFnXXTo[->[_,_], A, F[_]](implicit c: Ccc[->]): ∀[λ[x => A -> F[x]]] => (A -> ∀[F]) = {
-      faf =>
-
-      ???
-    }
-
     def fnLowerFunk[F[_], G[_]](fg: F  ~> G): ∀[F]  => ∀[G] = fg.$(_)
-    def fnLowerIsok[F[_], G[_]](fg: F <~> G): ∀[F] <=> ∀[G] = Iso.unsafe(fg.toK.$(_), fg.fromK.$(_))
+    def fnLowerIsok[F[_], G[_]](fg: F <~> G): ∀[F] <=> ∀[G] = Iso.unsafe(fg.to.$(_), fg.from.$(_))
 
     //////////////////////////// ⨂
     /** ∀ distributes over Tuple2 */
@@ -99,32 +94,6 @@ object foralls {
       cc: Cartesian[* => *, ⨂] { type TC[a] = Trivial.T1[a] }
     ): ∀[λ[x => F[x] ⨂ G[x]]] => (∀[F] ⨂ ∀[G]) =
       cc.&&&(f => ∀.of[F].fromH(t => cc.fst.apply(f[t.T])), f => ∀.of[G].fromH(t => cc.snd.apply(f[t.T])))
-
-    def fnDistribCartesianToXX[->[_,_], F[_], G[_], ⨂[_,_]](implicit
-      cc: Cartesian[->, ⨂],
-      ccc: Ccc[->] { type ⊙[a,b] = ⨂[a,b]; type |->[a,b] = ->[a,b] }
-    ): ∀[λ[x => F[x] ⨂ G[x]]] -> (∀[F] ⨂ ∀[G]) = {
-      def ii1: ∀[λ[x => F[x] ⨂ G[x]]] -> ∀[F] = ???
-      def ii2: ∀[λ[x => F[x] ⨂ G[x] -> F[x]]] = ???
-
-
-      def f1[x]: (F[x] ⨂ G[x]) -> F[x] = {
-        val t1: cc.TC[F[x]] = ???
-        val t2: cc.TC[G[x]] = ???
-        cc.fst[F[x], G[x]](t1, t2)
-      }
-      def f2[x]: (F[x] ⨂ G[x]) -> G[x] = {
-        val t1: cc.TC[F[x]] = ???
-        val t2: cc.TC[G[x]] = ???
-        cc.snd[F[x], G[x]](t1, t2)
-      }
-
-      def r1[x]: F[x] -> (G[x] -> F[x]) = ccc.curry[F[x], G[x], F[x]](f1[x])
-      def r2[x]: F[x] -> (G[x] -> G[x]) = ccc.curry[F[x], G[x], G[x]](f2[x])
-
-      ???
-    }
-
     def fnDistribCartesianFrom[F[_], G[_], ⨂[_,_]](implicit
       cc: Cartesian[* => *, ⨂]
     ): (∀[F] ⨂ ∀[G]) => ∀[λ[x => F[x] ⨂ G[x]]] =
@@ -408,13 +377,13 @@ object foralls {
   }
 
   private[exo] object ForallK1Impl extends ForallK1Module {
-    type ForallK1[A[_[_],_]] = A[Any1, Any]
+    type ForallK1[A[_[_],_]] = A[AnyK, Any]
 
     def specialize[Alg[_[_],_], F[_], A](f: ForallK1[Alg]): Alg[F, A] = f.asInstanceOf[Alg[F, A]]
     def instantiation[Alg[_[_], _], F[_], A]: ForallK1[Alg] <~< Alg[F, A] = As.refl[A => Any].asInstanceOf
     def monotonicity[A1[_[_], _], A2[_[_], _]](ev: ForallK1[λ[(f[_],a) => A1[f,a] <~< A2[f,a]]]):ForallK1[A1] <~< ForallK1[A2] =
       As.refl[Any].asInstanceOf
-    def from[Alg[_[_],_]](p: Prototype[Alg]): ForallK1[Alg] = p[Any1, Any]
+    def from[Alg[_[_],_]](p: Prototype[Alg]): ForallK1[Alg] = p[AnyK, Any]
     def of[Alg[_[_],_]]: MkForallK1[Alg] = new MkForallK1Impl[Alg]
   }
 

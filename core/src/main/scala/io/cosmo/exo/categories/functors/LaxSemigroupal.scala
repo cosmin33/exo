@@ -19,8 +19,15 @@ trait LaxSemigroupal[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends Exo
   def preserveCSemigroup[M](ma: CSemigroup.Aux[==>, ⊙=, TC1, M]): CSemigroup.Aux[-->, ⊙-, TC2, F[M]] =
     CSemigroup.unsafe(map2(ma.op))(M2)
 
+  def preserveSemigroup[M](S: Semigroup[M])(implicit
+    e1: ==> =~~= Function1, e2:  ⊙= =~~= Tuple2, e3: --> =~~= Function1, e4:  ⊙- =~~= Tuple2,
+  ): Semigroup[F[M]] = {
+    val eq = =~~=.lower4[LaxSemigroupal[*[_,_], *[_,_], *[_,_], *[_,_], F]].on(e1, e2, e3, e4)
+    Semigroup.instance { case (x, y) => eq(self).map2[M, M, M]((S.combine _).tupled)((x, y)) }
+  }
+
   def compose[~~>[_,_], ⊙~[_,_], ~>#[_], G[_]](G: LaxSemigroupal.Aux[-->, ⊙-, TC2, ~~>, ⊙~, ~>#, G]
-  ) =
+  ): LaxSemigroupal.Aux[==>, ⊙=, TC1, ~~>, ⊙~, ~>#, λ[a => G[F[a]]]] =
     new LaxSemigroupal[==>, ⊙=, ~~>, ⊙~, λ[a => G[F[a]]]] {
       type TC1[a] = self.TC1[a]
       type TC2[a] = ~>#[a]
@@ -31,24 +38,22 @@ trait LaxSemigroupal[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends Exo
     }
 }
 
+private trait LaxSemi[⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] { self =>
+  def product[A, B]: (F[A] ⊙- F[B]) --> F[A ⊙= B]
+
+  def map2[==>[_,_], A, B, C](fn: (A ⊙= B) ==> C)(implicit
+    C: Semicategory[-->], E: Exofunctor[==>, -->, F]
+  ): (F[A] ⊙- F[B]) --> F[C] = product[A, B] >>>> E.map(fn)
+
+  def preserveCSemigroup[==>[_,_], M](ma: CSemigroup[==>, ⊙=, M])(implicit
+    A: Associative[-->, ⊙-], E: Exofunctor[==>, -->, F]
+  ): CSemigroup[-->, ⊙-, F[M]] = CSemigroup.unsafe(map2(ma.op)(A.C, E))
+}
+
 object LaxSemigroupal extends LaxSemigroupalInstances {
   type Aux[==>[_,_], ⊙=[_,_], =>#[_], -->[_,_], ⊙-[_,_], ->#[_], F[_]] =
     LaxSemigroupal[==>, ⊙=, -->, ⊙-, F] { type TC1[a] = =>#[a]; type TC2[a] = ->#[a] }
   type Endo[->[_, _], ⊙[_, _], F[_]] = LaxSemigroupal[->, ⊙, ->, ⊙, F]
-
-  implicit class LaxSemigroupalOps[==>[_,_], ⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]](
-    self: LaxSemigroupal[==>, ⊙=, -->, ⊙-, F]
-  ) {
-    def preserveSemigroup[M](S: Semigroup[M])(implicit
-      e1: ==> =~~= Function1,
-      e2:  ⊙= =~~= Tuple2,
-      e3: --> =~~= Function1,
-      e4:  ⊙- =~~= Tuple2,
-    ): Semigroup[F[M]] = {
-      val eq = =~~=.lower4[LaxSemigroupal[*[_,_], *[_,_], *[_,_], *[_,_], F]].on(e1, e2, e3, e4)
-      Semigroup.instance { case (x, y) => eq(self).map2[M, M, M]((S.combine _).tupled)((x, y)) }
-    }
-  }
 
   implicit class OplaxSemigroupalOps[==>[_,_], =⊙[_,_], -->[_,_], -⊙[_,_], F[_]](
     l: OplaxSemigroupal[==>, =⊙, -->, -⊙, F]
@@ -61,7 +66,7 @@ object LaxSemigroupal extends LaxSemigroupalInstances {
     def map[A, B](f: A ==> B) = F.map(f)
   }
 
-  implicit def orderTest: LaxSemigroupal.Aux[Dual[* => *, *, *], \/, Trivial.T1, * => *, /\, Trivial.T1, Order] =
+  private def orderTest: LaxSemigroupal.Aux[Dual[* => *, *, *], \/, Trivial.T1, * => *, /\, Trivial.T1, Order] =
     new LaxSemigroupal[Dual[* => *,*,*], \/, * => *, /\, Order] {
       type TC1[a] = Trivial.T1[a]
       type TC2[a] = Trivial.T1[a]

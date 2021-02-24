@@ -5,7 +5,6 @@ import cats.implicits._
 import io.cosmo.exo.categories.Trivial.T1
 import io.cosmo.exo.categories.functors._
 import io.cosmo.exo.evidence._
-import io.cosmo.exo.typeclasses.{IsTypeF, TypeF}
 import io.cosmo.exo._
 import shapeless.the
 
@@ -17,11 +16,6 @@ trait Semicategory[->[_, _]] {
   def andThen[A, B, C](ab: A -> B, bc: B -> C): A -> C
 }
 
-private trait SemicategoryIsProfunctor[->[_, _]] extends Exobifunctor[Dual[->,*,*], ->, * => *, ->] {
-  def S: Semicategory[->]
-  def bimap[A, X, B, Y](left: Dual[->, A, X], right:  B -> Y): A -> B => X -> Y = ab => S.andThen(left, S.andThen(ab, right))
-}
-
 object Semicategory extends SemicategoryImplicits {
   def apply[->[_,_]](implicit S: Semicategory[->]): Semicategory[->] = S
 
@@ -29,13 +23,6 @@ object Semicategory extends SemicategoryImplicits {
     new Exobifunctor[Dual[->,*,*], ->, * => *, ->] {
       def bimap[A, X, B, Y](left: Dual[->, A, X], right: B -> Y): (A -> B) => (X -> Y) = left.toFn >>>> _ >>>> right
     }
-
-  //
-
-
-
-//  def profunctorToFunction1[->[_,_]](implicit s: Semicategory[->]): Exobifunctor[Dual[->,*,*], ->, * => *, ->] =
-//    new SemicategoryIsProfunctor[->] { val S = s }
 }
 
 import io.cosmo.exo.categories.SemicategoryHelpers._
@@ -104,7 +91,8 @@ private[categories] object SemicategoryHelpers {
     def terminate[A](implicit A: T1[A]): A <~< Any = the[A <~< Any]
     def concretize[A, B](f: A <~< B): (A, Trivial.T1[A]) => (B, Trivial.T1[B]) =
       { case (a, _) => (f(a), Trivial.trivialInstance) }
-    override def toFunction[A, B](f: A <~< B)(implicit eq: =~=[T1, T1]) = f.apply
+    override def toFunction[A: T1, B](f: A <~< B): A => B = a => f(a)
+    override def concrete[A: T1, B](a: A)(f: A <~< B): B = f(a)
   }
 
   trait OppSubcategory[->[_,_], C[_]] extends Subcat[Opp[->]#l] {

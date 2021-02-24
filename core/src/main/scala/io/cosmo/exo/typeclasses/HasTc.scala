@@ -1,39 +1,46 @@
 package io.cosmo.exo.typeclasses
 
+import cats.implicits._
 import io.cosmo.exo._
-import io.cosmo.exo.categories.functors.Exofunctor
-import io.cosmo.exo.categories.{Ccc, Subcat, Trivial}
-import io.cosmo.exo.evidence.{===, =~=, Is}
-import shapeless.the
 
-trait HasTc[TC[_[_]], TF] {
+sealed trait HasTc[TC[_[_]], TF] {
   type F[_]
-  def leibniz: TypeF[F] === TF
+  def isk: IsKind.Aux[TF, F]
   def instance: TC[F]
+  def instanceFor(i: IsKind[TF]): TC[i.Type] = IsKind.injectivity(isk, i).subst[TC](instance)
 }
+
 object HasTc {
-  type Aux[TC[_[_]], TF, F0[_]] = HasTc[TC, TF] {type F[x] = F0[x]}
-  type Aux1[TC[_[_]], F0[_]] = HasTc[TC, _] {type F[x] = F0[x]}
+  type Aux[TC[_[_]], TF, F0[_]] = HasTc[TC, TF] { type F[a] = F0[a] }
 
-  def apply[TC[_[_]], F[_]](implicit h: HasTc[TC, TypeF[F]]): HasTc.Aux[TC, TypeF[F], h.F] = h
-//  def apply[TC[_[_]], TF](implicit h: HasTc[TC, TF]): HasTc.Aux[TC, TF, h.F] = h
+  def from[TC[_[_]], F0[_], A](tc: TC[F0], i: IsKind.Aux[A, F0]): HasTc.Aux[TC, A, F0] =
+    new HasTc[TC, A] { type F[a] = F0[a]; val isk = i; val instance = tc }
 
-  implicit def steal[TC[_[_]], F0[_]](implicit source: TC[F0]): HasTc.Aux[TC, TypeF[F0], F0] =
-    new HasTc[TC, TypeF[F0]] {type F[x] = F0[x]; val leibniz = Is.refl; val instance = source}
+  def apply[TC[_[_]], F[_]](implicit tc: TC[F]): HasTc.Aux[TC, TypeK[F], F] = from(tc, IsKind.impl[F])
 
-  def isoCanonic[TC[_[_]], FF[_]]: TC[FF] <=> HasTc[TC, TypeF[FF]] =
-    Iso.unsafe(HasTc.steal(_), h => h.leibniz.isoTo[h.F =~= FF].subst(h.instance))
+  implicit def steal[TC[_[_]], F[_]](implicit tc: TC[F]): HasTc.Aux[TC, TypeK[F], F] = apply(tc)
 
-  private def exofunc[->[_,_], TC[_[_]]](implicit
-    c: Subcat.Aux[->, IsTypeF],
-    ccc: Ccc.Aux[->, IsTypeF, (*, *), Unit, ->]
-  ): Exofunctor[->, * => *, HasTc[TC, *]] =
-    new Exofunctor[->, * => *, HasTc[TC, *]] {
-//      type TC1[a] = IsTypeF[a]
-//      type TC2[a] = Trivial.T1[a]
-//      def C: Subcat.Aux[->, IsTypeF] = c
-//      def D = the[Subcat.Aux[* => *, Trivial.T1]]
-      def map[A, B](f: A -> B): HasTc[TC, A] => HasTc[TC, B] = ???
-    }
+  implicit def isoKanonic[TC[_[_]], A, F[_]](implicit i: IsKind.Aux[A, F]): HasTc[TC, A] <=> TC[F] =
+    Iso.unsafe(ht => IsKind.injectivity(ht.isk, i).subst[TC](ht.instance), from(_, i))
+
+  def isoCanonic[TC[_[_]], F[_]]: HasTc[TC, TypeK[F]] <=> TC[F] = isoKanonic(IsKind.impl[F])
+
+  implicit def isoFun1[TC[_[_]], A, F[_], B, G[_]](implicit
+    ia: IsKind.Aux[A, F], ib: IsKind.Aux[B, G]
+  ): (HasTc[TC, A] => HasTc[TC, B]) <=> (TC[F] => TC[G]) = {
+    val i1 = isoKanonic[TC, A, F]
+    val i2 = isoKanonic[TC, B, G]
+    Iso.unsafe(i1.from >>> _ >>> i2.to, i1.to >>> _ >>> i2.from)
+  }
+  implicit def isoIso1[TC[_[_]], A, F[_], B, G[_]](implicit
+    ia: IsKind.Aux[A, F], ib: IsKind.Aux[B, G]
+  ): (HasTc[TC, A] <=> HasTc[TC, B]) <=> (TC[F] <=> TC[G]) = {
+    val i1 = isoKanonic[TC, A, F]
+    val i2 = isoKanonic[TC, B, G]
+    Iso.unsafe(i1.flip andThen _ andThen i2, i1 andThen _ andThen i2.flip)
+  }
+
+  def isoFun[TC[_[_]], F[_], G[_]]: (HasTc[TC, TypeK[F]]  => HasTc[TC, TypeK[G]]) <=> (TC[F]  => TC[G]) = isoFun1
+  def isoIso[TC[_[_]], F[_], G[_]]: (HasTc[TC, TypeK[F]] <=> HasTc[TC, TypeK[G]]) <=> (TC[F] <=> TC[G]) = isoIso1
 
 }

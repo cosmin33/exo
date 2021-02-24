@@ -4,22 +4,22 @@ import cats.arrow.Arrow
 import cats.data.{AndThen, Ior, Validated}
 import cats.{Functor, Order, Semigroup}
 import cats.implicits._
-import io.cosmo.exo.Iso.HasIso
-import io.cosmo.exo.categories.{Distributive, Trivial}
+import io.cosmo.exo.Iso.{HasIso, HasIsoK}
+import io.cosmo.exo.categories.{Distributive, Endofunctor, Trivial}
 import io.cosmo.exo.categories.conversions.CatsInstances._
 import io.cosmo.exo.categories.functors.LaxSemigroupal
 import io.cosmo.exo.evidence.internal.Unsafe
 import io.cosmo.exo.evidence.{===, =~=, =~~=}
-import io.cosmo.exo.typeclasses.TypeF
+import io.cosmo.exo.typeclasses.TypeK
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import shapeless.Refute
 
 class IsoTests extends AnyFunSuite with Matchers {
 
-  // incorrect isos, but doesn't matter, they work for these tests..
+  // incorrect isos, fundamentally, but doesn't matter, they will do just fine for these tests..
   implicit val isoIL: Int <=> Long = Iso.unsafe(_.toLong, _.toInt)
-  implicit val isoSI: String <=> Int = Iso.unsafe(_.toInt, _.toString)
+  implicit val isoSI: String <=> Int = <=>.unsafe(_.toInt, _.toString)
 
   test("chain") {
     assert(Iso[String].chain[Int].chain[Long].flip.chain[String].chain[String].apply(4L) == "4")
@@ -38,14 +38,22 @@ class IsoTests extends AnyFunSuite with Matchers {
 
   test("HasIso implicit search") {
 
+    <=>[Int, Int]
     Iso[String].chain[Int].chain[Long]
+    <=>[Int, Long]
+    <=>[Long, Int]
+    <=>[Int].chain[Long]
+    <~>[Option, Option]
+    <~>[Option]
+    implicitly[HasIsoK[* => *, Option, Option]]
 
-    Iso[4].chain[6]
+
+    Iso[4].chain[6] // Isomorphism between singletons
 
     implicitly[HasIso[* => *, String, Int]]
     implicitly[HasIso[* => *, Int, String]]
     implicitly[HasIso[* => *, Int, Int]]
-    implicitly[HasIso[FunK, TypeF[List], TypeF[List]]]
+    implicitly[HasIso[FunK, TypeK[List], TypeK[List]]]
     implicitly[Refute[HasIso[* => *, String, Long]]]
 
     Iso[Iso[* => *, String, Int]].chain[HasIso[* => *, String, Int]]
@@ -62,6 +70,13 @@ class IsoTests extends AnyFunSuite with Matchers {
     Iso[(String, Int)].chain[(Int, String)].chain[Int /\ String]
     Iso[String /\ (Int \/ Long)].chain[(String /\ Int) \/ (String /\ Long)]
     Iso[(String, Either[Int, Long])].chain[Either[(String, Int), (String, Long)]]
+
+    // Isomorphisms from yoneda and corollaries
+    Iso[Option[Int]].chain[(Int => *) ~> Option]
+    Iso[Order[Int]].chain[(* => Int) ~> Order]
+    Iso[(String => *) ~> (Int => *)].chain[Int => String].chain[(* => Int) ~> (* => String)]
+    Iso[Int => String].chain[∀~[λ[f[_] => Endofunctor[* => *, f] => f[Int] => f[String]]]]
+    Iso[(* => Int) <~> (* => Long)].chain[Int <=> Long].chain[(Long => *) <~> (Int => *)]
 
     // Isomorphisms derived from lifting equality
     type Int1 = InstanceOf[Int]
@@ -132,13 +147,14 @@ class IsoTests extends AnyFunSuite with Matchers {
   locally {
 
     implicit def isoListVect: <~>[List, Vector] = ∀.mk[List <~> Vector].from(Iso.unsafe(_.toVector, _.toList))
-    val lv1: List <~> Vector = implicitly[<~>[List, Vector]]
+    val i1 = <~>[List, Vector]
+    val i2 = <~>[Vector, List]
 
-    implicitly[HasIso[FunK, TypeF[List], TypeF[Vector]]]
-    implicitly[HasIso[FunK, TypeF[Vector], TypeF[List]]]
+    implicitly[HasIso[FunK, TypeK[List], TypeK[Vector]]]
+    implicitly[HasIso[FunK, TypeK[Vector], TypeK[List]]]
 
-    val rrr: HasIso[FunK, TypeF[List], TypeF[Vector]] = implicitly[HasIso[FunK, TypeF[List], TypeF[Vector]]]
-    val lv2: List <~> Vector = TypeF[List].isoWith[Vector]
+    val rrr: HasIso[FunK, TypeK[List], TypeK[Vector]] = implicitly[HasIso[FunK, TypeK[List], TypeK[Vector]]]
+    val lv2: List <~> Vector = TypeK[List].isoWith[Vector]
 
   }
 

@@ -1,7 +1,7 @@
 package io.cosmo.exo.evidence
 
 import io.cosmo.exo.Void
-import io.cosmo.exo.typeclasses.TypeF
+import io.cosmo.exo.typeclasses.TypeK
 import io.estatico.newtype.macros.{newsubtype, newtype}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -11,7 +11,7 @@ class TypeHolderTests extends AnyFunSuite  {
 
   test("Type holder") {
 
-    val l: TypeF[List] = TypeF[List]
+    val l: TypeK[List] = TypeK[List]
 
     abstract class ListHolder {
       type T

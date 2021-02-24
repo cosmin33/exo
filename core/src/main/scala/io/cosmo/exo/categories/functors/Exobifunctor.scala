@@ -31,24 +31,28 @@ object Exobifunctor extends ExobifunctorInstances {
   def apply[=>:[_,_], ->:[_,_], ~>:[_,_], ⊙[_,_]](implicit
     bi: Exobifunctor[=>:, ->:, ~>:, ⊙]): Exobifunctor[=>:, ->:, ~>:, ⊙] = bi
 
-  def fromFunctors[==>[_,_], -->[_,_], >->[_,_]: Semicategory, Bi[_,_]](
+  def fromFaFunctors[==>[_,_], -->[_,_], >->[_,_]: Semicategory, Bi[_,_]](
     L: ∀[λ[a => Exo[==>, >->, Bi[*, a]]]],
     R: ∀[λ[a => Exo[-->, >->, Bi[a, *]]]]
   ): Exobifunctor[==>, -->, >->, Bi] = {
     new Exobifunctor[==>, -->, >->, Bi] {
-      def bimap[A, X, B, Y](left: A ==> X, right: B --> Y): Bi[A, B] >-> Bi[X, Y] =
-        L.apply[B].map(left) >>>> R.apply[X].map(right)
+      def bimap[A, X, B, Y](l: A ==> X, r: B --> Y): Bi[A, B] >-> Bi[X, Y] = L.apply[B].map(l) >>>> R.apply[X].map(r)
       override def leftMap [A, B, Z](fn:  A ==> Z)(implicit C:  SubcatHasId[-->, B]) = L.apply[B].map(fn)
       override def rightMap[A, B, Z](fn:  B --> Z)(implicit C:  SubcatHasId[==>, A]) = R.apply[A].map(fn)
     }
   }
 
   implicit class ExobifunctorOps[==>[_,_], >->[_,_], F[_,_]](val self: Exobifunctor[==>, ==>, >->, F]) extends AnyVal {
-    def compose[G[_,_]](G: Exobifunctor[==>, ==>, ==>, G]): Exobifunctor[==>, ==>, >->, λ[(α, β) => F[G[α, β], G[α, β]]]] =
+    def compose[G[_,_]](implicit G: Endobifunctor[==>, G]): Exobifunctor[==>, ==>, >->, λ[(α, β) => F[G[α, β], G[α, β]]]] =
       new Exobifunctor[==>, ==>, >->, λ[(α, β) => F[G[α, β], G[α, β]]]] {
-        override def bimap[A, X, B, Y](left: A ==> X, right: B ==> Y) = G.bimap(left, right) |> (i => self.bimap(i, i))
+        def bimap[A, X, B, Y](l: A ==> X, r: B ==> Y) = G.bimap(l, r) |> (i => self.bimap(i, i))
       }
   }
+
+  implicit def bifunctor[->[_,_]: Semicategory]: Exobifunctor[Dual[->,*,*], ->, * => *, ->] =
+    new Exobifunctor[Dual[->,*,*], ->, * => *, ->] {
+      def bimap[A, X, B, Y](left: Dual[->, A, X], right: B -> Y): A -> B => (X -> Y) = f => left.toFn >>>> f >>>> right
+    }
 
   def dual[->[_,_], Bi[_,_]](F: Endo[->, Bi]): Endo[Dual[->,*,*], Bi] =
     new Endo[Dual[->,*,*], Bi] {
@@ -89,7 +93,6 @@ trait ExobifunctorInstances {
     }
 
   implicit def semicatToExobifunctor[->[_,_]](implicit s: Semicategory[->]): Exobifunctor[Dual[->,*,*], ->, * => *, ->] =
-  //    Exobifunctor.fromFunctors(Exo.semiFaFunCon[->], Exo.semiFaFunCov[->])
     new Exobifunctor[Dual[->,*,*], ->, * => *, ->] {
       def bimap[A, X, B, Y](left: Dual[->, A, X], right: B -> Y): (A -> B) => (X -> Y) = left.toFn >>>> _ >>>> right
     }
