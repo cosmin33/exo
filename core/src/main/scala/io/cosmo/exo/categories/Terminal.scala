@@ -10,7 +10,6 @@ trait Terminal[->[_, _]] extends Subcat[->] {
 }
 
 object Terminal {
-  type AuxTerm[->[_,_], T] = Terminal[->] { type Terminal = T }
   type Aux[->[_,_], C[_], T] = Terminal[->] { type TC[a] = C[a]; type Terminal = T }
   trait Proto[->[_, _], ->#[_], T] extends Terminal[->] with Subcat.Proto[->, ->#] {
     type Terminal = T

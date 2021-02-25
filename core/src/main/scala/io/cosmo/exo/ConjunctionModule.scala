@@ -41,7 +41,7 @@ object ConjunctionModule {
   implicit def bothImp[A, B](implicit a: A, b: B): A /\ B = /\(a, b)
 
   implicit def productTypeclass[T[_], A, B](implicit
-    L: LaxSemigroupal.Endo[* => *, /\, T], ta: T[A], tb: T[B]
+    L: LaxSemigroupal[/\, * => *, /\, T], ta: T[A], tb: T[B]
   ): T[A /\ B] = L.product(/\(ta, tb))
 
   def typeclassFromTuple[TC[_], A, B](implicit t: TC[(A, B)]): TC[A /\ B] =
@@ -77,6 +77,6 @@ trait ConjunctionSyntax {
 
 
 trait ConjunctionFunctions {
-  def both[A, B, C](ab: A => B)(ac: A => C): A => (B, C) = a => (ab(a), ac(a))
+  def both[A, B, C](ab: A => B)(ac: A => C): A => (B /\ C) = a => /\(ab(a), ac(a))
 }
 

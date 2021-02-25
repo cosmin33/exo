@@ -36,21 +36,21 @@ object EvidenceCat {
     }
 
   implicit def bifunctorConj[T[_]](implicit
-    L: LaxSemigroupal.Endo[* => *, /\, T]
+    L: LaxSemigroupal[/\, * => *, /\, T]
   ): Endobifunctor[EvidenceCat[T, *, *], /\] = new Endobifunctor[EvidenceCat[T, *, *], /\] {
     def bimap[A, X, B, Y](l: EvidenceCat[T, A, X], r: EvidenceCat[T, B, Y]): EvidenceCat[T, A /\ B, X /\ Y] =
       fromImplicits[T, A /\ B, X /\ Y](L.product(/\(l.left, r.left)), L.product(/\(l.right, r.right)))
   }
 
   implicit def bifunctorDisj[T[_]](implicit
-    L: LaxSemigroupal.Endo[* => *, \/, T]
+    L: LaxSemigroupal[\/, * => *, \/, T]
   ): Endobifunctor[EvidenceCat[T, *, *], \/] = new Endobifunctor[EvidenceCat[T, *, *], \/] {
     def bimap[A, X, B, Y](l: EvidenceCat[T, A, X], r: EvidenceCat[T, B, Y]): EvidenceCat[T, A \/ B, X \/ Y] =
       fromImplicits[T, A \/ B, X \/ Y](L.product[A, B](-\/(l.left)), L.product[X, Y](-\/(l.right)))
   }
 
   implicit def cartesian[T[_], I](implicit
-    L: LaxSemigroupal.Endo[* => *, /\, T], ti: T[I]
+    L: LaxSemigroupal[/\, * => *, /\, T], ti: T[I]
   ): Cartesian.Aux[EvidenceCat[T, *, *], /\, T, I] =
     new Cartesian[EvidenceCat[T,*,*], /\] {
       type TC[x] = T[x]
@@ -71,12 +71,12 @@ object EvidenceCat {
     }
 
   implicit def cocartesian[T[_], I](implicit
-    L: LaxSemigroupal.Endo[* => *, \/, T], ti: T[I]
+    L: LaxSemigroupal[\/, * => *, \/, T], ti: T[I]
   ): Cartesian.Aux[Dual[EvidenceCat[T,*,*], *, *], \/, T, I] =
     Dual.leibniz[EvidenceCat[T,*,*]].subst[Cartesian.Aux[*[_,_], \/, T, I]](cocartesianOpp[T, I])
 
   implicit def cocartesianOpp[T[_], I](implicit
-    L: LaxSemigroupal.Endo[* => *, \/, T], ti: T[I]
+    L: LaxSemigroupal[\/, * => *, \/, T], ti: T[I]
   ): Cartesian.Aux[Opp[EvidenceCat[T, *, *]]#l, \/, T, I] =
     new Cartesian[Opp[EvidenceCat[T,*,*]]#l, \/] {
         type Id = I

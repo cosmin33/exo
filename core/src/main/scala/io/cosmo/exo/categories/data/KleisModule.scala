@@ -19,7 +19,7 @@ object KleisModule {
 
   def bifunctor[->[_,_], F[_], ⨂[_,_]](implicit
     cc: Associative[->, ⨂],
-    lax: LaxSemigroupal.Endo[->, ⨂, F]
+    lax: LaxSemigroupal[⨂, ->, ⨂, F]
   ): Endobifunctor[λ[(a, b) => a -> F[b]], ⨂] =
     new Endobifunctor[λ[(a, b) => a -> F[b]], ⨂] {
       def bimap[A, X, B, Y](left: A -> F[X], right: B -> F[Y]): (A ⨂ B) -> F[X ⨂ Y] =
@@ -30,8 +30,8 @@ object KleisModule {
     c: Cartesian.Aux[->, ⨂, T, Term],
     t: Terminal.Aux[->, T, Term],
     c1: Subcat.Aux[λ[(a,b) => a -> F[b]], T],
-    lax: LaxSemigroupal.Endo[->, ⨂, F],
-    lt: LaxSemigroupal[* => *, ⨂, * => *, (*, *), T]
+    lax: LaxSemigroupal[⨂, ->, ⨂, F],
+    lt: LaxSemigroupal[⨂, * => *, (*, *), T]
   ): Cartesian.Aux[λ[(a,b) => a -> F[b]], ⨂, T, Term] =
     new Cartesian[λ[(a,b) => a -> F[b]], ⨂] {
       type TC[a] = T[a]
