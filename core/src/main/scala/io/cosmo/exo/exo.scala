@@ -70,15 +70,15 @@ package object exo extends Existence with syntax {
   type /\[L, R] = Conjunction[L, R]
   val /\ : Conjunction.type = Conjunction
 
-  type VoidK[x] = Void
-  type UnitK[x] = Unit
-  type VoidK2[x,y] = Void
-  type UnitK2[x,y] = Unit
+  type VoidK[x]     = Void
+  type VoidK2[x,y]  = Void
   type VoidHK[f[_]] = Void
+  type UnitK[x]     = Unit
+  type UnitK2[x,y]  = Unit
   type UnitHK[f[_]] = Unit
-
-  type AnyK[x]        = Any
-  type AnyHK[f[_]]    = Any
+  type AnyK[x]      = Any
+  type AnyK2[x,y]   = Any
+  type AnyHK[f[_]]  = Any
 
   // morphisms and isomorphisms
   type IsoFunK[A, B] = Iso[FunK, A, B]

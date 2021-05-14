@@ -16,6 +16,7 @@ lazy val versionOf = new {
   val scalaCheck = "1.14.3"
   val scalatest = "3.3.0-SNAP2"
   val estaticoNewtype = "0.4.4-SNAPSHOT"
+  val singletonOps = "0.5.1"
 }
 
 lazy val commonSettings = Seq(
@@ -78,6 +79,7 @@ lazy val commonSettings = Seq(
     "org.scalatest"        %%% "scalatest"           % versionOf.scalatest % Test,
     "org.scalacheck"       %%% "scalacheck"          % versionOf.scalaCheck % Test,
     "com.chuusai"          %%% "shapeless"           % versionOf.shapeless,
+    "eu.timepit"           %%% "singleton-ops"       % versionOf.singletonOps,
   )
 )
 

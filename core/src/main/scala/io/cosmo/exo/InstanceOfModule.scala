@@ -1,12 +1,8 @@
 package io.cosmo.exo
 
 import cats.{Id, ⊥}
-import cats.implicits._
-import io.cosmo.exo.categories.{Endofunctor, Subcat, Trivial}
-import io.cosmo.exo.categories.functors.{Endofunctor, Exofunctor}
 import io.cosmo.exo.evidence._
 import io.cosmo.exo.evidence.variance._
-import shapeless.{LowPriority, Refute, the}
 
 abstract class InstanceOfModule {
   type InstanceOf[T] <: T
@@ -19,8 +15,8 @@ private[exo] object InstanceOfImpl extends InstanceOfModule {
   def isId = IsK.refl[Id]
 }
 object InstanceOfModule {
-  implicit def isCovariant: IsCovariant[InstanceOf] = IsCovariant.witness(fnEq(the[Void <~< Any]))
-  implicit def isInjective: IsInjective[InstanceOf] = IsInjective.witness(fnEq(the[Void =!= Any]))
+  implicit def isCovariant: IsCovariant[InstanceOf] = IsCovariant.witness(fnEq(implicitly[Void <~< Any]))
+  implicit def isInjective: IsInjective[InstanceOf] = IsInjective.witness(fnEq(implicitly[Void =!= Any]))
   implicit def isoInstance[T]: T <=> InstanceOf[T] = InstanceOf.is[T].toIso
   private def fnEq[->[_,_], A, B]: (A -> B) === (InstanceOf[A] -> InstanceOf[B]) =
     Is.lift2[->](InstanceOf.is[A], InstanceOf.is[B])

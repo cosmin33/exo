@@ -1,7 +1,9 @@
 package io.cosmo.exo.internalstuff
 
 import cats.implicits._
+import cats.Id
 import io.cosmo.exo.categories.{Associative, Cartesian, Cocartesian, Distributive}
+import io.cosmo.exo.categories.functors.Exo
 import io.cosmo.exo.{UnitK, VoidK, ~>, ∀}
 
 private[exo] trait FunctionKObject {
@@ -48,5 +50,19 @@ private[exo] trait FunctionKObject {
     def idr[F[_]]: F ~> λ[a => Either[F[a], VoidK[a]]] = ∀.mk[F ~> λ[a => Either[F[a], VoidK[a]]]].from(_.asLeft)
     def braid[F[_], G[_]]: λ[a => Either[F[a], G[a]]] ~> λ[a => Either[G[a], F[a]]] =
       ∀.mk[λ[a => Either[F[a], G[a]]] ~> λ[a => Either[G[a], F[a]]]].from(_.swap)
+  }
+  object composition {
+    def bimap[F[_], G[_], X[_], Y[_]](fg: F ~> G, xy: X ~> Y)(implicit
+      E: Exo.Cov[* => *, F]
+    ): λ[a => F[X[a]]] ~> λ[a => G[Y[a]]] =
+      ∀.mk[λ[a => F[X[a]]] ~> λ[a => G[Y[a]]]].fromH(t => fxa => fg.apply(E.map(xy.apply[t.T])(fxa)))
+    def associate  [F[_], G[_], H[_]]: λ[a => F[G[H[a]]]] ~> λ[a => F[G[H[a]]]] =
+      ∀.mk[λ[a => F[G[H[a]]]] ~> λ[a => F[G[H[a]]]]].from(identity)
+    def diassociate[F[_], G[_], H[_]]: λ[a => F[G[H[a]]]] ~> λ[a => F[G[H[a]]]] =
+      ∀.mk[λ[a => F[G[H[a]]]] ~> λ[a => F[G[H[a]]]]].from(identity)
+    def idl  [F[_]]: λ[a => Id[F[a]]] ~> F = id[F]
+    def coidl[F[_]]: F ~> λ[a => Id[F[a]]] = id[F]
+    def idr  [F[_]]: λ[a => F[Id[a]]] ~> F = id[F]
+    def coidr[F[_]]: F ~> λ[a => F[Id[a]]] = id[F]
   }
 }

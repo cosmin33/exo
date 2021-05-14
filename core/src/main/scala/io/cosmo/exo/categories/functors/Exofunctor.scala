@@ -3,14 +3,18 @@ package io.cosmo.exo.categories.functors
 import cats.data.{Cokleisli, Kleisli}
 import cats.implicits._
 import cats.{Applicative, CoflatMap, Contravariant, Eval, FlatMap, Functor, FunctorFilter, Id, Invariant, Monad, StackSafeMonad, Traverse, TraverseFilter}
-import io.cosmo.exo._
+import io.cosmo.exo.Iso.HasIsoK
 import io.cosmo.exo.categories._
-import io.cosmo.exo.evidence.{<~<, ===, TypeHolder2}
-import io.cosmo.exo.evidence.variance.{IsContravariant, IsCovariant}
-import io.cosmo.exo.typeclasses.{HasTc, TypeK}
+import io.cosmo.exo.evidence.{=~~=, TypeHolder2}
+import io.cosmo.exo.typeclasses.HasTc
+import io.cosmo.exo.{toIsoOps, _}
 
 trait Exofunctor[==>[_,_], -->[_,_], F[_]] { self =>
   def map[A, B](f: A ==> B): F[A] --> F[B]
+//  def fmap1[=>>[_,_], ->>[_,_], A, B](f: A =>> B)(implicit
+//    s1: =>> ~~> ==>,
+//    s2: --> ~~> ->>
+//  ): F[A] ->> F[B] = s2.exec(map(s1.exec(f)))
 
   final def compose[|->[_,_], G[_]](G: Exo[|->, ==>, G]): Exofunctor[|->, -->, λ[α => F[G[α]]]] =
     Exo.unsafe[|->, -->, λ[α => F[G[α]]]](f => map(G.map(f)))
@@ -35,6 +39,10 @@ object Exofunctor extends ExofunctorImplicits {
     def mapK[F[_], G[_]](f: F ~> G): A[F] => A[G] = F.map(FunK(f)).isoTo[A[F] => A[G]]
   }
 
+  implicit class CovariantExofunctorKOps[A[_[_]]](val F: Exofunctor[Dual[FunK,*,*], * => *, HasTc[A, *]]) extends AnyVal {
+    def contramapK[F[_], G[_]](f: G ~> F): A[F] => A[G] = F.map(Dual(FunK(f))).isoTo[A[F] => A[G]]
+  }
+
   implicit class IsoExofunctorKOps[A[_[_]]](val F: Exofunctor[IsoFunK, * => *, HasTc[A, *]]) extends AnyVal {
     def isoMapK[F[_], G[_]](i: F <~> G): A[F] => A[G] = F.map(IsoFunK(i)).isoTo[A[F] => A[G]]
   }
@@ -43,7 +51,7 @@ object Exofunctor extends ExofunctorImplicits {
     def coComposeContra[G[_]](G: Exofunctor[Dual[==>,*,*], ==>, G]): Exofunctor[==>, -->, λ[α => F[G[α]]]] =
       Exo.unsafe[==>, -->, λ[α => F[G[α]]]](f => F.map(Dual(G.map(Dual(f)))))
 
-    def coCompose[G[_]](G: Endofunctor[==>, G]): Exofunctor[Dual[==>,*,*], -->, λ[α => F[G[α]]]] =
+    private def coCompose[G[_]](G: Endofunctor[==>, G]): Exofunctor[Dual[==>,*,*], -->, λ[α => F[G[α]]]] =
       Exo.unsafe[Dual[==>,*,*], -->, λ[α => F[G[α]]]](f => F.map(Dual(G.map(f))))
   }
 
@@ -203,9 +211,18 @@ final class ExofunctorSyntaxOps[F[_], A](val fa: F[A]) extends AnyVal {
   def ecomap[==>[_,_], B](f: B ==> A)(implicit E: Exo.Con[==>, F]): F[B] = E.map(Dual(f))(fa)
 }
 final class ExofunctorKSyntaxOps[A[_[_]], F[_]](val af: A[F]) extends AnyVal {
-  def emapK[G[_]](f: F  ~> G)(implicit E: FunctorK[A]): A[G] = E.mapK(f)(af)
-  def imapK[G[_]](f: F <~> G)(implicit E: IsoFunctorK[A]): A[G] = E.isoMapK(f)(af)
-  def deriveK[G[_]](implicit f: IsoFunK[TypeK[F], TypeK[G]], E: IsoFunctorK[A]): A[G] = imapK(FunK.isoFunKUnapply(f))
+  def emapK [G[_]](f: F  ~> G)(implicit E: FunctorK[A]):    A[G] = E.mapK(f)(af)
+  def comapK[G[_]](f: G  ~> F)(implicit E: CofunctorK[A]):  A[G] = E.contramapK(f)(af)
+  def imapK [G[_]](f: F <~> G)(implicit E: IsoFunctorK[A]): A[G] = E.isoMapK(f)(af)
+  def deriveK[G[_]](implicit f: HasIsoK[* => *, F, G], E: IsoFunctorK[A]): A[G] = imapK(f.iso)
+  def deriveK__[G[_]](implicit
+    f: (FunctorK[A] /\ (F ~> G)) \/ (CofunctorK[A] /\ (G ~> F)) \/ (IsoFunctorK[A] /\ HasIsoK[* => *, F, G])
+  ): A[G] =
+    f.fold3(
+      p => p._1.mapK(p._2)(af),
+      p => p._1.contramapK(p._2)(af),
+      p => p._1.isoMapK(p._2)(af)
+    )
 }
 
 trait ExofunctorImplicits extends ExofunctorImplicits01 {

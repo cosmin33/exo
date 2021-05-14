@@ -2,7 +2,6 @@ package io.cosmo.exo.categories
 
 import cats.Inject
 import cats.implicits._
-import io.cosmo.exo.categories.Trivial.T1
 import io.cosmo.exo.categories.functors._
 import io.cosmo.exo.evidence._
 import io.cosmo.exo._
@@ -85,14 +84,14 @@ private[categories] object SemicategoryHelpers {
     override type TC[a] = Trivial.T1[a]
     def id[A](implicit A: Trivial.T1[A]): A <~< A = As.refl
     def andThen[A, B, C](ab: A <~< B, bc: B <~< C): A <~< C = ab.andThen(bc)
-    def initialTC: T1[Void] = Trivial.trivialInstance
-    def initiate[A](implicit A: T1[A]): Void <~< A = the[Void <~< A]
-    def terminalTC: T1[Any] = Trivial.trivialInstance
-    def terminate[A](implicit A: T1[A]): A <~< Any = the[A <~< Any]
+    def initialTC: Trivial.T1[Void] = Trivial.trivialInstance
+    def initiate[A](implicit A: Trivial.T1[A]): Void <~< A = the[Void <~< A]
+    def terminalTC: Trivial.T1[Any] = Trivial.trivialInstance
+    def terminate[A](implicit A: Trivial.T1[A]): A <~< Any = the[A <~< Any]
     def concretize[A, B](f: A <~< B): (A, Trivial.T1[A]) => (B, Trivial.T1[B]) =
       { case (a, _) => (f(a), Trivial.trivialInstance) }
-    override def toFunction[A: T1, B](f: A <~< B): A => B = a => f(a)
-    override def concrete[A: T1, B](a: A)(f: A <~< B): B = f(a)
+    override def toFunction[A: Trivial.T1, B](f: A <~< B): A => B = a => f(a)
+    override def concrete[A: Trivial.T1, B](a: A)(f: A <~< B): B = f(a)
   }
 
   trait OppSubcategory[->[_,_], C[_]] extends Subcat[Opp[->]#l] {
@@ -128,10 +127,10 @@ private[categories] object SemicategoryHelpers {
     def curry[X, Y, Z](f: ((X, Y)) => Z): X => (Y => Z) = x => y => f((x, y))
     def uncurry[X, Y, Z](f: X => (Y => Z)): ⊙[X, Y] => Z = { case (x, y) => f(x)(y) }
     def terminalTC: Trivial.T1[Terminal] = Trivial.trivialInstance
-    def terminate[A](implicit A: Trivial.T1[A]): A => Terminal = _ => ()
+    def terminate[A: Trivial.T1]: A => Terminal = _ => ()
     def initialTC: Trivial.T1[Nothing] = Trivial.trivialInstance
-    def initiate[A](implicit A: Trivial.T1[A]): Nothing => A = identity
-    override def distribute[A: T1, B: T1, C: T1] = { case (a, bc) => bc.fold((a, _).asLeft, (a, _).asRight) }
+    def initiate[A: Trivial.T1]: Nothing => A = identity
+    def distribute[A: Trivial.T1, B: Trivial.T1, C: Trivial.T1] = { case (a, bc) => bc.fold((a, _).asLeft, (a, _).asRight) }
   }
 
 

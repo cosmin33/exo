@@ -23,6 +23,8 @@ class FunctorsTests  extends AnyFunSuite with Matchers {
   import io.cosmo.exo.categories.conversions.CatsInstances._
 
   // IsoFunctorK syntax + typeclass derivation test
+
+
   implicit val ilv: List <~> Vector = ∀.mk[List <~> Vector].from(Iso.unsafe(_.toVector, _.toList))
   val fv1: Functor[Vector] = Functor[List].imapK(ilv)
   val fv2: Functor[Vector] = IsoFunK(ilv).deriveK[Functor]

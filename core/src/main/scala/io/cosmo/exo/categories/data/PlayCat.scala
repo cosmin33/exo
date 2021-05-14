@@ -24,8 +24,8 @@ trait PlayCat1Implicits extends PlayCat1Implicits01 {
 
   implicit def bifunctorProd[==>[_,_], -->[_,_], ~~>[_,_], ⊙[_,_], T[_], F[_]](implicit
     S: Semicategory[~~>],
-    LS: LaxSemigroupal[⊙, ~~>, ⊙, F],   //   LaxSemigroupal[Any2, /\, ~~>, /\, F] //would suffice
-    OS: OplaxSemigroupal[⊙, ~~>, ⊙, F], // OplaxSemigroupal[Any2, /\, ~~>, /\, F] //would suffice
+    LS: LaxSemigroupal[⊙, ~~>, ⊙, F],
+    OS: OplaxSemigroupal[⊙, ~~>, ⊙, F],
     F: Exobifunctor[==>, -->, ~~>, ⊙]
   ): Exobifunctor[PlayCat1[==>, F,*,*], PlayCat1[-->, F,*,*], PlayCat1[~~>, F,*,*], ⊙] =
     new Exobifunctor[PlayCat1[==>, F,*,*], PlayCat1[-->, F,*,*], PlayCat1[~~>, F,*,*], ⊙] {
@@ -100,8 +100,79 @@ object PlayCat1Helpers {
 
 }
 
-import PlayCatHelpers._
+object PlayCatHelpers {
+  trait SubcatPlayCat[F[_]] extends Subcat[PlayCat[F, *, *]] {
+    type TC[a] = Trivial.T1[a]
+    def id[A](implicit A: TC[A]): PlayCat[F, A, A] = PlayCat(identity)
+    def andThen[A, B, C](ab: PlayCat[F, A, B], bc: PlayCat[F, B, C]): PlayCat[F, A, C] =
+      PlayCat(ab.fn >>> bc.fn)
+  }
+
+  trait MonoSymmPlayCatConj[F[_]] extends Monoidal[PlayCat[F,*,*], /\] with Symmetric[PlayCat[F,*,*], /\] {
+    type TC[a] = Trivial.T1[a]
+    type Id = Unit
+    protected def F: Endofunctor[* => *, F]
+    def C: Subcat.Aux[PlayCat[F,*,*], TC] = implicitly
+    def associate  [X: TC, Y: TC, Z: TC]: PlayCat[F, X /\ Y /\ Z, X /\ (Y /\ Z)] =
+      PlayCat(F.map[X /\ Y /\ Z, X /\ (Y /\ Z)](p => /\(p._1._1, /\(p._1._2, p._2))))
+    def diassociate[X: TC, Y: TC, Z: TC]: PlayCat[F, X /\ (Y /\ Z), X /\ Y /\ Z] =
+      PlayCat(F.map[X /\ (Y /\ Z), X /\ Y /\ Z](p => /\(/\(p._1, p._2._1), p._2._2)))
+    def braid[A: TC, B: TC]: PlayCat[F, A /\ B, B /\ A] = PlayCat(F.map[A /\ B, B /\ A](_.swap))
+    def idl  [A: TC]: PlayCat[F, Unit /\ A, A] = PlayCat(F.map[Unit /\ A, A](_._2))
+    def coidl[A: TC]: PlayCat[F, A, Unit /\ A] = PlayCat(F.map[A, Unit /\ A](/\((), _)))
+    def idr  [A: TC]: PlayCat[F, A /\ Unit, A] = PlayCat(F.map[A /\ Unit, A](_._1))
+    def coidr[A: TC]: PlayCat[F, A, A /\ Unit] = PlayCat(F.map[A, A /\ Unit](/\(_, ())))
+  }
+
+  trait CartesianPlayCatConj[F[_]] extends MonoSymmPlayCatConj[F] with Cartesian[PlayCat[F,*,*], /\] {
+    protected def F: Endofunctor[* => *, F]
+    protected def L: LaxSemigroupal[/\, * => *, /\, F]
+    def fst[A: TC, B: TC]: PlayCat[F, A /\ B, A] = PlayCat(((ab: F[A /\ B]) => ab) >>> F.map(_._1))
+    def snd[A: TC, B: TC]: PlayCat[F, A /\ B, B] = PlayCat(((ab: F[A /\ B]) => ab) >>> F.map(_._2))
+    def diag[A: TC]: PlayCat[F, A, A /\ A] = PlayCat(((fa: F[A]) => /\(fa, fa)) >>> L.product[A, A])
+    def &&&[X, Y, Z](f: PlayCat[F, X, Y], g: PlayCat[F, X, Z]): PlayCat[F, X, Y /\ Z] =
+      PlayCat(Cartesian[* => *, /\].&&&(f.fn, g.fn) >>> L.product[Y, Z])
+  }
+
+  trait MonoSymmPlayCatDisj[F[_]] extends Monoidal[Dual[PlayCat[F,*,*],*,*], \/] with Symmetric[Dual[PlayCat[F,*,*],*,*], \/] {
+    type TC[a] = Trivial.T1[a]
+    type Id = Void
+    protected def F: Endofunctor[Dual[* => *,*,*], F]
+    def C: Subcat.Aux[Dual[PlayCat[F, *, *], *, *], TC] = implicitly
+    def associate  [X:TC, Y: TC, Z: TC]: Dual[PlayCat[F, *, *], X \/ Y \/ Z, X \/ (Y \/ Z)] =
+      Dual(PlayCat(F.map[X \/ Y \/ Z, X \/ (Y \/ Z)](Dual(Associative[* => *, \/].diassociate[X, Y, Z](trivialInstance, trivialInstance, trivialInstance)))))
+    def diassociate[X:TC, Y: TC, Z: TC]: Dual[PlayCat[F, *, *], X \/ (Y \/ Z), X \/ Y \/ Z] =
+      Dual(PlayCat(F.map[X \/ (Y \/ Z), X \/ Y \/ Z](Dual(Associative[* => *, \/].associate[X, Y, Z](trivialInstance, trivialInstance, trivialInstance)))))
+    def idl  [A: TC]: Dual[PlayCat[F, *, *], Void \/ A, A] = Dual(PlayCat(F.map[Void \/ A, A](Dual(_.right[Void]))))
+    def coidl[A: TC]: Dual[PlayCat[F, *, *], A, Void \/ A] = Dual(PlayCat(F.map[A, Void \/ A](Dual(_.fold(identity, identity)))))
+    def idr  [A: TC]: Dual[PlayCat[F, *, *], A \/ Void, A] = Dual(PlayCat(F.map[A \/ Void, A](Dual(_.left[Void]))))
+    def coidr[A: TC]: Dual[PlayCat[F, *, *], A, A \/ Void] = Dual(PlayCat(F.map[A, A \/ Void](Dual(_.fold(identity, identity)))))
+    def braid[A: TC, B: TC]: Dual[PlayCat[F, *, *], A \/ B, B \/ A] = Dual(PlayCat(F.map[A \/ B, B \/ A](Dual(_.swap))))
+  }
+
+  trait CocartesianPlayCatDisj[F[_]] extends MonoSymmPlayCatDisj[F] with Cocartesian[PlayCat[F,*,*], \/] {
+    protected def F: Endofunctor[Dual[* => *,*,*], F]
+    protected def L: LaxSemigroupal[\/, Dual[* => *,*,*], \/, F]
+    def fst[A: TC, B: TC]: Dual[PlayCat[F, *, *], A \/ B, A] = Dual(PlayCat(F.map[A \/ B, A](Dual(_.left[B])).toFn))
+    def snd[A: TC, B: TC]: Dual[PlayCat[F, *, *], A \/ B, B] = Dual(PlayCat(F.map[A \/ B, B](Dual(_.right[A])).toFn))
+    def diag[A: TC]: Dual[PlayCat[F, *, *], A, A \/ A] =
+      Dual(PlayCat(L.product[A, A].toFn >>> Cocartesian[* => *, \/].diag[F[A]](trivialInstance).toFn))
+    def &&&[X, Y, Z](f: Dual[PlayCat[F, *, *], X, Y], g: Dual[PlayCat[F, *, *], X, Z]): Dual[PlayCat[F, *, *], X, Y \/ Z] =
+      Dual(PlayCat(L.product[Y, Z].toFn >>> Cocartesian[* => *, \/].|||(f.fn, g.fn)))
+  }
+
+  trait DistribPlayCat[F[_]] extends SubcatPlayCat[F] with Distributive[PlayCat[F,*,*], /\, \/] {
+    type ProductId = Unit
+    type SumId = Void
+    protected def F: Endofunctor[* => *, F]
+    def distribute[A: TC, B: TC, C: TC]: PlayCat[F, A /\ (B \/ C), A /\ B \/ (A /\ C)] =
+      PlayCat(F.map[A /\ (B \/ C), A /\ B \/ (A /\ C)](p => p._2.fold(b => /\(p._1, b).left, c => /\(p._1, c).right)))
+  }
+
+}
+
 trait PlayCatImplicits extends PlayCatImplicits01 {
+  import PlayCatHelpers._
   implicit def subcat[F[_]]: Subcat.Aux[PlayCat[F,*,*], Trivial.T1] = new SubcatPlayCat[F] {}
 
   implicit def bifunctorConj[F[_]](implicit
@@ -191,75 +262,4 @@ trait PlayCatImplicits01 extends PlayCatImplicits02 {
 }
 
 trait PlayCatImplicits02 {
-}
-
-object PlayCatHelpers {
-  trait SubcatPlayCat[F[_]] extends Subcat[PlayCat[F, *, *]] {
-    type TC[a] = Trivial.T1[a]
-    def id[A](implicit A: TC[A]): PlayCat[F, A, A] = PlayCat(identity)
-    def andThen[A, B, C](ab: PlayCat[F, A, B], bc: PlayCat[F, B, C]): PlayCat[F, A, C] =
-      PlayCat(ab.fn >>> bc.fn)
-  }
-
-  trait MonoSymmPlayCatConj[F[_]] extends Monoidal[PlayCat[F,*,*], /\] with Symmetric[PlayCat[F,*,*], /\] {
-    type TC[a] = Trivial.T1[a]
-    type Id = Unit
-    protected def F: Endofunctor[* => *, F]
-    def C: Subcat.Aux[PlayCat[F,*,*], TC] = implicitly
-    def associate  [X: TC, Y: TC, Z: TC]: PlayCat[F, X /\ Y /\ Z, X /\ (Y /\ Z)] =
-      PlayCat(F.map[X /\ Y /\ Z, X /\ (Y /\ Z)](p => /\(p._1._1, /\(p._1._2, p._2))))
-    def diassociate[X: TC, Y: TC, Z: TC]: PlayCat[F, X /\ (Y /\ Z), X /\ Y /\ Z] =
-      PlayCat(F.map[X /\ (Y /\ Z), X /\ Y /\ Z](p => /\(/\(p._1, p._2._1), p._2._2)))
-    def braid[A: TC, B: TC]: PlayCat[F, A /\ B, B /\ A] = PlayCat(F.map[A /\ B, B /\ A](_.swap))
-    def idl  [A: TC]: PlayCat[F, Unit /\ A, A] = PlayCat(F.map[Unit /\ A, A](_._2))
-    def coidl[A: TC]: PlayCat[F, A, Unit /\ A] = PlayCat(F.map[A, Unit /\ A](/\((), _)))
-    def idr  [A: TC]: PlayCat[F, A /\ Unit, A] = PlayCat(F.map[A /\ Unit, A](_._1))
-    def coidr[A: TC]: PlayCat[F, A, A /\ Unit] = PlayCat(F.map[A, A /\ Unit](/\(_, ())))
-  }
-
-  trait CartesianPlayCatConj[F[_]] extends MonoSymmPlayCatConj[F] with Cartesian[PlayCat[F,*,*], /\] {
-    protected def F: Endofunctor[* => *, F]
-    protected def L: LaxSemigroupal[/\, * => *, /\, F]
-    def fst[A: TC, B: TC]: PlayCat[F, A /\ B, A] = PlayCat(((ab: F[A /\ B]) => ab) >>> F.map(_._1))
-    def snd[A: TC, B: TC]: PlayCat[F, A /\ B, B] = PlayCat(((ab: F[A /\ B]) => ab) >>> F.map(_._2))
-    def diag[A: TC]: PlayCat[F, A, A /\ A] = PlayCat(((fa: F[A]) => /\(fa, fa)) >>> L.product[A, A])
-    def &&&[X, Y, Z](f: PlayCat[F, X, Y], g: PlayCat[F, X, Z]): PlayCat[F, X, Y /\ Z] =
-      PlayCat(Cartesian[* => *, /\].&&&(f.fn, g.fn) >>> L.product[Y, Z])
-  }
-
-  trait MonoSymmPlayCatDisj[F[_]] extends Monoidal[Dual[PlayCat[F,*,*],*,*], \/] with Symmetric[Dual[PlayCat[F,*,*],*,*], \/] {
-    type TC[a] = Trivial.T1[a]
-    type Id = Void
-    protected def F: Endofunctor[Dual[* => *,*,*], F]
-    def C: Subcat.Aux[Dual[PlayCat[F, *, *], *, *], TC] = implicitly
-    def associate  [X:TC, Y: TC, Z: TC]: Dual[PlayCat[F, *, *], X \/ Y \/ Z, X \/ (Y \/ Z)] =
-      Dual(PlayCat(F.map[X \/ Y \/ Z, X \/ (Y \/ Z)](Dual(Associative[* => *, \/].diassociate[X, Y, Z](trivialInstance, trivialInstance, trivialInstance)))))
-    def diassociate[X:TC, Y: TC, Z: TC]: Dual[PlayCat[F, *, *], X \/ (Y \/ Z), X \/ Y \/ Z] =
-      Dual(PlayCat(F.map[X \/ (Y \/ Z), X \/ Y \/ Z](Dual(Associative[* => *, \/].associate[X, Y, Z](trivialInstance, trivialInstance, trivialInstance)))))
-    def idl  [A: TC]: Dual[PlayCat[F, *, *], Void \/ A, A] = Dual(PlayCat(F.map[Void \/ A, A](Dual(_.right[Void]))))
-    def coidl[A: TC]: Dual[PlayCat[F, *, *], A, Void \/ A] = Dual(PlayCat(F.map[A, Void \/ A](Dual(_.fold(identity, identity)))))
-    def idr  [A: TC]: Dual[PlayCat[F, *, *], A \/ Void, A] = Dual(PlayCat(F.map[A \/ Void, A](Dual(_.left[Void]))))
-    def coidr[A: TC]: Dual[PlayCat[F, *, *], A, A \/ Void] = Dual(PlayCat(F.map[A, A \/ Void](Dual(_.fold(identity, identity)))))
-    def braid[A: TC, B: TC]: Dual[PlayCat[F, *, *], A \/ B, B \/ A] = Dual(PlayCat(F.map[A \/ B, B \/ A](Dual(_.swap))))
-  }
-
-  trait CocartesianPlayCatDisj[F[_]] extends MonoSymmPlayCatDisj[F] with Cocartesian[PlayCat[F,*,*], \/] {
-    protected def F: Endofunctor[Dual[* => *,*,*], F]
-    protected def L: LaxSemigroupal[\/, Dual[* => *,*,*], \/, F]
-    def fst[A: TC, B: TC]: Dual[PlayCat[F, *, *], A \/ B, A] = Dual(PlayCat(F.map[A \/ B, A](Dual(_.left[B])).toFn))
-    def snd[A: TC, B: TC]: Dual[PlayCat[F, *, *], A \/ B, B] = Dual(PlayCat(F.map[A \/ B, B](Dual(_.right[A])).toFn))
-    def diag[A: TC]: Dual[PlayCat[F, *, *], A, A \/ A] =
-      Dual(PlayCat(L.product[A, A].toFn >>> Cocartesian[* => *, \/].diag[F[A]](trivialInstance).toFn))
-    def &&&[X, Y, Z](f: Dual[PlayCat[F, *, *], X, Y], g: Dual[PlayCat[F, *, *], X, Z]): Dual[PlayCat[F, *, *], X, Y \/ Z] =
-      Dual(PlayCat(L.product[Y, Z].toFn >>> Cocartesian[* => *, \/].|||(f.fn, g.fn)))
-  }
-
-  trait DistribPlayCat[F[_]] extends SubcatPlayCat[F] with Distributive[PlayCat[F,*,*], /\, \/] {
-    type ProductId = Unit
-    type SumId = Void
-    protected def F: Endofunctor[* => *, F]
-    def distribute[A: TC, B: TC, C: TC]: PlayCat[F, A /\ (B \/ C), A /\ B \/ (A /\ C)] =
-      PlayCat(F.map[A /\ (B \/ C), A /\ B \/ (A /\ C)](p => p._2.fold(b => /\(p._1, b).left, c => /\(p._1, c).right)))
-  }
-
 }

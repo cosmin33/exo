@@ -73,8 +73,8 @@ object foralls {
 
     implicit class IsoKOps[F[_], G[_]](val iso: F <~> G) {
       def flip: G <~> F = ∀.mk[G <~> F].fromH(t => iso[t.T].flip)
-      def to:   F ~> G = ∀.mk[F ~> G].fromH(t => iso[t.T].to)
-      def from: G ~> F = ∀.mk[G ~> F].fromH(t => iso[t.T].from)
+      def to:   F  ~> G = ∀.mk[F  ~> G].fromH(t => iso[t.T].to)
+      def from: G  ~> F = ∀.mk[G  ~> F].fromH(t => iso[t.T].from)
     }
 
     // https://nokyotsu.com/qscripts/2014/07/distribution-of-quantifiers-over-logic-connectives.html
@@ -198,8 +198,9 @@ object foralls {
     }
 
     implicit class IsoK2Ops[F[_,_], G[_,_]](val iso: F <~~> G) {
-      def to:   F ~~> G = ∀∀.mk[F ~~> G].fromH(t => iso[t.A, t.B].to)
-      def from: G ~~> F = ∀∀.mk[G ~~> F].fromH(t => iso[t.A, t.B].from)
+      def flip: G <~~> F = ∀∀.mk[G <~~> F].fromH(t => iso[t.A, t.B].flip)
+      def to:   F  ~~> G = ∀∀.mk[F  ~~> G].fromH(t => iso[t.A, t.B].to)
+      def from: G  ~~> F = ∀∀.mk[G  ~~> F].fromH(t => iso[t.A, t.B].from)
     }
 
   }

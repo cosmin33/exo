@@ -28,6 +28,18 @@ package object functors {
     }
   }
 
+  type CofunctorK[H[_[_]]] = Exo[Dual[FunK,*,*], * => *, HasTc[H, *]]
+  object CofunctorK {
+    def apply[H[_[_]]](implicit F: CofunctorK[H]): CofunctorK[H] = F
+    trait Proto[H[_[_]]] extends CofunctorK[H] {
+      def map[A, B](f: Dual[FunK, A, B]): HasTc[H, A] => HasTc[H, B] = {
+        val f1 = f.toFn
+        HasTc.isoFun1[H, A, f1.TypeB, B, f1.TypeA](f1.kindB, f1.kindA).flip(comapK(f1.fn))
+      }
+      protected def comapK[F[_], G[_]](f: G ~> F): H[F] => H[G]
+    }
+  }
+
   type IsoFunctorK[H[_[_]]] = Exo[IsoFunK, * => *, HasTc[H, *]]
   object IsoFunctorK {
     def apply[H[_[_]]](implicit F: IsoFunctorK[H]): IsoFunctorK[H] = F

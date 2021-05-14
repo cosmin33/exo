@@ -56,9 +56,13 @@ object DisjunctionModule extends DisjunctionModule01 {
 
   implicit val iso: Either <~~> \/ = \/.leibniz.toIso
 
-  implicit def coproductTypeclass[T[_], A, B](implicit
+  implicit def opproductTypeclass[T[_], A, B](implicit
     L: LaxSemigroupal[\/, * => *, \/, T], tab: T[A] \/ T[B]
   ): T[A \/ B] = L.product(tab)
+
+  implicit def coproductTypeclass[T[_], A, B](implicit
+    L: LaxSemigroupal[\/, * => *, /\, T], ta: T[A], tb: T[B]
+  ): T[A \/ B] = L.product(/\(ta, tb))
 
   def typeclassFromEither[TC[_], A, B](implicit t: TC[Either[A, B]]): TC[A \/ B] =
     \/.leibniz.subst[λ[f[_,_] => TC[f[A, B]]]](t)

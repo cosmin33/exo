@@ -1,9 +1,10 @@
 package io.cosmo.exo.categories.functors
 
-import io.cosmo.exo.categories.{CMonoid, Dual, Monoidal}
+import io.cosmo.exo.categories.Monoidal
 
 /** https://ncatlab.org/nlab/show/monoidal+functor */
 trait LaxMonoidal[⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends LaxSemigroupal[⊙=, -->, ⊙-, F] { self =>
+  def A: Monoidal.AuxI[-->, ⊙-, I2]
   type I1
   type I2
 

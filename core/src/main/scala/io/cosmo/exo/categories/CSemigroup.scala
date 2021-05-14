@@ -18,7 +18,7 @@ object CSemigroup {
   ): CSemigroup.Aux[->, ⊙, m.TC, A] = new CSemigroup[->, ⊙, A] {type TC[a] = m.TC[a]; val C = m; val op = f}
 
   implicit def fromCats[A](implicit m: Semigroup[A]): CSemigroup.Aux[* => *, (*, *), Trivial.T1, A] =
-    unsafe(p => m.combine(p._1, p._2))
+    unsafe((m.combine _).tupled)
 
   def toCats[A](implicit m: CSemigroup.Aux[* => *, (*, *), Trivial.T1, A]): Semigroup[A] =
     Semigroup.instance({case (a, b) => m.op((a, b))})

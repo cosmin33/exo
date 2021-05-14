@@ -1,6 +1,5 @@
 package io.cosmo.exo
 
-import io.cosmo.exo
 import io.cosmo.exo.categories.data.{KleisModule, KleisModuleImpl}
 import io.cosmo.exo.categories.functors._
 import io.cosmo.exo.categories.instances.ProdcatInstances

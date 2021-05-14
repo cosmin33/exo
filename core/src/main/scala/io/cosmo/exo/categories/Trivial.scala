@@ -14,6 +14,8 @@ object Trivial {
   type T111[A, B, C] = Trivial
   type T322[Alg[_[_]], F[_], G[_]] = Trivial
 
+  implicitly[DummyImplicit]
+
   implicit val trivialInstance: Trivial = new Trivial {}
   implicit def faTrivial[F[_]]: ∀[λ[a => T1[F[a]]]] = ∀.of[λ[a => T1[F[a]]]].from(trivialInstance)
   implicit def faTrivial2[F[_,_]]: ∀∀[λ[(a,b) => T1[F[a, b]]]] = ∀∀.of[λ[(a, b) => T1[F[a, b]]]].from(trivialInstance)

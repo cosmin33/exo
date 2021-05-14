@@ -33,6 +33,9 @@ object ConjunctionModule {
     def tuple: (L, R) = /\.iso[L, R].flip(value)
   }
 
+  trait IsConjunction[T]
+  implicit def isConjunction[A, B]: IsConjunction[A /\ B] = new IsConjunction[A /\ B] {}
+
   implicit val co: Coercible[∀∀[Tuple2], ∀∀[/\]] = Coercible.instance
 
   implicit def iso[A, B]: (A, B) <=> (A /\ B) = /\.leibniz.is[A, B].toIso

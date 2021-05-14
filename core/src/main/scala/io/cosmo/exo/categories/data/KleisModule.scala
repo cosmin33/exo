@@ -1,7 +1,7 @@
 package io.cosmo.exo.categories.data
 
 import io.cosmo.exo.categories.functors._
-import io.cosmo.exo.categories.{Associative, Cartesian, Endobifunctor, Kleis, Subcat, Terminal}
+import io.cosmo.exo.categories._
 import io.cosmo.exo.evidence.{===, Is}
 
 trait KleisModule {
@@ -18,17 +18,27 @@ object KleisModule {
   implicit def conversion[->[_,_], F[_], A, B](fn: A -> F[B]): Kleis[->, F, A, B] = Kleis.leibniz(fn)
 
   def bifunctor[->[_,_], F[_], ⨂[_,_]](implicit
-    cc: Associative[->, ⨂],
+    C: Semicategory[->],
+    F: Endobifunctor[->, ⨂],
     lax: LaxSemigroupal[⨂, ->, ⨂, F]
   ): Endobifunctor[λ[(a, b) => a -> F[b]], ⨂] =
     new Endobifunctor[λ[(a, b) => a -> F[b]], ⨂] {
       def bimap[A, X, B, Y](left: A -> F[X], right: B -> F[Y]): (A ⨂ B) -> F[X ⨂ Y] =
-        cc.C.andThen(cc.grouped(left, right), lax.product[X, Y])
+        F.bimap(left, right) >>>> lax.product[X, Y]
+    }
+
+  def kleisSemicat[->[_,_], ⨂[_,_], F[_]](implicit
+    C: Semicategory[->],
+    M: Exo[λ[(a,b) => a -> F[b]], ->, F]
+  ): Semicategory[λ[(a,b) => a -> F[b]]] =
+    new Semicategory[λ[(a,b) => a -> F[b]]] {
+      def andThen[A, B, C](ab: A -> F[B], bc: B -> F[C]): A -> F[C] = ab >>>> M.map(bc)
     }
 
   def kleisCartesian[->[_,_], ⨂[_,_], F[_], T[_], Term](implicit
     c: Cartesian.Aux[->, ⨂, T, Term],
     t: Terminal.Aux[->, T, Term],
+    F: Endobifunctor[->, ⨂],
     c1: Subcat.Aux[λ[(a,b) => a -> F[b]], T],
     lax: LaxSemigroupal[⨂, ->, ⨂, F],
     lt: LaxSemigroupal[⨂, * => *, (*, *), T]
@@ -52,5 +62,15 @@ object KleisModule {
       def diag[A: TC]: A -> F[A ⨂ A] = c.C.andThen(c.diag[A], c1.id[⨂[A, A]])
       def braid[A: TC, B: TC]: (A ⨂ B) -> F[B ⨂ A] = c.C.andThen(c.swap, c1.id[B ⨂ A])
     }
+
+}
+
+private object KleisHelpers {
+
+  trait KleisSemicategory[->[_,_], ⨂[_,_], F[_]] extends Semicategory[λ[(a,b) => a -> F[b]]] {
+    protected implicit def C: Semicategory[->]
+    protected implicit def M: Exo[λ[(a,b) => a -> F[b]], ->, F]
+    def andThen[A, B, C](ab: A -> F[B], bc: B -> F[C]): A -> F[C] = ab >>>> M.map(bc)
+  }
 
 }

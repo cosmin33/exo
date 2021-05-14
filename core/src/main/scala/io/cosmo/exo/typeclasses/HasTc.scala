@@ -23,7 +23,7 @@ object HasTc {
   implicit def isoKanonic[TC[_[_]], A, F[_]](implicit i: IsKind.Aux[A, F]): HasTc[TC, A] <=> TC[F] =
     Iso.unsafe(ht => IsKind.injectivity(ht.isk, i).subst[TC](ht.instance), from(_, i))
 
-  def isoCanonic[TC[_[_]], F[_]]: HasTc[TC, TypeK[F]] <=> TC[F] = isoKanonic(IsKind.impl[F])
+  def isoCanonic[TC[_[_]], F[_]]: HasTc[TC, TypeK[F]] <=> TC[F] = isoKanonic
 
   implicit def isoFun1[TC[_[_]], A, F[_], B, G[_]](implicit
     ia: IsKind.Aux[A, F], ib: IsKind.Aux[B, G]
