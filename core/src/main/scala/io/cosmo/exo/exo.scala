@@ -7,7 +7,7 @@ import io.cosmo.exo.typeclasses.TypeK
 
 package object exo extends Existence with syntax {
   val InstanceOf: InstanceOfModule = InstanceOfImpl
-  type InstanceOf[T] = InstanceOf.InstanceOf[T]
+  type InstanceOf[T] = InstanceOf.Type[T]
   @inline final def instanceOf[T](t: T): InstanceOf[T] = InstanceOf.is(t)
 
   type Void <: Nothing with Void.Tag

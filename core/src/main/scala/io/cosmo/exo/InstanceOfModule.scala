@@ -5,12 +5,12 @@ import io.cosmo.exo.evidence._
 import io.cosmo.exo.evidence.variance._
 
 abstract class InstanceOfModule {
-  type InstanceOf[T] <: T
-  def is[T]: T === InstanceOf[T]
-  def isId: InstanceOf =~= Id
+  type Type[T] <: T
+  def is[T]: T === Type[T]
+  def isId: Type =~= Id
 }
 private[exo] object InstanceOfImpl extends InstanceOfModule {
-  type InstanceOf[T] = T
+  type Type[T] = T
   def is[T] = Is.refl
   def isId = IsK.refl[Id]
 }

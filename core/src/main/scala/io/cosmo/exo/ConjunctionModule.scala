@@ -33,8 +33,14 @@ object ConjunctionModule {
     def tuple: (L, R) = /\.iso[L, R].flip(value)
   }
 
-  trait IsConjunction[T]
-  implicit def isConjunction[A, B]: IsConjunction[A /\ B] = new IsConjunction[A /\ B] {}
+  trait IsConjunction[T] {
+    type T1
+    type T2
+    def iso: T <=> (T1 /\ T2)
+  }
+  implicit def isConjunction[A, B]: IsConjunction[A /\ B] =
+    new IsConjunction[A /\ B] { type T1 = A; type T2 = B; val iso = Iso.refl }
+  implicit def isConjunctionP[A, B]: IsConjunction[(A, B)] = typeclassToTuple
 
   implicit val co: Coercible[∀∀[Tuple2], ∀∀[/\]] = Coercible.instance
 
@@ -49,6 +55,9 @@ object ConjunctionModule {
 
   def typeclassFromTuple[TC[_], A, B](implicit t: TC[(A, B)]): TC[A /\ B] =
     /\.leibniz.subst[λ[f[_,_] => TC[f[A, B]]]](t)
+
+  def typeclassToTuple[TC[_], A, B](implicit t: TC[A /\ B]): TC[(A, B)] =
+    /\.leibniz.flip.subst[λ[f[_,_] => TC[f[A, B]]]](t)
 }
 
 private[exo] object ConjunctionModuleImpl extends ConjunctionModule {

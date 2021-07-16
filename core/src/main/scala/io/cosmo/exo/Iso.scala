@@ -69,6 +69,7 @@ trait Iso[->[_,_], A, B] { ab =>
 
 object Iso extends IsoInstances with IsoInstancesEq {
   def apply[->[_,_], A, B](implicit iso: HasIso[->, A, B]): Iso[->, A, B] = iso.iso
+  def apply[->[_,_], A](implicit si: SubcatHasId[->, A]): Iso[->, A, A] = refl[->, A]
   def apply[A]: Iso[* => *, A, A] = refl[A]
 
   private val reflAny: Iso[* => *, Any, Any] =
@@ -76,8 +77,8 @@ object Iso extends IsoInstances with IsoInstancesEq {
 
   def refl[A]: Iso[* => *, A, A] = reflAny.asInstanceOf[Iso[* => *, A, A]]
 
-  def refl[->[_,_], A, TC[_]](implicit c: Subcat.Aux[->, TC], tc: TC[A]): Iso[->, A, A] =
-    new Iso[->, A, A] {val cat = c; val to, from = c.id[A]}
+  def refl[->[_,_], A](implicit c: SubcatHasId[->, A]): Iso[->, A, A] =
+    new Iso[->, A, A] {val cat = c.s; val to, from = c.id}
 
   /** create an isomorphism given the two complementary functions as long as you promise they uphold the iso laws */
   def unsafe[->[_,_], A, B](ab: A -> B, ba: B -> A)(implicit C: Subcat[->]): Iso[->, A, B] =
@@ -111,7 +112,7 @@ object Iso extends IsoInstances with IsoInstancesEq {
     a: ValueOf[A], b: ValueOf[B], neq: A =:!= B
   ): A <=> B = Iso.unsafe((_: A) => b.value, (_: B) => a.value)
 
-  /** Isomorphisms from categoric constructs */
+  /** Isomorphisms from categorical constructs */
   implicit def isoAssociator[->[_,_], ⊙[_,_], A, B, C, T[_]](implicit
     A: Associative.Aux[->, ⊙, T], a: T[A], b: T[B], c: T[C]
   ): Iso[->, (A ⊙ B) ⊙ C, A ⊙ (B ⊙ C)] = A.isoAssociator(a, b, c)
@@ -168,32 +169,57 @@ object Iso extends IsoInstances with IsoInstancesEq {
   implicit def isoYoDoubleEmbed[->[_,_], A, B](implicit
     cat: Subcat[->]
   ): (A -> B) <=> ∀~[λ[f[_] => Endofunctor[->, f] => f[A] -> f[B]]] = yoneda.yoDoubleEmbed
-  implicit def isoYoCorolCov[->[_,_], ->#[_], A, B](implicit
-    C: Subcat.Aux[->, ->#], tca: ->#[A], tcb: ->#[B],
+  implicit def isoYoCorolCov[->[_,_], A, B](implicit
+    CA: SubcatHasId[->, A], CB: SubcatHasId[->, B]
   ): ((A -> *) <~> (B -> *)) <=> Iso[->, B, A] = yoneda.yoCorol1Cov
   implicit def isoYoCorolCon[->[_,_], ->#[_], A, B](implicit
-    C: Subcat.Aux[->, ->#], tca: ->#[A], tcb: ->#[B],
+    CA: SubcatHasId[->, A], CB: SubcatHasId[->, B]
   ): ((* -> A) <~> (* -> B)) <=> Iso[->, A, B] = yoneda.yoCorol1Con
 
   implicit def isoUnitToA[A]: (Unit => A) <=> A = Iso.unsafe(_(()), a => _ => a)
 
+
+  /** iso's for categorical constructs applied to tuple */
   object Product {
-    final def associate[A, B, C]: (A, (B, C)) <=> ((A, B), C) = Iso.unsafe({
-      case (a, (b, c)) => ((a, b), c) }, { case ((a, b), c) => (a, (b, c)) })
-    final def commute[A, B]: (A, B) <=> (B, A) = unsafe({ case (a, b) => (b, a) }, { case (b, a) => (a, b) })
-    final def unitL[A]: A <=> (Unit, A) = unsafe(a => ((), a), { case ((), a) => a })
-    final def unitR[A]: A <=> (A, Unit) = unsafe(a => (a, ()), { case (a, ()) => a })
+    final def associate[A, B, C]: (A, (B, C)) <=> ((A, B), C) =
+      Iso.unsafe(p => ((p._1, p._2._1), p._2._2), { p => (p._1._1, (p._1._2, p._2)) })
+    final def commute[A, B]: (A, B) <=> (B, A) = unsafe(_.swap, _.swap)
+    final def unitL[A]: A <=> (Unit, A) = unsafe(a => ((), a), _._2)
+    final def unitR[A]: A <=> (A, Unit) = unsafe(a => (a, ()), _._1)
     final def first [A, B, C](iso: A <=> C): (A, B) <=> (C, B) = iso.grouped(refl[B])
     final def second[A, B, C](iso: B <=> C): (A, B) <=> (A, C) = refl[A].grouped(iso)
   }
 
+  /** iso's for categorical constructs applied to /\ */
+  object Product1 {
+    final def associate[A, B, C]: (A /\ (B /\ C)) <=> ((A /\ B) /\ C) =
+      Iso.unsafe(p => /\(/\(p._1, p._2._1), p._2._2), p => /\(p._1._1, /\(p._1._2, p._2)))
+    final def commute[A, B]: (A /\ B) <=> (B /\ A) = Iso.unsafe(_.swap, _.swap)
+    final def unitL[A]: A <=> (Unit /\ A) = Iso.unsafe(a => /\((), a), _._2)
+    final def unitR[A]: A <=> (A /\ Unit) = Iso.unsafe(a => /\(a, ()), _._1)
+    final def first [A, B, C](iso: A <=> C): (A /\ B) <=> (C /\ B) = iso.grouped(refl[B])
+    final def second[A, B, C](iso: B <=> C): (A /\ B) <=> (A /\ C) = refl[A].grouped(iso)
+  }
+
+
+  /** iso's for categorical constructs applied to Either */
   object Coproduct {
-    final def associate[A, B, C]: (A \/ (B \/ C)) <=> ((A \/ B) \/ C) =
-      Iso.unsafe(
-        _.fold(a => -\/(-\/(a)), _.fold(b => -\/(\/-(b)), c => \/-(c))),
-        _.fold(_.fold(a => -\/(a), b => \/-(-\/(b))), c => \/-(\/-(c)))
-      )
-    final def commute[A, B]: (A \/ B) <=> (B \/ A) = unsafe((e: A \/ B) => e.swap, (e: B \/ A) => e.swap)
+    final def associate[A, B, C]: (A Either (B Either C)) <=> ((A Either B) Either C) = Iso.unsafe(
+      _.fold(a => Left(Left(a)), _.fold(b => Left(Right(b)), c => Right(c))),
+      _.fold(_.fold(a => Left(a), b => Right(Left(b))), c => Right(Right(c))))
+    final def commute[A, B]: (A Either B) <=> (B Either A) = Iso.unsafe(_.swap, _.swap)
+    final def unitL[A]: A <=> Either[Void, A] = unsafe(a => Right(a), _.fold((n: A) => n, identity))
+    final def unitR[A]: A <=> Either[A, Void] = unsafe(a => Left(a), _.fold(identity, (n: A) => n))
+    final def first [A, B, C](iso: A <=> C): (A Either B) <=> (C Either B) = iso.grouped(refl[B])
+    final def second[A, B, C](iso: B <=> C): (A Either B) <=> (A Either C) = refl[A].grouped(iso)
+  }
+
+  /** iso's for categorical constructs applied to \/ */
+  object Coproduct1 {
+    final def associate[A, B, C]: (A \/ (B \/ C)) <=> ((A \/ B) \/ C) = Iso.unsafe(
+      _.fold(a => -\/(-\/(a)), _.fold(b => -\/(\/-(b)), c => \/-(c))),
+      _.fold(_.fold(a => -\/(a), b => \/-(-\/(b))), c => \/-(\/-(c))))
+    final def commute[A, B]: (A \/ B) <=> (B \/ A) = unsafe(_.swap, _.swap)
     final def unitL[A]: A <=> (Void \/ A) = unsafe(a => \/-(a), _.fold((n: A) => n, identity))
     final def unitR[A]: A <=> (A \/ Void) = unsafe(a => -\/(a), _.fold(identity, (n: A) => n))
     final def first [A, B, C](iso: A <=> C): (A \/ B) <=> (C \/ B) = iso.grouped(refl[B])
@@ -212,10 +238,8 @@ object Iso extends IsoInstances with IsoInstancesEq {
   }
   @newtype private[exo] case class ReflImpIso[->[_,_], A](iso: Iso[->, A, A])
   private[exo] object ReflImpIso {
-//    implicit def impl[->[_,_], A](implicit s: SubcatHasId[->, A]): ReflImpIso[->, A] =
-//      ReflImpIso(Iso.refl[->, A, s.TC](s.s, s.t))
-    implicit def impl[->[_,_], A, T[_]](implicit s: Subcat.Aux[->, T], t: T[A]): ReflImpIso[->, A] =
-      ReflImpIso(Iso.refl[->, A, T])
+    implicit def impl[->[_,_], A](implicit s: SubcatHasId[->, A]): ReflImpIso[->, A] =
+      ReflImpIso(Iso.refl[->, A])
   }
   @newtype private[exo] case class EqImpIso[->[_,_], A, B](iso: Iso[->, A, B])
   private[exo] object EqImpIso {
@@ -240,7 +264,7 @@ object Iso extends IsoInstances with IsoInstancesEq {
   @newtype private[exo] case class ReflImpIsoK[->[_,_], F[_]](iso: ∀[λ[a => Iso[->, F[a], F[a]]]])
   private[exo] object ReflImpIsoK {
     implicit def impl[->[_,_], F[_], T[_]](implicit s: Subcat.Aux[->, T], tc: ∀[λ[a => T[F[a]]]]): ReflImpIsoK[->, F] =
-      ReflImpIsoK(∀.of[λ[a => Iso[->, F[a], F[a]]]].fromH(t => Iso.refl[->, F[t.T], T](s, tc[t.T])))
+      ReflImpIsoK(∀.of[λ[a => Iso[->, F[a], F[a]]]].fromH(t => Iso.refl[->, F[t.T]](SubcatHasId.from(s, tc[t.T]))))
   }
   @newtype private[exo] case class EqImpIsoK[->[_,_], F[_], G[_]](iso: ∀[λ[a => Iso[->, F[a], G[a]]]])
   private[exo] object EqImpIsoK {
@@ -348,7 +372,7 @@ private[exo] object IsoHelperTraits {
   trait IsoGroupoid[->[_,_], T[_]] extends Groupoid[Iso[->, *, *]] {
     def cat: Subcat.Aux[->, T]
     type TC[a] = T[a]
-    def id[A](implicit A: T[A]): Iso[->, A, A] = Iso.refl[->, A, TC](cat, A)
+    def id[A](implicit A: T[A]): Iso[->, A, A] = Iso.refl[->, A](SubcatHasId.from(cat, A))
     def flip[A, B](f: Iso[->, A, B]): Iso[->, B, A] = f.flip
     def andThen[A, B, C](ab: Iso[->, A, B], bc: Iso[->, B, C]): Iso[->, A, C] = ab.andThen(bc)
   }

@@ -16,9 +16,9 @@ trait LaxSemigroupal[⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] { self =>
     CSemigroup.unsafe(map2(ma.op))(A)
 
   def compose[~~>[_,_], ⊙~[_,_], G[_]](G: LaxSemigroupal[⊙-, ~~>, ⊙~, G])(implicit
-    S: Associative[~~>, ⊙~], F: Exo[-->, ~~>, G]
+    F: Exo[-->, ~~>, G]
   ): LaxSemigroupal[⊙=, ~~>, ⊙~, λ[a => G[F[a]]]] =
-    new LaxSemigroupal[⊙=, ~~>, ⊙~, λ[a => G[F[a]]]] { val A = S; def product[A, B] = G.map2(self.product[A, B]) }
+    new LaxSemigroupal[⊙=, ~~>, ⊙~, λ[a => G[F[a]]]] { val A = G.A; def product[A, B] = G.map2(self.product[A, B]) }
 }
 
 object LaxSemigroupal extends LaxSemigroupalInstances {
@@ -66,8 +66,7 @@ private object LaxSemigroupalHelpers {
   trait ImpLaxMonoidal[F[_]] extends ImpLaxSemigroupal[F] with LaxMonoidal[(*,*), * => *, (*,*), F] {
     protected def sem: InvariantMonoidal[F]
     override def A = implicitly
-    type I1 = Unit
-    type I2 = Unit
+    type I = Unit
     val id: Unit => F[Unit] = _ => sem.unit
   }
 }

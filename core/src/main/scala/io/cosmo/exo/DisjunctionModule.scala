@@ -23,6 +23,8 @@ trait DisjunctionModule {
   final def apply[L, R](e: Either[L, R]): Type[L, R] = leibniz.is[L, R](e)
   final def iso[L, R]: Either[L, R] <=> Type[L, R] = leibniz.is[L, R].toIso
   final def either[A, B, C](ac: A => C, bc: B => C): Type[A, B] => C = fold(_)(ac, bc)
+
+  //def unapply[L, R](d: Type[L, R]): Option[] = ???
 }
 
 private[exo] object DisjunctionModuleImpl extends DisjunctionModule {

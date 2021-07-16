@@ -39,6 +39,13 @@ object yoneda {
         i => Iso.unsafe(i.apply[A].to(ca.id), i.apply[B].from(cb.id))(ca.s),
         i => <~>.unsafe(yoEmbeddingCov[->, A, B].from(i.to), yoEmbeddingCov[->, B, A].from(i.from))
       )
+  def yoCorol1CovX[->[_,_], A, B](implicit
+    ca: SubcatHasId[->, A], cb: SubcatHasId[->, B]
+  ): ((A -> *) <~> (B -> *)) <=> Iso[->, B, A] =
+      Iso.unsafe(
+        i => Iso.unsafe(i.apply[A].to(ca.id), i.apply[B].from(cb.id))(ca.s),
+        i => <~>.unsafe(yoEmbeddingCov[->, A, B].from(i.to), yoEmbeddingCov[->, B, A].from(i.from))
+      )
 
   def yoCorol1Con[->[_,_], A, B](implicit
     ca: SubcatHasId[->, A], cb: SubcatHasId[->, B]
@@ -48,10 +55,10 @@ object yoneda {
       i => <~>.unsafe(yoEmbeddingCon[->, A, B].from(i.to), yoEmbeddingCon[->, B, A].from(i.from))
     )
 
-  def isoIndirectLiskov[A, B]: ((A <~< *) ~> (B <~< *)) <=> (B <~< A) = yoEmbeddingCov
-  def isoIndirectLeibniz[A, B]: ((A === *) <~> (B === *)) <=> (A === B) =
+  private def isoIndirectLiskov[A, B]: ((A <~< *) ~> (B <~< *)) <=> (B <~< A) = yoEmbeddingCov
+  private def isoIndirectLeibniz[A, B]: ((A === *) <~> (B === *)) <=> (A === B) =
     yoCorol1Cov[===, A, B] andThen Iso.isoGroupoid[===, B, A].flip andThen Iso.isoGroupoidFlip
-    // yoCorol1Cov[===, A, B].chain[B === A].chain[A === B] // strange compile error for this one but it should work, I think it's a scala bug ?!?!
+//     yoCorol1Cov[===, A, B].chain[B === A].chain[A === B] // strange compile error for this one but it should work, I think it's a scala bug ?!?!
     // TODO: investigate why the above doesn't work
 
   /** object containing all general yoneda isomorphisms applied to Function1 */

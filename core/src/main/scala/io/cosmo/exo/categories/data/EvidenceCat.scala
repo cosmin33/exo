@@ -70,30 +70,30 @@ object EvidenceCat {
       def &&&[X, Y, Z](f: EvidenceCat[T, X, Y], g: EvidenceCat[T, X, Z]) = EvidenceCat(f.left, L.product(/\(f.right, g.right)))
     }
 
-  implicit def cocartesian[T[_], I](implicit
-    L: LaxSemigroupal[\/, * => *, \/, T], ti: T[I]
-  ): Cartesian.Aux[Dual[EvidenceCat[T,*,*], *, *], \/, T, I] =
-    Dual.leibniz[EvidenceCat[T,*,*]].subst[Cartesian.Aux[*[_,_], \/, T, I]](cocartesianOpp[T, I])
-
   implicit def cocartesianOpp[T[_], I](implicit
     L: LaxSemigroupal[\/, * => *, \/, T], ti: T[I]
   ): Cartesian.Aux[Opp[EvidenceCat[T, *, *]]#l, \/, T, I] =
     new Cartesian[Opp[EvidenceCat[T,*,*]]#l, \/] {
-        type Id = I
-        type TC[a] = T[a]
-        def C = category[T].opp
-        def bifunctor = Exobifunctor.opp(EvidenceCat.bifunctorDisj)
-        def associate  [X: TC, Y: TC, Z: TC] = implicitly
-        def diassociate[X: TC, Y: TC, Z: TC] = implicitly
-        def fst[A: TC, B: TC]                = implicitly
-        def snd[A: TC, B: TC]                = implicitly
-        def diag[A: TC]                      = implicitly
-        def braid[A: TC, B: TC]              = implicitly
-        def idl  [A: TC]                     = implicitly
-        def coidl[A: TC]                     = implicitly
-        def idr  [A: TC]                     = implicitly
-        def coidr[A: TC]                     = implicitly
-        def &&&[X, Y, Z](f: EvidenceCat[T, Y, X], g: EvidenceCat[T, Z, X]) = EvidenceCat(L.product(-\/(f.left)), f.right)
-      }
+      type Id = I
+      type TC[a] = T[a]
+      def C = category[T].opp
+      def bifunctor = Exobifunctor.opp(EvidenceCat.bifunctorDisj)
+      def associate  [X: TC, Y: TC, Z: TC] = implicitly
+      def diassociate[X: TC, Y: TC, Z: TC] = implicitly
+      def fst[A: TC, B: TC]                = implicitly
+      def snd[A: TC, B: TC]                = implicitly
+      def diag[A: TC]                      = implicitly
+      def braid[A: TC, B: TC]              = implicitly
+      def idl  [A: TC]                     = implicitly
+      def coidl[A: TC]                     = implicitly
+      def idr  [A: TC]                     = implicitly
+      def coidr[A: TC]                     = implicitly
+      def &&&[X, Y, Z](f: EvidenceCat[T, Y, X], g: EvidenceCat[T, Z, X]) = EvidenceCat(L.product(-\/(f.left)), f.right)
+    }
+
+  implicit def cocartesian[T[_], I](implicit
+    L: LaxSemigroupal[\/, * => *, \/, T], ti: T[I]
+  ): Cartesian.Aux[Dual[EvidenceCat[T,*,*], *, *], \/, T, I] =
+    Dual.leibniz[EvidenceCat[T,*,*]].subst[Cartesian.Aux[*[_,_], \/, T, I]](cocartesianOpp[T, I])
 
 }

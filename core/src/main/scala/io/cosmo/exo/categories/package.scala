@@ -33,13 +33,15 @@ package object categories extends ProdcatInstances with categories.syntax {
   type Cocartesian[->[_,_], ⨂[_,_]] = Cartesian[Dual[->, *, *], ⨂]
 
   type Endofunctor[->[_,_], F[_]] = Exofunctor[->, ->, F]
-  type Exomonad1[->[_,_], TC[_], F[_]] = Subcat.Aux[Kleis[->,F,*,*], TC] /\ Exo[Kleis[->,F,*,*], ->, F]
-//  type Exomonad1[->[_,_], TC[_], F[_]] = Subcat.Aux[λ[(a,b) => a -> F[b]], TC] /\ Exo[λ[(a,b) => a -> F[b]], ->, F]
+//  type Exomonad1[->[_,_], TC[_], F[_]] = Subcat.Aux[Kleis[->,F,*,*], TC] /\ Exo[Kleis[->,F,*,*], ->, F]
+  type Exomonad1[->[_,_], TC[_], F[_]] = Subcat.Aux[λ[(a,b) => a -> F[b]], TC] /\ Exo[λ[(a,b) => a -> F[b]], ->, F]
 
   type Endobifunctor [->[_,_], ⊙[_,_]] = Exobifunctor[->, ->, ->, ⊙]
   type Endoprofunctor[->[_,_], ⊙[_,_]] = Exobifunctor[Dual[->,*,*], ->, ->, ⊙]
 
   type CSemigroupK[->[_,_], ⊙[_,_], F[_]] = ∀[λ[a => CSemigroup[->, ⊙, F[a]]]]
   type CMonoidK   [->[_,_], ⊙[_,_], F[_]] = ∀[λ[a => CMonoid   [->, ⊙, F[a]]]]
+
+  type Exorepresentable[->[_,_], F[_], Repr] = Exo.Cov[->, F] /\ (F <~> (Repr -> *))
 
 }

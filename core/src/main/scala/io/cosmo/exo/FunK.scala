@@ -28,10 +28,10 @@ object IsKind {
     new IsKind[A \/ B] { type Type[α] = \/[a.Type[α], b.Type[α]] }
 
   def injectivity[A, B](ia: IsKind[A], ib: IsKind[B])(implicit eq: IsKind[A] === IsKind[B]): ia.Type =~= ib.Type =
-    Unsafe.isK[ia.Type, ib.Type]
+    Unsafe.isK
 
-  implicit def isoInjectivity[F[_], G[_]]: (IsKind[TypeK[F]] === IsKind[TypeK[G]]) <=> (F =~= G) =
-    Iso.unsafe(IsKind.injectivity(IsKind[TypeK[F]], IsKind[TypeK[G]])(_), _.lower[λ[f[_] => IsKind[TypeK[f]]]])
+  def isoInjectivity[A, B](implicit ia: IsKind[A], ib: IsKind[B]): (IsKind[A] === IsKind[B]) <=> (ia.Type =~= ib.Type) =
+    Iso.unsafe(_ => Unsafe.isK, _=> Unsafe.is)
 }
 
 sealed trait NestK[A, B]
@@ -39,8 +39,6 @@ object NestK {
   implicit def nestImp[A, B](implicit a: IsKind[A], b: IsKind[B]): IsKind.Aux[NestK[A, B], λ[x => a.Type[b.Type[x]]]] =
     new IsKind[NestK[A, B]] { type Type[x] = a.Type[b.Type[x]] }
 }
-
-//trait NestK[A, B] extends DoubleK[λ[(f[_], g[_]) => ∀[λ[x => f[g[x]]]]], A, B]
 
 trait FunK[A, B] {
   type TypeA[_]
@@ -56,22 +54,17 @@ trait FunK[A, B] {
 
 object FunK {
   type Aux[A, B, F[_], G[_]] = FunK[A, B] { type TypeA[a] = F[a]; type TypeB[a] = G[a] }
-  def from[F[_], G[_], A, B](f: F ~> G, a: IsKind[A], b: IsKind[B])(implicit e1: a.Type =~= F, e2: b.Type =~= G): FunK.Aux[A, B, F, G] =
+  def apply[F[_], G[_]](f: F ~> G): FunK.Aux[TypeK[F], TypeK[G], F, G] = FunK.from(f)(IsKind[TypeK[F]], IsKind[TypeK[G]])
+  def from[F[_], G[_], A, B](f: F ~> G)(a: IsKind.Aux[A, F], b: IsKind.Aux[B, G]): FunK.Aux[A, B, F, G] =
     new FunK[A, B] {
       type TypeA[a] = F[a]
       type TypeB[a] = G[a]
-      val kindA: IsKind.Aux[A, F] = e1.subst[IsKind.Aux[A, *[_]]](a)
-      val kindB: IsKind.Aux[B, G] = e2.subst[IsKind.Aux[B, *[_]]](b)
+      val kindA = a
+      val kindB = b
       val fn =  f
     }
-  def apply[F[_], G[_]](f: F ~> G): FunK.Aux[TypeK[F], TypeK[G], F, G] = FunK.from(f, IsKind[TypeK[F]], IsKind[TypeK[G]])
 
   type FunctorFunK[A, B] = EvidenceCat[HasTc[Exo.CovF, *], A, B] /\ FunK[A, B]
-  trait FunctorFunK1[F1[_], F2[_], A, B] {
-    def f1: F1[A]
-    def f2: F2[A]
-    def fn: FunK[A, B]
-  }
 
   def isoFunKUnapply[A, B, F[_], G[_]](i: IsoFunK[A, B])(implicit a: IsKind.Aux[A, F], b: IsKind.Aux[B, G]): F <~> G =
     <~>.unsafe(i.to.unapply, i.from.unapply)
@@ -104,28 +97,25 @@ object FunK {
     new Endobifunctor[FunK, NestK] {
       def bimap[A, X, B, Y](l: FunK[A, X], r: FunK[B, Y]): FunK[NestK[A, B], NestK[X, Y]] = ???
     }
-//  implicit def compositionFunctor: Endobifunctor[FunK, NestK] =
-//    new Endobifunctor[FunK, NestK] {
-//      def bimap[A, X, B, Y](l: FunK[A, X], r: FunK[B, Y]): FunK[NestK[A, B], NestK[X, Y]] = ???
-//    }
+
 
   implicit def compositionMonoidal: Monoidal.Aux[FunK, NestK, IsKind, TypeK[cats.Id]] =
     new Monoidal[FunK, NestK] {
       type TC[a] = IsKind[a]
       type Id = TypeK[cats.Id]
       def C: Subcat.Aux[FunK, IsKind] = implicitly
-      def bifunctor: Endobifunctor[FunK, NestK] = ??? //implicitly
-      def idl  [A](implicit ia: TC[A]) = FunK.from(~>.composition.idl[ia.Type], NestK.nestImp(IsKind[TypeK[cats.Id]], ia), ia)
-      def coidl[A](implicit ia: TC[A]) = FunK.from(~>.composition.coidl[ia.Type], ia, NestK.nestImp(IsKind[TypeK[cats.Id]], ia))
-      def idr  [A](implicit ia: TC[A]) = FunK.from(~>.composition.idr[ia.Type], NestK.nestImp(ia, IsKind[TypeK[cats.Id]]), ia)
-      def coidr[A](implicit ia: TC[A]) = FunK.from(~>.composition.coidr[ia.Type], ia, NestK.nestImp(ia, IsKind[TypeK[cats.Id]]))
+      def bifunctor: Endobifunctor[FunK, NestK] = implicitly
+      def idl  [A](implicit ia: TC[A]) = FunK.from(~>.composition.idl[ia.Type])(NestK.nestImp(IsKind[TypeK[cats.Id]], ia), ia)
+      def coidl[A](implicit ia: TC[A]) = FunK.from(~>.composition.coidl[ia.Type])(ia, NestK.nestImp(IsKind[TypeK[cats.Id]], ia))
+      def idr  [A](implicit ia: TC[A]) = FunK.from(~>.composition.idr[ia.Type])(NestK.nestImp(ia, IsKind[TypeK[cats.Id]]), ia)
+      def coidr[A](implicit ia: TC[A]) = FunK.from(~>.composition.coidr[ia.Type])(ia, NestK.nestImp(ia, IsKind[TypeK[cats.Id]]))
       def associate  [X, Y, Z](implicit ix: IsKind[X], iy: IsKind[Y], iz: IsKind[Z]) = FunK.from(
-        ~>.composition.associate[ix.Type, iy.Type, iz.Type],
+        ~>.composition.associate[ix.Type, iy.Type, iz.Type])(
         NestK.nestImp(NestK.nestImp(ix, iy), iz),
         NestK.nestImp(ix, NestK.nestImp(iy, iz))
       )
       def diassociate[X, Y, Z](implicit ix: IsKind[X], iy: IsKind[Y], iz: IsKind[Z]) = FunK.from(
-        ~>.composition.diassociate[ix.Type, iy.Type, iz.Type],
+        ~>.composition.diassociate[ix.Type, iy.Type, iz.Type])(
         NestK.nestImp(ix, NestK.nestImp(iy, iz)),
         NestK.nestImp(NestK.nestImp(ix, iy), iz)
       )
@@ -143,19 +133,19 @@ private[exo] object FunKHelpers {
     type Initial = TypeK[VoidK]
     def initialTC = IsKind[TypeK[VoidK]]
     def initiate[A](implicit ia: IsKind[A]): FunK[TypeK[VoidK], A] =
-      FunK.from(~>.initiate[ia.Type], IsKind[TypeK[VoidK]], ia)
+      FunK.from(~>.initiate[ia.Type])(IsKind[TypeK[VoidK]], ia)
     type Terminal = TypeK[UnitK]
     def terminalTC = IsKind[TypeK[UnitK]]
     def terminate[A](implicit ia: IsKind[A]): FunK[A, TypeK[UnitK]] =
-      FunK.from(~>.terminate[ia.Type], ia, IsKind[TypeK[UnitK]])
+      FunK.from(~>.terminate[ia.Type])(ia, IsKind[TypeK[UnitK]])
     def cartesian = implicitly
     def cocartesian = implicitly
-    def id[A](implicit ia: IsKind[A]): FunK[A, A] = FunK.from(~>.id[ia.Type], ia, ia)
+    def id[A](implicit ia: IsKind[A]): FunK[A, A] = FunK.from(~>.id[ia.Type])(ia, ia)
     def andThen[A, B, C](ab: FunK[A, B], bc: FunK[B, C]): FunK[A, C] =
-      FunK.from(~>.andThen(ab.fn, IsKind.injectivity(bc.kindA, ab.kindB).subst[λ[f[_] => f ~> bc.TypeB]](bc.fn)), ab.kindA, bc.kindB)
+      FunK.from(~>.andThen(ab.fn, IsKind.injectivity(bc.kindA, ab.kindB).subst[λ[f[_] => f ~> bc.TypeB]](bc.fn)))(ab.kindA, bc.kindB)
     def distribute[A, B, C](implicit ia: IsKind[A], ib: IsKind[B], ic: IsKind[C]): FunK[A ⨂ (B ⨁ C), (A ⨂ B) ⨁ (A ⨂ C)] =
       FunK.from(
-        ~>.distribute[ia.Type, ib.Type, ic.Type],
+        ~>.distribute[ia.Type, ib.Type, ic.Type])(
         IsKind.pair2(ia, IsKind.either2(ib, ic)),
         IsKind.either2(IsKind.pair2(ia, ib), IsKind.pair2(ia, ic))
       )
@@ -164,7 +154,7 @@ private[exo] object FunKHelpers {
   trait FunkBifTuple extends Endobifunctor[FunK, Tuple2] {
     def bimap[A, X, B, Y](left: FunK[A, X], right: FunK[B, Y]): FunK[(A, B), (X, Y)] =
       FunK.from(
-        ~>.product.bimap(left.fn, right.fn),
+        ~>.product.bimap(left.fn, right.fn))(
         IsKind.pair2(left.kindA, right.kindA),
         IsKind.pair2(left.kindB, right.kindB)
       )
@@ -172,7 +162,7 @@ private[exo] object FunKHelpers {
 
   trait FunkBifEither extends Endobifunctor[FunK, Either] {
     def bimap[A, X, B, Y](l: FunK[A, X], r: FunK[B, Y]): FunK[Either[A, B], Either[X, Y]] =
-      FunK.from(~>.coproduct.bimap(l.fn, r.fn), IsKind.either2(l.kindA, r.kindA), IsKind.either2(l.kindB, r.kindB))
+      FunK.from(~>.coproduct.bimap(l.fn, r.fn))(IsKind.either2(l.kindA, r.kindA), IsKind.either2(l.kindB, r.kindB))
   }
 
   trait FunkCartesianTuple extends Cartesian[FunK, Tuple2] {
@@ -181,36 +171,36 @@ private[exo] object FunKHelpers {
     def C: Subcat.Aux[FunK, IsKind] = implicitly
     def bifunctor: Endobifunctor[FunK, Tuple2] = implicitly
     def fst[A, B](implicit ia: IsKind[A], ib: IsKind[B]): FunK[(A, B), A] =
-      FunK.from(~>.product.fst[ia.Type, ib.Type], IsKind.pair2(ia, ib), ia)
+      FunK.from(~>.product.fst[ia.Type, ib.Type])(IsKind.pair2(ia, ib), ia)
     def snd[A, B](implicit ia: IsKind[A], ib: IsKind[B]): FunK[(A, B), B] =
-      FunK.from(~>.product.snd[ia.Type, ib.Type], IsKind.pair2(ia, ib), ib)
+      FunK.from(~>.product.snd[ia.Type, ib.Type])(IsKind.pair2(ia, ib), ib)
     def diag[A](implicit ia: IsKind[A]): FunK[A, (A, A)] =
-      FunK.from(~>.product.diag[ia.Type], ia, IsKind.pair2(ia, ia))
+      FunK.from(~>.product.diag[ia.Type])(ia, IsKind.pair2(ia, ia))
     def &&&[X, Y, Z](f: FunK[X, Y], g: FunK[X, Z]): FunK[X, (Y, Z)] =
       FunK.from(
-        ~>.product.merge(f.fn, IsKind.injectivity(g.kindA, f.kindA).subst[λ[f[_] => f ~> g.TypeB]](g.fn)),
+        ~>.product.merge(f.fn, IsKind.injectivity(g.kindA, f.kindA).subst[λ[f[_] => f ~> g.TypeB]](g.fn)))(
         f.kindA,
         IsKind.pair2(f.kindB, g.kindB)
       )
     def idl  [A](implicit ia: IsKind[A]): FunK[(TypeK[UnitK], A), A] =
-      FunK.from(~>.product.idl[ia.Type], IsKind.pair2(IsKind[TypeK[UnitK]], ia), ia)
+      FunK.from(~>.product.idl[ia.Type])(IsKind.pair2(IsKind[TypeK[UnitK]], ia), ia)
     def coidl[A](implicit ia: IsKind[A]): FunK[A, (TypeK[UnitK], A)] =
-      FunK.from(~>.product.coidl[ia.Type], ia, IsKind.pair2(IsKind[TypeK[UnitK]], ia))
+      FunK.from(~>.product.coidl[ia.Type])(ia, IsKind.pair2(IsKind[TypeK[UnitK]], ia))
     def idr  [A](implicit ia: IsKind[A]): FunK[(A, TypeK[UnitK]), A] =
-      FunK.from(~>.product.idr[ia.Type], IsKind.pair2(ia, IsKind[TypeK[UnitK]]), ia)
+      FunK.from(~>.product.idr[ia.Type])(IsKind.pair2(ia, IsKind[TypeK[UnitK]]), ia)
     def coidr[A](implicit ia: IsKind[A]): FunK[A, (A, TypeK[UnitK])] =
-      FunK.from(~>.product.coidr[ia.Type], ia, IsKind.pair2(ia, IsKind[TypeK[UnitK]]))
+      FunK.from(~>.product.coidr[ia.Type])(ia, IsKind.pair2(ia, IsKind[TypeK[UnitK]]))
     def braid[A, B](implicit ia: IsKind[A], ib: IsKind[B]): FunK[(A, B), (B, A)] =
-      FunK.from(~>.product.braid[ia.Type, ib.Type], IsKind.pair2(ia, ib), IsKind.pair2(ib, ia))
+      FunK.from(~>.product.braid[ia.Type, ib.Type])(IsKind.pair2(ia, ib), IsKind.pair2(ib, ia))
     def associate  [X, Y, Z](implicit ix: IsKind[X], iy: IsKind[Y], iz: IsKind[Z]): FunK[((X, Y), Z), (X, (Y, Z))] =
       FunK.from(
-        ~>.product.associate[ix.Type, iy.Type, iz.Type],
+        ~>.product.associate[ix.Type, iy.Type, iz.Type])(
         IsKind.pair2(IsKind.pair2(ix, iy), iz),
         IsKind.pair2(ix, IsKind.pair2(iy, iz))
       )
     def diassociate[X, Y, Z](implicit ix: IsKind[X], iy: IsKind[Y], iz: IsKind[Z]): FunK[(X, (Y, Z)), ((X, Y), Z)] =
       FunK.from(
-        ~>.product.diassociate[ix.Type, iy.Type, iz.Type],
+        ~>.product.diassociate[ix.Type, iy.Type, iz.Type])(
         IsKind.pair2(ix, IsKind.pair2(iy, iz)),
         IsKind.pair2(IsKind.pair2(ix, iy), iz)
       )
@@ -222,36 +212,36 @@ private[exo] object FunKHelpers {
     def bifunctor = DualModule.oppEndobifunctor(Endobifunctor[FunK, Either])
     def C = DualModule.oppSubcat(implicitly[Subcat.Aux[FunK, IsKind]])
     def fst[A, B](implicit ia: IsKind[A], ib: IsKind[B]): FunK[A, Either[A, B]] =
-      FunK.from(~>.coproduct.inl[ia.Type, ib.Type], ia, IsKind.either2(ia, ib))
+      FunK.from(~>.coproduct.inl[ia.Type, ib.Type])(ia, IsKind.either2(ia, ib))
     def snd[A, B](implicit ia: IsKind[A], ib: IsKind[B]): FunK[B, Either[A, B]] =
-      FunK.from(~>.coproduct.inr[ia.Type, ib.Type], ib, IsKind.either2(ia, ib))
+      FunK.from(~>.coproduct.inr[ia.Type, ib.Type])(ib, IsKind.either2(ia, ib))
     def diag[A](implicit ia: IsKind[A]): FunK[Either[A, A], A] =
-      FunK.from(~>.coproduct.codiag[ia.Type], IsKind.either2(ia, ia), ia)
+      FunK.from(~>.coproduct.codiag[ia.Type])(IsKind.either2(ia, ia), ia)
     def &&&[X, Y, Z](f: FunK[Y, X], g: FunK[Z, X]): FunK[Either[Y, Z], X] =
     FunK.from(
-      ~>.coproduct.split(f.fn, IsKind.injectivity(g.kindB, f.kindB).subst[λ[f[_] => g.TypeA ~> f]](g.fn)),
+      ~>.coproduct.split(f.fn, IsKind.injectivity(g.kindB, f.kindB).subst[λ[f[_] => g.TypeA ~> f]](g.fn)))(
       IsKind.either2(f.kindA, g.kindA),
       f.kindB
     )
     def idl  [A](implicit ia: IsKind[A]): FunK[A, Either[TypeK[VoidK], A]] =
-      FunK.from(~>.coproduct.idl[ia.Type], ia, IsKind.either2(IsKind[TypeK[VoidK]], ia))
+      FunK.from(~>.coproduct.idl[ia.Type])(ia, IsKind.either2(IsKind[TypeK[VoidK]], ia))
     def coidl[A](implicit ia: IsKind[A]): FunK[Either[TypeK[VoidK], A], A] =
-      FunK.from(~>.coproduct.coidl[ia.Type], IsKind.either2(IsKind[TypeK[VoidK]], ia), ia)
+      FunK.from(~>.coproduct.coidl[ia.Type])(IsKind.either2(IsKind[TypeK[VoidK]], ia), ia)
     def idr  [A](implicit ia: IsKind[A]): FunK[A, Either[A, TypeK[VoidK]]] =
-      FunK.from(~>.coproduct.idr[ia.Type], ia, IsKind.either2(ia, IsKind[TypeK[VoidK]]))
+      FunK.from(~>.coproduct.idr[ia.Type])(ia, IsKind.either2(ia, IsKind[TypeK[VoidK]]))
     def coidr[A](implicit ia: IsKind[A]): FunK[Either[A, TypeK[VoidK]], A] =
-      FunK.from(~>.coproduct.coidr[ia.Type], IsKind.either2(ia, IsKind[TypeK[VoidK]]), ia)
+      FunK.from(~>.coproduct.coidr[ia.Type])(IsKind.either2(ia, IsKind[TypeK[VoidK]]), ia)
     def braid[A, B](implicit ia: IsKind[A], ib: IsKind[B]): FunK[Either[B, A], Either[A, B]] =
-      FunK.from(~>.coproduct.braid[ib.Type, ia.Type], IsKind.either2(ib, ia), IsKind.either2(ia, ib))
+      FunK.from(~>.coproduct.braid[ib.Type, ia.Type])(IsKind.either2(ib, ia), IsKind.either2(ia, ib))
     def associate  [X, Y, Z](implicit ix: IsKind[X], iy: IsKind[Y], iz: IsKind[Z]): FunK[Either[X, Either[Y, Z]], Either[Either[X, Y], Z]] =
       FunK.from(
-        ~>.coproduct.associate[ix.Type, iy.Type, iz.Type],
+        ~>.coproduct.associate[ix.Type, iy.Type, iz.Type])(
         IsKind.either2(ix, IsKind.either2(iy, iz)),
         IsKind.either2(IsKind.either2(ix, iy), iz)
       )
     def diassociate[X, Y, Z](implicit ix: IsKind[X], iy: IsKind[Y], iz: IsKind[Z]): FunK[Either[Either[X, Y], Z], Either[X, Either[Y, Z]]] =
       FunK.from(
-        ~>.coproduct.diassociate[ix.Type, iy.Type, iz.Type],
+        ~>.coproduct.diassociate[ix.Type, iy.Type, iz.Type])(
         IsKind.either2(IsKind.either2(ix, iy), iz),
         IsKind.either2(ix, IsKind.either2(iy, iz))
       )

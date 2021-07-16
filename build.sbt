@@ -91,7 +91,7 @@ lazy val root = project.in(file("."))
   .settings(commonSettings)
   .settings(
     name := "exo",
-    skip in publish := true,
+    publish / skip := true,
     publish := {},
     publishLocal := {},
     publishArtifact := false,

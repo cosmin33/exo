@@ -25,18 +25,32 @@ trait SubcatHasId[->[_,_], A] {
   type TC[_]
   val s: Subcat.Aux[->, TC]
   val t: TC[A]
-  def id: A -> A = s.id(t)
+  val id: A -> A
 }
 object SubcatHasId {
   def apply[->[_,_], A](implicit sub: SubcatHasId[->, A]): SubcatHasId[->, A] = sub
 
   implicit def from[->[_,_], A, T[_]](implicit sub: Subcat.Aux[->, T], tc: T[A]): SubcatHasId[->, A] =
-    new SubcatHasId[->, A] { type TC[a] = T[a]; val s = sub; val t = tc }
+    new SubcatHasId[->, A] { type TC[a] = T[a]; val s = sub; val t = tc; val id = sub.id(tc) }
 }
 
+trait SubcatHasId2[->[_,_], A, B] {
+  type TC[_]
+  val s: Subcat.Aux[->, TC]
+  val ta: TC[A]
+  val tb: TC[B]
+  val idA: A -> A
+  val idB: B -> B
+}
+object SubcatHasId2 {
+  def apply[->[_,_], A, B](implicit sub: SubcatHasId2[->, A, B]): SubcatHasId2[->, A, B] = sub
+
+  implicit def from[->[_,_], A, B, T[_]](implicit sub: Subcat.Aux[->, T], t1: T[A], t2: T[B]): SubcatHasId2[->, A, B] =
+    new SubcatHasId2[->, A, B] { type TC[a] = T[a]; val s = sub; val ta = t1; val tb = t2; val idA = s.id(ta); val idB = s.id(tb) }
+}
 
 trait SubcategorySyntax {
-  implicit final class ToSemicategoryOps[->[_, _], B, C](self: B -> C) {
+  implicit final class GenericSubcatOps[->[_, _], B, C](self: B -> C) {
     private def compose[A](f: A -> B)(implicit ev: Semicategory[->]): A -> C = ev.andThen(f, self)
     private def andThen[D](f: C -> D)(implicit ev: Semicategory[->]): B -> D = ev.andThen(self, f)
     def <<<<[A](f: A -> B)(implicit ev: Semicategory[->]): A -> C = compose(f)
@@ -51,12 +65,12 @@ trait SubcategorySyntax {
     def associateR[X, Y, Z, ⊙[_,_], TC[_]](implicit
       A: Associative.Aux[->, ⊙, TC], ev: C === ⊙[⊙[X, Y], Z], c: Subcat.Aux[->, TC],
       tx: TC[X], ty: TC[Y], tz: TC[Z]
-    ): B -> ⊙[X, ⊙[Y, Z]] = A.C.andThen(ev.subst[λ[X => B -> X]](self), A.associate[X, Y, Z])
+    ): B -> ⊙[X, ⊙[Y, Z]] = A.C.andThen(ev.subst[λ[α => B -> α]](self), A.associate[X, Y, Z])
 
     def diassociateR[X, Y, Z, ⊙[_,_], TC[_]](implicit
       A: Associative.Aux[->, ⊙, TC], ev: C === ⊙[X, ⊙[Y, Z]], c: Subcat.Aux[->, TC],
       tx: TC[X], ty: TC[Y], tz: TC[Z]
-    ): B -> ⊙[⊙[X, Y], Z] = A.C.andThen(ev.subst[λ[X => B -> X]](self), A.diassociate[X, Y, Z])
+    ): B -> ⊙[⊙[X, Y], Z] = A.C.andThen(ev.subst[λ[α => B -> α]](self), A.diassociate[X, Y, Z])
 
     def braid[X, Y, ⊙[_,_]] = new BraidOps[X, Y, ⊙]
     class BraidOps[X, Y, ⊙[_,_]] {

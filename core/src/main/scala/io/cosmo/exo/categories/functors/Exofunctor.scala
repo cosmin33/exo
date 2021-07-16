@@ -11,13 +11,9 @@ import io.cosmo.exo.{toIsoOps, _}
 
 trait Exofunctor[==>[_,_], -->[_,_], F[_]] { self =>
   def map[A, B](f: A ==> B): F[A] --> F[B]
-//  def fmap1[=>>[_,_], ->>[_,_], A, B](f: A =>> B)(implicit
-//    s1: =>> ~~> ==>,
-//    s2: --> ~~> ->>
-//  ): F[A] ->> F[B] = s2.exec(map(s1.exec(f)))
 
-  final def compose[|->[_,_], G[_]](G: Exo[|->, ==>, G]): Exofunctor[|->, -->, λ[α => F[G[α]]]] =
-    Exo.unsafe[|->, -->, λ[α => F[G[α]]]](f => map(G.map(f)))
+  final def compose[>->[_,_], G[_]](G: Exo[>->, ==>, G]): Exofunctor[>->, -->, λ[α => F[G[α]]]] =
+    Exo.unsafe[>->, -->, λ[α => F[G[α]]]](f => map(G.map(f)))
 }
 
 object Exofunctor extends ExofunctorImplicits {
@@ -58,7 +54,7 @@ object Exofunctor extends ExofunctorImplicits {
   type Cov[->[_,_], F[_]] = Exo[->, * => *, F]
   object Cov { def apply[->[_,_], F[_]](implicit E: Cov[->, F]) = E }
   /** This is isomorphic to cats.Functor */
-  type CovF[F[_]] = Cov[* => *, F]
+  type CovF[F[_]] = Exo[* => *, * => *, F]
   object CovF { def apply[F[_]](implicit E: CovF[F]) = E }
 
   type Con[->[_,_], F[_]] = Exo[Dual[->,*,*], * => *, F]
@@ -212,11 +208,11 @@ final class ExofunctorSyntaxOps[F[_], A](val fa: F[A]) extends AnyVal {
 }
 final class ExofunctorKSyntaxOps[A[_[_]], F[_]](val af: A[F]) extends AnyVal {
   def emapK [G[_]](f: F  ~> G)(implicit E: FunctorK[A]):    A[G] = E.mapK(f)(af)
-  def comapK[G[_]](f: G  ~> F)(implicit E: CofunctorK[A]):  A[G] = E.contramapK(f)(af)
+  def comapK[G[_]](f: G  ~> F)(implicit E: CovariantK[A]):  A[G] = E.contramapK(f)(af)
   def imapK [G[_]](f: F <~> G)(implicit E: IsoFunctorK[A]): A[G] = E.isoMapK(f)(af)
   def deriveK[G[_]](implicit f: HasIsoK[* => *, F, G], E: IsoFunctorK[A]): A[G] = imapK(f.iso)
   def deriveK__[G[_]](implicit
-    f: (FunctorK[A] /\ (F ~> G)) \/ (CofunctorK[A] /\ (G ~> F)) \/ (IsoFunctorK[A] /\ HasIsoK[* => *, F, G])
+    f: (FunctorK[A] /\ (F ~> G)) \/ (CovariantK[A] /\ (G ~> F)) \/ (IsoFunctorK[A] /\ HasIsoK[* => *, F, G])
   ): A[G] =
     f.fold3(
       p => p._1.mapK(p._2)(af),
