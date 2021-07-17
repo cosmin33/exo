@@ -62,12 +62,12 @@ trait Iso[->[_,_], A, B] { ab =>
   def and_[I, J](ij: I <-> J)(implicit C: Associative[->, /\]): (A /\ I) <-> (B /\ J) = grouped[/\](ij)
 
   /** From A <-> B, X <-> Y we can obtain (A \/ X) <-> (B \/ Y) if -> has an associative instance with \/ */
-  def or [I, J](ij: I <-> J)(implicit C: Associative[->, Either]): (A Either I) <-> (B Either J) = grouped[Either](ij)
+  def or [I, J](ij: I <-> J)(implicit C: Associative[->, Either]): Either[A, I] <-> Either[B, J] = grouped[Either](ij)
   def or_[I, J](ij: I <-> J)(implicit C: Associative[->, \/]): (A \/ I) <-> (B \/ J) = grouped[\/](ij)
 
 }
 
-object Iso extends IsoInstances with IsoInstancesEq {
+object Iso extends IsoInstances {
   def apply[->[_,_], A, B](implicit iso: HasIso[->, A, B]): Iso[->, A, B] = iso.iso
   def apply[->[_,_], A](implicit si: SubcatHasId[->, A]): Iso[->, A, A] = refl[->, A]
   def apply[A]: Iso[* => *, A, A] = refl[A]
@@ -208,8 +208,8 @@ object Iso extends IsoInstances with IsoInstancesEq {
       _.fold(a => Left(Left(a)), _.fold(b => Left(Right(b)), c => Right(c))),
       _.fold(_.fold(a => Left(a), b => Right(Left(b))), c => Right(Right(c))))
     final def commute[A, B]: (A Either B) <=> (B Either A) = Iso.unsafe(_.swap, _.swap)
-    final def unitL[A]: A <=> Either[Void, A] = unsafe(a => Right(a), _.fold((n: A) => n, identity))
-    final def unitR[A]: A <=> Either[A, Void] = unsafe(a => Left(a), _.fold(identity, (n: A) => n))
+    final def unitL[A]: A <=> Either[Void, A] = unsafe(Right(_), _.fold((n: A) => n, identity))
+    final def unitR[A]: A <=> Either[A, Void] = unsafe(Left(_), _.fold(identity, (n: A) => n))
     final def first [A, B, C](iso: A <=> C): (A Either B) <=> (C Either B) = iso.grouped(refl[B])
     final def second[A, B, C](iso: B <=> C): (A Either B) <=> (A Either C) = refl[A].grouped(iso)
   }
@@ -220,13 +220,13 @@ object Iso extends IsoInstances with IsoInstancesEq {
       _.fold(a => -\/(-\/(a)), _.fold(b => -\/(\/-(b)), c => \/-(c))),
       _.fold(_.fold(a => -\/(a), b => \/-(-\/(b))), c => \/-(\/-(c))))
     final def commute[A, B]: (A \/ B) <=> (B \/ A) = unsafe(_.swap, _.swap)
-    final def unitL[A]: A <=> (Void \/ A) = unsafe(a => \/-(a), _.fold((n: A) => n, identity))
-    final def unitR[A]: A <=> (A \/ Void) = unsafe(a => -\/(a), _.fold(identity, (n: A) => n))
+    final def unitL[A]: A <=> (Void \/ A) = unsafe(\/-, _.fold((n: A) => n, identity))
+    final def unitR[A]: A <=> (A \/ Void) = unsafe(-\/, _.fold(identity, (n: A) => n))
     final def first [A, B, C](iso: A <=> C): (A \/ B) <=> (C \/ B) = iso.grouped(refl[B])
     final def second[A, B, C](iso: B <=> C): (A \/ B) <=> (A \/ C) = refl[A].grouped(iso)
   }
 
-  /** Class equivalent to an Iso; useful for implicit searching of isomorphisms as it searches also for flipped iso and for reflective iso */
+  /** Class equivalent to an Iso; useful for implicit searching of isomorphisms as it searches also for flipped and for reflexive iso */
   @newtype case class HasIso[->[_,_], A, B](iso: Iso[->, A, B])
   object HasIso {
     implicit def impl[->[_,_], A, B](implicit
@@ -285,45 +285,6 @@ final class IsokSyntaxOps[F[_]](val self: TypeK[F]) extends AnyVal {
 }
 final class IsoSyntaxOps[A](val self: A) extends AnyVal {
   def isoTo[B](implicit h: Iso.HasIso[* => *, A, B]): B = h(self)
-}
-
-/** Isomorphisms derived from lifting equalities */
-trait IsoInstancesEq extends IsoInstancesEq1 {
-  implicit def eqLift1[F[_], A, X](implicit eq: A === X): F[A] <=> F[X] = Is.lift(eq).toIso
-  implicit def eqKLift1[A[_[_]], F[_], F1[_]](implicit eq: F =~= F1): A[F] <=> A[F1] = =~=.lower(eq).toIso
-  implicit def eqK2Lift1[A[_[_,_]], F[_,_], F1[_,_]](implicit eq: F =~~= F1): A[F] <=> A[F1] = =~~=.lower(eq).toIso
-}
-trait IsoInstancesEq1 extends IsoInstancesEq2 {
-  implicit def eqLift2[F[_,_], A, X, B, Y](implicit e1: A === X, e2: B === Y): F[A, B] <=> F[X, Y] = Is.lift2(e1, e2).toIso
-  implicit def eqKLift2[A[_[_],_[_]], F[_], F1[_], G[_], G1[_]](implicit
-    e1: F =~= F1, e2: G =~= G1
-  ): A[F, G] <=> A[F1, G1] = =~=.lower2(e1, e2).toIso
-  implicit def eqK2Lift2[A[_[_,_], _[_,_]], F[_,_], F1[_,_], G[_,_], G1[_,_]](implicit
-    e1: F =~~= F1, e2: G =~~= G1
-  ): A[F, G] <=> A[F1, G1] = =~~=.lower2.on(e1, e2).toIso
-}
-trait IsoInstancesEq2 extends IsoInstancesEq3 {
-  implicit def eqLift3[F[_,_,_], A, X, B, Y, C, Z](implicit e1: A === X, e2: B === Y, e3: C === Z): F[A, B, C] <=> F[X, Y, Z] = Is.lift3(e1, e2, e3).toIso
-  implicit def eqKLift3[A[_[_],_[_],_[_]], F[_], F1[_], G[_], G1[_], H[_], H1[_]](implicit
-    e1: F =~= F1, e2: G =~= G1, e3: H =~= H1
-  ): A[F, G, H] <=> A[F1, G1, H1] = =~=.lower3(e1, e2, e3).toIso
-  implicit def eqK2Lift3[A[_[_,_],_[_,_],_[_,_]], F[_,_], F1[_,_], G[_,_], G1[_,_], H[_,_], H1[_,_]](implicit
-    e1: F =~~= F1, e2: G =~~= G1, e3: H =~~= H1
-  ): A[F, G, H] <=> A[F1, G1, H1] = =~~=.lower3.on(e1, e2, e3).toIso
-}
-trait IsoInstancesEq3 extends IsoInstancesEq4{
-  implicit def eqLift4[F[_,_,_,_], A, X, B, Y, C, Z, D, T](implicit e1: A === X, e2: B === Y, e3: C === Z, e4: D === T): F[A, B, C, D] <=> F[X, Y, Z, T] = Is.lift4(e1, e2, e3, e4).toIso
-  implicit def eqKLift4[A[_[_],_[_],_[_],_[_]], F[_], F1[_], G[_], G1[_], H[_], H1[_], I[_], I1[_]](implicit
-    e1: F =~= F1, e2: G =~= G1, e3: H =~= H1, e4: I =~= I1
-  ): A[F, G, H, I] <=> A[F1, G1, H1, I1] = =~=.lower4(e1, e2, e3, e4).toIso
-  implicit def eqK2Lift4[A[_[_,_],_[_,_],_[_,_],_[_,_]], F[_,_], F1[_,_], G[_,_], G1[_,_], H[_,_], H1[_,_], I[_,_], I1[_,_]](implicit
-    e1: F =~~= F1, e2: G =~~= G1, e3: H =~~= H1, e4: I =~~= I1
-  ): A[F, G, H, I] <=> A[F1, G1, H1, I1] = =~~=.lower4.on(e1, e2, e3, e4).toIso
-}
-trait IsoInstancesEq4 {
-  implicit def eqK2Lift5[A[_[_,_],_[_,_],_[_,_],_[_,_],_[_,_]], F[_,_], F1[_,_], G[_,_], G1[_,_], H[_,_], H1[_,_], I[_,_], I1[_,_], J[_,_], J1[_,_]](implicit
-    e1: F =~~= F1, e2: G =~~= G1, e3: H =~~= H1, e4: I =~~= I1, e5: J =~~= J1
-  ): A[F, G, H, I, J] <=> A[F1, G1, H1, I1, J1] = =~~=.lower5.on(e1, e2, e3, e4, e5).toIso
 }
 
 import io.cosmo.exo.IsoHelperTraits._

@@ -116,5 +116,40 @@ object Is extends IsInstances {
 
 }
 
-trait IsInstances {
+trait IsInstances extends IsInstances01 {
+  implicit def eqLift1[F[_], A, X](implicit eq: A === X): F[A] === F[X] = Is.lift(eq)
+  implicit def eqKLift1[A[_[_]], F[_], F1[_]](implicit eq: F =~= F1): A[F] === A[F1] = =~=.lower(eq)
+  implicit def eqK2Lift1[A[_[_,_]], F[_,_], F1[_,_]](implicit eq: F =~~= F1): A[F] === A[F1] = =~~=.lower(eq)
+}
+trait IsInstances01 extends IsInstances02 {
+  implicit def eqLift2[F[_,_], A, X, B, Y](implicit e1: A === X, e2: B === Y): F[A, B] === F[X, Y] = Is.lift2(e1, e2)
+  implicit def eqKLift2[A[_[_],_[_]], F[_], F1[_], G[_], G1[_]](implicit
+    e1: F =~= F1, e2: G =~= G1
+  ): A[F, G] === A[F1, G1] = =~=.lower2(e1, e2)
+  implicit def eqK2Lift2[A[_[_,_], _[_,_]], F[_,_], F1[_,_], G[_,_], G1[_,_]](implicit
+    e1: F =~~= F1, e2: G =~~= G1
+  ): A[F, G] === A[F1, G1] = =~~=.lower2.on(e1, e2)
+}
+trait IsInstances02 extends IsInstances03 {
+  implicit def eqLift3[F[_,_,_], A, X, B, Y, C, Z](implicit e1: A === X, e2: B === Y, e3: C === Z): F[A, B, C] === F[X, Y, Z] = Is.lift3(e1, e2, e3)
+  implicit def eqKLift3[A[_[_],_[_],_[_]], F[_], F1[_], G[_], G1[_], H[_], H1[_]](implicit
+    e1: F =~= F1, e2: G =~= G1, e3: H =~= H1
+  ): A[F, G, H] === A[F1, G1, H1] = =~=.lower3(e1, e2, e3)
+  implicit def eqK2Lift3[A[_[_,_],_[_,_],_[_,_]], F[_,_], F1[_,_], G[_,_], G1[_,_], H[_,_], H1[_,_]](implicit
+    e1: F =~~= F1, e2: G =~~= G1, e3: H =~~= H1
+  ): A[F, G, H] === A[F1, G1, H1] = =~~=.lower3.on(e1, e2, e3)
+}
+trait IsInstances03 extends IsInstances04 {
+  implicit def eqLift4[F[_,_,_,_], A, X, B, Y, C, Z, D, T](implicit e1: A === X, e2: B === Y, e3: C === Z, e4: D === T): F[A, B, C, D] === F[X, Y, Z, T] = Is.lift4(e1, e2, e3, e4)
+  implicit def eqKLift4[A[_[_],_[_],_[_],_[_]], F[_], F1[_], G[_], G1[_], H[_], H1[_], I[_], I1[_]](implicit
+    e1: F =~= F1, e2: G =~= G1, e3: H =~= H1, e4: I =~= I1
+  ): A[F, G, H, I] === A[F1, G1, H1, I1] = =~=.lower4(e1, e2, e3, e4)
+  implicit def eqK2Lift4[A[_[_,_],_[_,_],_[_,_],_[_,_]], F[_,_], F1[_,_], G[_,_], G1[_,_], H[_,_], H1[_,_], I[_,_], I1[_,_]](implicit
+    e1: F =~~= F1, e2: G =~~= G1, e3: H =~~= H1, e4: I =~~= I1
+  ): A[F, G, H, I] === A[F1, G1, H1, I1] = =~~=.lower4.on(e1, e2, e3, e4)
+}
+trait IsInstances04 {
+  implicit def eqK2Lift5[A[_[_,_],_[_,_],_[_,_],_[_,_],_[_,_]], F[_,_], F1[_,_], G[_,_], G1[_,_], H[_,_], H1[_,_], I[_,_], I1[_,_], J[_,_], J1[_,_]](implicit
+    e1: F =~~= F1, e2: G =~~= G1, e3: H =~~= H1, e4: I =~~= I1, e5: J =~~= J1
+  ): A[F, G, H, I, J] === A[F1, G1, H1, I1, J1] = =~~=.lower5.on(e1, e2, e3, e4, e5)
 }
