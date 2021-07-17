@@ -35,7 +35,7 @@ object inhabitance {
       (p: ¬¬[Void]) => p.run(a => a)
 
     // This covers Unit & other terminal objects.
-    implicit def unitProp: Proposition[Unit] = (_: Inhabited[Unit]) => ()
+    implicit def unitProp: Proposition[Unit] = (_: ¬¬[Unit]) => ()
     implicit def singleton[A <: Singleton](implicit A: ValueOf[A]): Proposition[A] =
       (_: Inhabited[A]) => A.value
 
@@ -66,11 +66,7 @@ object inhabitance {
     def zip[B](notB: ¬[B]): ¬[Either[A, B]] = ¬.witness[Either[A, B]](_.fold(run, notB.run))
   }
 
-  trait UninhabitedLowerPriority {
-    //implicit def mkUninhabited[A]: Uninhabited[A] = macro internal.MacroUtil.mkUninhabited[A]
-  }
-
-  object Uninhabited extends UninhabitedLowerPriority {
+  object Uninhabited {
     def apply[A](implicit ev: ¬[A]): ¬[A] = ev
 
     def witness[A](f: A => Void): ¬[A] = f.coerce[¬[A]]
