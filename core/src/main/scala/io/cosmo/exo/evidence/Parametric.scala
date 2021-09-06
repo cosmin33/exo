@@ -2,6 +2,7 @@ package io.cosmo.exo.evidence
 
 import io.cosmo.exo._
 
+///// from Alex Konovalov library https://github.com/alexknvl/leibniz
 /**
  * a ≠ b ⋀ f a = f b ⟶ ∀ x y. x ≠ y ⟶ f x = f y
  * a < b ⋀ f a ≤ f b ⟶ ∀ x y. x < y ⟶ f x ≤ f y

@@ -1,8 +1,6 @@
 package io.cosmo.exo
 
 
-import scala.language.experimental.macros
-
 package object evidence {
 
   type =:!=[A, B] = NotEq[A, B]

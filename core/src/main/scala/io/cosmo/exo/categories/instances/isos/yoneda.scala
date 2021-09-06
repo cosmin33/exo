@@ -17,6 +17,9 @@ object yoneda {
   ): ((* -> A) ~> F) <=> F[A] =
     Iso.unsafe(_[A](C.id), fa => ∀.of[λ[x => x -> A => F[x]]].from(xa => E.map(Dual(xa))(fa)))
 
+  def lemmaYoUnrestricted  [A, F[_]]: ((A === *) ~> F) <=> F[A] = lemmaYoIso  [===, A, F]
+  def lemmaCoyoUnrestricted[A, F[_]]: ((* === A) ~> F) <=> F[A] = lemmaCoyoIso[===, A, F]
+
   def yoEmbeddingCov[->[_,_], A, B](implicit
     C: SubcatHasId[->, A]
   ): ((A -> *) ~> (B -> *)) <=> (B -> A) = lemmaYoIso[->, A, B -> *](C, Exo.semiFunctorCov(C.s))

@@ -57,6 +57,8 @@ object Is extends IsInstances {
   implicit def faExoCon: ∀[λ[a => Exo.Con[===, * === a]]] = ∀.of[λ[a => Exo.Con[===, * === a]]].from(exoCon)
 
   implicit def leibnizFunctor[F[_]]: Endofunctor[===, F] = Exo.unsafe[===, ===, F](f => Is.lift(f))
+  implicit def leibnizFunctorFn[F[_]]: Exo.Cov[===, F] = Exo.unsafe[===, * => *, F](f => Is.lift(f).apply(_))
+  implicit def leibnizFunctorCn[F[_]]: Exo.Con[===, F] = Exo.unsafe[Dual[===,*,*], * => *, F](f => Is.lift(f.flip).apply(_))
 
   implicit def leibnizBifunctor[P[_,_]]: Endobifunctor[===, P] = new Endobifunctor[===, P] {
     override def bimap[A, X, B, Y](left: A === X, right: B === Y): P[A, B] === P[X, Y] = left.lift2[P](right)

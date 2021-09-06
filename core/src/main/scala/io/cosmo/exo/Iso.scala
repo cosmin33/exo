@@ -54,7 +54,7 @@ trait Iso[->[_,_], A, B] { ab =>
   def grouped[⨂[_,_]] = new GroupedPartial[⨂]
   class GroupedPartial[⨂[_,_]] {
     def apply[I, J](ij: I <-> J)(implicit A: Associative[->, ⨂]): ⨂[A, I] <-> ⨂[B, J] =
-      Associative[Iso[->,*,*], ⨂].grouped(ab, ij)
+      Associative[<->, ⨂].bifunctor.bimap(ab, ij)
   }
 
   /** From A <-> B, X <-> Y we can obtain (A, X) <-> (B, Y) if -> has an Associative instance with Tuple2 */
