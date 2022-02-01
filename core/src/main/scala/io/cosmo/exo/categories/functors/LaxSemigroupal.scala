@@ -2,11 +2,11 @@ package io.cosmo.exo.categories.functors
 
 import cats._
 import io.cosmo.exo.categories._
+import cats.laws._
 
 trait LaxSemigroupal[⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] { self =>
-  //type TC[_]
-//  def A: Associative.Aux[-->, ⊙-]
-  def A: Associative[-->, ⊙-]
+  type TC[_]
+  def A: Associative.Aux[-->, ⊙-, TC]
   def product[A, B]: (F[A] ⊙- F[B]) --> F[A ⊙= B]
 
   def map2[==>[_,_], A, B, C](fn: (A ⊙= B) ==> C)(implicit E: Exo[==>, -->, F]): (F[A] ⊙- F[B]) --> F[C] =
@@ -20,35 +20,41 @@ trait LaxSemigroupal[⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] { self =>
   def compose[~~>[_,_], ⊙~[_,_], G[_]](G: LaxSemigroupal[⊙-, ~~>, ⊙~, G])(implicit
     F: Exo[-->, ~~>, G]
   ): LaxSemigroupal[⊙=, ~~>, ⊙~, λ[a => G[F[a]]]] =
-    new LaxSemigroupal[⊙=, ~~>, ⊙~, λ[a => G[F[a]]]] { val A = G.A; def product[A, B] = G.map2(self.product[A, B]) }
-//    new LaxSemigroupal[⊙=, ~~>, ⊙~, λ[a => G[F[a]]]] { type TC[a] = G.TC[a]; val A = G.A; def product[A, B] = G.map2(self.product[A, B]) }
+    new LaxSemigroupal[⊙=, ~~>, ⊙~, λ[a => G[F[a]]]] { type TC[a] = G.TC[a]; val A = G.A; def product[A, B] = G.map2(self.product[A, B]) }
 
   // laws
-  def associativityLaw[==>[_,_], TC1[_], A, B, C](implicit
+  def associativityLeftLaw[==>[_,_], TC1[_], A, B, C](implicit
     A1: Associative.Aux[==>, ⊙=, TC1],
     E: Exo[==>, -->, F],
-    sa: SubcatHasId[-->, F[A]],
-    sb: SubcatHasId[-->, F[B]],
-    sc: SubcatHasId[-->, F[C]],
+    tfa: TC[F[A]],
+    tfb: TC[F[B]],
+    tfc: TC[F[C]],
     ta: TC1[A],
     tb: TC1[B],
     tc: TC1[C]
   ) = {
-    val mm: F[A] ⊙- F[B] ⊙- F[C] --> F[A ⊙= B ⊙= C] = A.C.andThen(A.grouped(product[A, B], sc.id), product[A ⊙= B, C])
+    implicit val ss: Subcat.Aux[-->, TC] = A.C
+    IsEq(
+      A.grouped(product[A, B], A.C.id[F[C]]) >>>> product[A ⊙= B, C] >>>> E.map(A1.associate[A, B, C]),
+      A.associate[F[A], F[B], F[C]] >>>> A.grouped(A.C.id[F[A]], product[B, C]) >>>> product[A, B ⊙= C]
+    )
+  }
 
-    val nn: F[A] ⊙- (F[B] ⊙- F[C]) --> F[A ⊙= (B ⊙= C)] = A.C.andThen(A.grouped(sa.id, product[B, C]), product[A, B ⊙= C])
-
-    val aa: F[A ⊙= B ⊙= C] --> F[A ⊙= (B ⊙= C)] = E.map(A1.associate[A, B, C])
-    val bb: F[A ⊙= (B ⊙= C)] --> F[A ⊙= B ⊙= C] = E.map(A1.diassociate[A, B, C])
-
-
-    val xx: F[A] ⊙- F[B] ⊙- F[C] --> F[A ⊙= (B ⊙= C)] = A.C.andThen(mm, aa)
-
-
-    val y: F[A] ⊙- (F[B] ⊙- F[C]) --> F[A ⊙= B ⊙= C] = A.C.andThen(nn, bb)
-
-
-    ???
+  def associativityRightLaw[==>[_,_], TC1[_], A, B, C](implicit
+    A1: Associative.Aux[==>, ⊙=, TC1],
+    E: Exo[==>, -->, F],
+    tfa: TC[F[A]],
+    tfb: TC[F[B]],
+    tfc: TC[F[C]],
+    ta: TC1[A],
+    tb: TC1[B],
+    tc: TC1[C]
+  ) = {
+    implicit val ss: Subcat.Aux[-->, TC] = A.C
+    IsEq(
+      A.grouped(A.C.id[F[A]], product[B, C]) >>>> product[A, B ⊙= C] >>>> E.map(A1.diassociate[A, B, C]),
+      A.diassociate[F[A], F[B], F[C]] >>>> A.grouped(product[A, B], A.C.id[F[C]]) >>>> product[A ⊙= B, C]
+    )
   }
 }
 
@@ -91,12 +97,13 @@ trait LaxSemigroupalInstances05 {
 private object LaxSemigroupalHelpers {
   trait ImpLaxSemigroupal[F[_]] extends LaxSemigroupal[(*,*), * => *, (*,*), F] {
     protected def sem: Semigroupal[F]
-    def A = implicitly
+    type TC[a] = Trivial.T1[a]
+    def A = implicitly[Associative.Aux[* => *, (*,*), Trivial.T1]]
     def product[A, B] = (sem.product[A, B] _).tupled
   }
   trait ImpLaxMonoidal[F[_]] extends ImpLaxSemigroupal[F] with LaxMonoidal[(*,*), * => *, (*,*), F] {
     protected def sem: InvariantMonoidal[F]
-    override def A = implicitly
+    override def A = implicitly[Monoidal.Aux[* => *, (*,*), TC, I]]
     type I = Unit
     val id: Unit => F[Unit] = _ => sem.unit
   }
