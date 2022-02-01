@@ -8,6 +8,8 @@ import mouse.any._
 
 package object categories extends ProdcatInstances with categories.syntax {
 
+  type Prodcat_1[==>[_,_], -->[_,_], A, B] = A ==> B
+  type Prodcat_2[==>[_,_], -->[_,_], A, B] = A --> B
   type Prodcat[==>[_,_], -->[_,_], A, B] = (A ==> B, A --> B)
   object Prodcat {
     /** Product category of duals is the same as dual of product category */
@@ -16,7 +18,9 @@ package object categories extends ProdcatInstances with categories.syntax {
         Dual.leibniz[-->].subst[λ[f[_,_] => Prodcat[Dual[==>,*,*], f, *, *] =~~= Opp[Prodcat[==>, -->, *, *]]#l]] |>
         Dual.leibniz[Prodcat[==>,-->,*,*]].subst
   }
-
+  private def proof1[==>[_,_], -->[_,_], A, B] =
+    implicitly[Prodcat[==>, -->, A, B] === (Prodcat_1[==>, -->, A, B], Prodcat_2[==>, -->, A, B])]
+  
   type Dicat[->[_,_], A, B] = (A -> B, Dual[->, A, B])
   object Dicat {
     def apply[->[_,_], A, B](to: A -> B, from: B -> A): Dicat[->, A, B] = (to, Dual(from))
@@ -33,7 +37,6 @@ package object categories extends ProdcatInstances with categories.syntax {
   type Cocartesian[->[_,_], ⨂[_,_]] = Cartesian[Dual[->, *, *], ⨂]
 
   type Endofunctor[->[_,_], F[_]] = Exofunctor[->, ->, F]
-//  type Exomonad1[->[_,_], TC[_], F[_]] = Subcat.Aux[Kleis[->,F,*,*], TC] /\ Exo[Kleis[->,F,*,*], ->, F]
   type Exomonad1[->[_,_], TC[_], F[_]] = Subcat.Aux[λ[(a,b) => a -> F[b]], TC] /\ Exo[λ[(a,b) => a -> F[b]], ->, F]
 
   type Endobifunctor [->[_,_], ⊙[_,_]] = Exobifunctor[->, ->, ->, ⊙]

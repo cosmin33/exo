@@ -27,6 +27,8 @@ object Exobifunctor extends ExobifunctorInstances {
 
   type EndoPro[->[_,_], B[_,_]] = Exobifunctor[Dual[->,*,*], ->, ->, B]
   type Endo[->[_,_], B[_,_]] = Exobifunctor[->, ->, ->, B]
+  type Con[==>[_,_], -->[_,_], >->[_,_], B[_,_]] = Exobifunctor[Dual[==>,*,*], Dual[-->,*,*], >->, B]
+  type ConF[B[_,_]] = Con[* => *, * => *, * => *, B]
 
   def apply[=>:[_,_], ->:[_,_], ~>:[_,_], ⊙[_,_]](implicit
     bi: Exobifunctor[=>:, ->:, ~>:, ⊙]): Exobifunctor[=>:, ->:, ~>:, ⊙] = bi
@@ -49,13 +51,13 @@ object Exobifunctor extends ExobifunctorInstances {
       }
   }
 
-  implicit def bifunctor[->[_,_]: Semicategory]: Exobifunctor[Dual[->,*,*], ->, * => *, ->] =
+  implicit def profunctor[->[_,_]: Semicategory]: Exobifunctor[Dual[->,*,*], ->, * => *, ->] =
     new Exobifunctor[Dual[->,*,*], ->, * => *, ->] {
       def bimap[A, X, B, Y](left: Dual[->, A, X], right: B -> Y): A -> B => (X -> Y) = f => left.toFn >>>> f >>>> right
     }
 
-  def dual[->[_,_], Bi[_,_]](F: Endo[->, Bi]): Endo[Dual[->,*,*], Bi] =
-    new Endo[Dual[->,*,*], Bi] {
+  def dual[->[_,_], Bi[_,_]](F: Endobifunctor[->, Bi]): Endobifunctor[Dual[->,*,*], Bi] =
+    new Endobifunctor[Dual[->,*,*], Bi] {
       def bimap[A, X, B, Y](l: Dual[->, A, X], r: Dual[->, B, Y]): Dual[->, Bi[A, B], Bi[X, Y]] =
         Dual(F.bimap(l.toFn, r.toFn))
     }

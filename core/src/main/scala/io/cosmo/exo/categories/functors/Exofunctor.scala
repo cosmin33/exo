@@ -8,12 +8,19 @@ import io.cosmo.exo.categories._
 import io.cosmo.exo.evidence.{=~~=, TypeHolder2}
 import io.cosmo.exo.typeclasses.HasTc
 import io.cosmo.exo.{toIsoOps, _}
+import cats.laws._
 
 trait Exofunctor[==>[_,_], -->[_,_], F[_]] { self =>
   def map[A, B](f: A ==> B): F[A] --> F[B]
 
   final def compose[>->[_,_], G[_]](G: Exo[>->, ==>, G]): Exofunctor[>->, -->, λ[α => F[G[α]]]] =
     Exo.unsafe[>->, -->, λ[α => F[G[α]]]](f => map(G.map(f)))
+
+  // Laws
+  def identityLaw[A](implicit C1: SubcatHasId[==>, A], C2: SubcatHasId[-->, F[A]]): IsEq[F[A] --> F[A]] =
+    map(C1.id) <-> C2.id
+  def compositionLaw[A, B, C](f: A ==> B, g: B ==> C)(implicit C1: Subcat[==>], C2: Subcat[-->]): IsEq[F[A] --> F[C]] =
+    C2.andThen(map(f), map(g)) <-> map(C1.andThen(f, g))
 }
 
 object Exofunctor extends ExofunctorImplicits {
@@ -31,15 +38,15 @@ object Exofunctor extends ExofunctorImplicits {
     ): Exo[==>, -->, F] = apply(f(TypeHolder2[X, Y]))
   }
 
-  implicit class ExofunctorKOps[A[_[_]]](val F: Exofunctor[FunK, * => *, HasTc[A, *]]) extends AnyVal {
+  implicit class ExofunctorKOps[A[_[_]]](val F: FunctorK[A]) extends AnyVal {
     def mapK[F[_], G[_]](f: F ~> G): A[F] => A[G] = F.map(FunK(f)).isoTo[A[F] => A[G]]
   }
 
-  implicit class CovariantExofunctorKOps[A[_[_]]](val F: Exofunctor[Dual[FunK,*,*], * => *, HasTc[A, *]]) extends AnyVal {
+  implicit class CovariantExofunctorKOps[A[_[_]]](val F: CovariantK[A]) extends AnyVal {
     def contramapK[F[_], G[_]](f: G ~> F): A[F] => A[G] = F.map(Dual(FunK(f))).isoTo[A[F] => A[G]]
   }
 
-  implicit class IsoExofunctorKOps[A[_[_]]](val F: Exofunctor[IsoFunK, * => *, HasTc[A, *]]) extends AnyVal {
+  implicit class IsoExofunctorKOps[A[_[_]]](val F: IsoFunctorK[A]) extends AnyVal {
     def isoMapK[F[_], G[_]](i: F <~> G): A[F] => A[G] = F.map(IsoFunK(i)).isoTo[A[F] => A[G]]
   }
 
@@ -53,13 +60,13 @@ object Exofunctor extends ExofunctorImplicits {
 
   type Cov[->[_,_], F[_]] = Exo[->, * => *, F]
   object Cov { def apply[->[_,_], F[_]](implicit E: Cov[->, F]) = E }
-  /** This is isomorphic to cats.Functor */
+  /** This is isomorphic to cats Functor */
   type CovF[F[_]] = Exo[* => *, * => *, F]
   object CovF { def apply[F[_]](implicit E: CovF[F]) = E }
 
   type Con[->[_,_], F[_]] = Exo[Dual[->,*,*], * => *, F]
   object Con { def apply[->[_,_], F[_]](implicit E: Con[->, F]) = E }
-  /** This is isomorphic to cats.Contravariant */
+  /** This is isomorphic to cats Contravariant */
   type ConF[F[_]] = Con[* => *, F]
   object ConF { def apply[F[_]](implicit E: ConF[F]) = E }
 
@@ -69,7 +76,7 @@ object Exofunctor extends ExofunctorImplicits {
 
   type Inv[->[_,_], F[_]] = Exo[Dicat[->,*,*], * => *, F]
   object Inv { def apply[->[_,_], F[_]](E: Inv[->, F]) = E }
-  /** This is isomorphic to cats.Invariant */
+  /** This is isomorphic to cats Invariant */
   type InvF[F[_]] = Inv[* => *, F]
   object InvF { def apply[F[_]](implicit E: InvF[F]) = E }
 
@@ -136,7 +143,7 @@ object Exofunctor extends ExofunctorImplicits {
   implicit def exoFromTraverse1[M[_]: Applicative, F[_]: Traverse]: Endofunctor[λ[(a,b) => a => M[b]], F] = {
     Endofunctor.unsafe[λ[(a,b) => a => M[b]], F](f => _.traverse(f))
   }
-  def exoToTraverse1[F[_]](fe: ∀~[λ[M[_] => Endofunctor[λ[(a,b) => a => M[b]], F]]]): Traverse[F] =
+  private def exoToTraverse1[F[_]](fe: ∀~[λ[M[_] => Endofunctor[λ[(a,b) => a => M[b]], F]]]): Traverse[F] =
     new Traverse[F] {
       def traverse[G[_]: Applicative, A, B](fa: F[A])(f: A => G[B]): G[F[B]] = fe.apply[G].map(f)(fa)
       def foldLeft[A, B](fa: F[A], b: B)(f: (B, A) => B): B = ???
@@ -161,7 +168,11 @@ object Exofunctor extends ExofunctorImplicits {
     Iso.unsafe(
       p => new FlatMap[F] {
         def flatMap[A, B](fa: F[A])(f: A => F[B]): F[B] = p._2.map(f)(fa)
-        def tailRecM[A, B](a: A)(f: A => F[Either[A, B]]): F[B] = ???
+        def tailRecM[A, B](a: A)(f: A => F[Either[A, B]]): F[B] = {
+
+
+          ???
+        }
         def map[A, B](fa: F[A])(f: A => B): F[B] = p._1.map(f)(fa)
       },
       F => (Exo.unsafe[* => *, * => *, F](f => F.map(_)(f)), Exo.unsafe[λ[(a,b) => a => F[b]], * => *, F](f => F.flatMap(_)(f)))
@@ -211,7 +222,7 @@ final class ExofunctorKSyntaxOps[A[_[_]], F[_]](val af: A[F]) extends AnyVal {
   def comapK[G[_]](f: G  ~> F)(implicit E: CovariantK[A]):  A[G] = E.contramapK(f)(af)
   def imapK [G[_]](f: F <~> G)(implicit E: IsoFunctorK[A]): A[G] = E.isoMapK(f)(af)
   def deriveK[G[_]](implicit f: HasIsoK[* => *, F, G], E: IsoFunctorK[A]): A[G] = imapK(f.iso)
-  def deriveK__[G[_]](implicit
+  def deriveK_[G[_]](implicit
     f: (FunctorK[A] /\ (F ~> G)) \/ (CovariantK[A] /\ (G ~> F)) \/ (IsoFunctorK[A] /\ HasIsoK[* => *, F, G])
   ): A[G] =
     f.fold3(
@@ -224,7 +235,7 @@ final class ExofunctorKSyntaxOps[A[_[_]], F[_]](val af: A[F]) extends AnyVal {
 trait ExofunctorImplicits extends ExofunctorImplicits01 {
   // TODO: generalize these:
   implicit def isoFunToIsoIso[->[_,_], F[_]](implicit e: Exo.IsoFun[->, F]): Exo.IsoIso[->, F] =
-    Exo.unsafe[Iso[->,*,*], * <=> *, F](i => Iso.unsafe(e.map(i), e.map(i.flip)))
+    Exo.unsafe[Iso[->,*,*], <=>, F](i => Iso.unsafe(e.map(i), e.map(i.flip)))
 }
 
 trait ExofunctorImplicits01 extends ExofunctorImplicits02 {
@@ -250,13 +261,3 @@ object Endofunctor {
   def unsafe[->[_,_], F[_]]: Exofunctor.MkExofunctor[->, ->, F] = Exofunctor.unsafe[->, ->, F]
 
 }
-
-//trait Exorepresentable[==>[_,_], ->[_,_], F[_]] {
-//  type Representation
-//  def functor: Exofunctor[==>, ->, F]
-//  def index   [A]: F[A] -> (Representation ==> A)
-//  def tabulate[A]: (Representation ==> A) -> F[A]
-//
-//  private type <->[a,b] = Iso[->,a,b]
-//  def iso[A]: (Representation ==> A) <-> F[A] = Iso.unsafe(tabulate[A], index[A])(functor.D)
-//}

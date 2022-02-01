@@ -19,7 +19,7 @@ object DualModule extends DualInstances {
     Dual.leibniz[->].subst[λ[f[_,_] => Opp[Opp[->]#l]#l =~~= Dual[f,*,*]]](Dual.leibniz[Opp[->]#l]).is[A, B]
 
   //TODO: to code once this bug is resolved: https://github.com/scala/bug/issues/8252
-  //implicit def doubleDualIsK2[->[_,_]]: -> =~~= λ[(a,b) => Dual[Dual[->,*,*], a, b]] = ???
+//  implicit def doubleDualIsK2[->[_,_]]: -> =~~= λ[(a,b) => Dual[Dual[->,*,*], a, b]] = ???
 
   //implicit def conversion[->[_,_], A, B](ab: B -> A): Dual[->, A, B] = Dual(ab)
 }
@@ -88,31 +88,31 @@ private[categories] object DualHelpers {
     override def id[A](implicit A: TC[A]): A -> A = S.id[A]
   }
 
-  trait OppBifunctor[->[_,_], P[_,_]] extends Endobifunctor[Opp[->]#l, P] {
-    protected def E: Endobifunctor[->, P]
-    override def bimap[A, X, B, Y](left: X -> A, right: Y -> B): P[X, Y] -> P[A, B] = E.bimap(left, right)
+  trait OppBifunctor[->[_,_], ⊙[_,_]] extends Endobifunctor[Opp[->]#l, ⊙] {
+    protected def E: Endobifunctor[->, ⊙]
+    override def bimap[A, X, B, Y](left: X -> A, right: Y -> B): ⊙[X, Y] -> ⊙[A, B] = E.bimap(left, right)
   }
 
-  trait OppAssociative[->[_,_], P[_,_], C[_]] extends Associative[Opp[->]#l, P] {
-    protected def A: Associative.Aux[->, P, C]
+  trait OppAssociative[->[_,_], ⊙[_,_], C[_]] extends Associative[Opp[->]#l, ⊙] {
+    protected def A: Associative.Aux[->, ⊙, C]
     type TC[a] = C[a]
     def C = DualModule.oppSubcat[->, C](A.C)
     def bifunctor = DualModule.oppEndobifunctor(A.bifunctor)
-    def associate  [X: TC, Y: TC, Z: TC]: P[X, P[Y, Z]] -> P[P[X, Y], Z] = A.diassociate
-    def diassociate[X: TC, Y: TC, Z: TC]: P[P[X, Y], Z] -> P[X, P[Y, Z]] = A.associate
+    def associate  [X: TC, Y: TC, Z: TC]: (X ⊙ (Y ⊙ Z)) -> (X ⊙ Y ⊙ Z) = A.diassociate
+    def diassociate[X: TC, Y: TC, Z: TC]: (X ⊙ Y ⊙ Z) -> (X ⊙ (Y ⊙ Z)) = A.associate
   }
 
-  trait OppBraided[->[_,_], P[_,_], C[_]] extends OppAssociative[->, P, C] with Braided[Opp[->]#l, P] {
-    protected def A: Braided.Aux[->, P, C]
-    def braid[A: C, B: C]: P[B, A] -> P[A, B] = A.braid
+  trait OppBraided[->[_,_], ⊙[_,_], C[_]] extends OppAssociative[->, ⊙, C] with Braided[Opp[->]#l, ⊙] {
+    protected def A: Braided.Aux[->, ⊙, C]
+    def braid[A: C, B: C]: (B ⊙ A) -> (A ⊙ B) = A.braid
   }
 
-  trait OppMonoidal[->[_,_], P[_,_], C[_], I] extends OppAssociative[->, P, C] with Monoidal[Opp[->]#l, P] {
+  trait OppMonoidal[->[_,_], ⊙[_,_], C[_], I] extends OppAssociative[->, ⊙, C] with Monoidal[Opp[->]#l, ⊙] {
     type Id = I
-    protected def A: Monoidal.Aux[->, P, C, I]
-    def idl  [A: TC]: A -> P[I, A] = A.coidl
-    def coidl[A: TC]: P[I, A] -> A = A.idl
-    def idr  [A: TC]: A -> P[A, I] = A.coidr
-    def coidr[A: TC]: P[A, I] -> A = A.idr
+    protected def A: Monoidal.Aux[->, ⊙, C, I]
+    def idl  [A: C]: A -> ⊙[I, A] = A.coidl
+    def coidl[A: C]: ⊙[I, A] -> A = A.idl
+    def idr  [A: C]: A -> ⊙[A, I] = A.coidr
+    def coidr[A: C]: ⊙[A, I] -> A = A.idr
   }
 }

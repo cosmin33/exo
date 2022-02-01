@@ -11,25 +11,24 @@ trait CMonoid[->[_,_], ⊙[_,_], A] extends CSemigroup[->, ⊙, A] {
 }
 
 object CMonoid {
-  type Aux[->[_,_], ⊙[_,_], I0, A] = CMonoid[->, ⊙, A] {type I = I0}
+  type Aux[->[_,_], ⊙[_,_], A, I0] = CMonoid[->, ⊙, A] {type I = I0}
 
   def unsafe[->[_,_], ⊙[_,_], A, I0](fe: I0 -> A, f: (A ⊙ A) -> A)(implicit
     m: Monoidal.AuxI[->, ⊙, I0]
-  ): CMonoid.Aux[->, ⊙, I0, A] =
+  ): CMonoid.Aux[->, ⊙, A, I0] =
     new CMonoid[->, ⊙, A] {type I = I0; val C = m; val id = fe; val op = f}
 
   def fromSemigroup[->[_,_], ⊙[_,_], A, I0](fe: I0 -> A, s: CSemigroup[->, ⊙, A])(implicit
     m: Monoidal.AuxI[->, ⊙, I0]
-  ): CMonoid.Aux[->, ⊙, I0, A] =
-    new CMonoid[->, ⊙, A] {type I = I0; val C = m; val id = fe; val op = s.op}
+  ): CMonoid.Aux[->, ⊙, A, I0] = unsafe(fe, s.op)
 
-  implicit def fromCats[A](implicit m: Monoid[A]): CMonoid.Aux[* => *, (*, *), Unit, A] =
+  implicit def fromCats[A](implicit m: Monoid[A]): CMonoid.Aux[* => *, (*, *), A, Unit] =
     unsafe((_: Unit) => m.empty, p => m.combine(p._1, p._2))
 
-  def toCats[A](implicit m: CMonoid.Aux[* => *, (*, *), Unit, A]): Monoid[A] =
+  def toCats[A](implicit m: CMonoid.Aux[* => *, (*, *), A, Unit]): Monoid[A] =
     Monoid.instance(m.id(()), {case (a, b) => m.op((a, b))})
 
-  implicit def isoCats[A]: Monoid[A] <=> CMonoid.Aux[* => *, (*, *), Unit, A] =
+  implicit def isoCats[A]: Monoid[A] <=> CMonoid.Aux[* => *, (*, *), A, Unit] =
     Iso.unsafe(fromCats(_), toCats(_))
 
 }

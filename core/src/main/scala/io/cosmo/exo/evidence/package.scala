@@ -27,8 +27,6 @@ package object evidence {
   val  SingletonOf = inhabitance.SingletonOf
   type <::[A, +B] = inhabitance.SingletonOf[A, B]
 
-  type ===[A, B] = Is[A, B]
-
   type WeakApart[A, B] = weakapart.WeakApart[A, B]
   val  WeakApart = weakapart.WeakApart
   type =!=[A, B] = weakapart.WeakApart[A, B]
@@ -41,11 +39,11 @@ package object evidence {
   type >~>[+B, -A] = As[A, B]
   type </<[-A, +B] = StrictAs[A, B]
 
+  type ===[A, B] = Is[A, B]
   type =~=[A[_], B[_]] = IsK[A, B]
   val  =~= = IsK
   type =~~=[A[_,_], B[_,_]] = IsK2[A, B]
   val =~~= = IsK2
-
   type =≈=[A[_[_]], B[_[_]]] = IsHK[A, B]
   val  =≈= = IsHK
 

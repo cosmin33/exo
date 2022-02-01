@@ -50,26 +50,20 @@ object Is extends IsInstances {
 
   implicit def coercibleToEquality[A, B](implicit ec: Coercible[A === A, A === B]): A === B = ec(Is.refl)
 
-  implicit def exoCov[A]: Exo.Cov[===, A === *] = Exo.unsafe[===, * => *, A === *](_.subst[A === *])
-  implicit def exoCon[A]: Exo.Con[===, * === A] = Exo.unsafe[Dual[===,*,*], * => *, * === A](_.flip.subst[* === A])
+  def faExoCov: ∀[λ[a => Exo.Cov[===, a === *]]] = ∀.of[λ[a => Exo.Cov[===, a === *]]].from(exoCov)
+  def faExoCon: ∀[λ[a => Exo.Con[===, * === a]]] = ∀.of[λ[a => Exo.Con[===, * === a]]].from(exoCon)
 
-  implicit def faExoCov: ∀[λ[a => Exo.Cov[===, a === *]]] = ∀.of[λ[a => Exo.Cov[===, a === *]]].from(exoCov)
-  implicit def faExoCon: ∀[λ[a => Exo.Con[===, * === a]]] = ∀.of[λ[a => Exo.Con[===, * === a]]].from(exoCon)
+  implicit def functor[F[_]]: Endofunctor[===, F] = Exo.unsafe[===, ===, F](f => Is.lift(f))
+  implicit def exoCov[F[_]]: Exo.Cov[===, F] = Exo.unsafe[===, * => *, F](f => Is.lift(f).apply(_))
+  implicit def exoCon[F[_]]: Exo.Con[===, F] = Exo.unsafe[Dual[===,*,*], * => *, F](f => Is.lift(f.flip).apply(_))
 
-  implicit def leibnizFunctor[F[_]]: Endofunctor[===, F] = Exo.unsafe[===, ===, F](f => Is.lift(f))
-  implicit def leibnizFunctorFn[F[_]]: Exo.Cov[===, F] = Exo.unsafe[===, * => *, F](f => Is.lift(f).apply(_))
-  implicit def leibnizFunctorCn[F[_]]: Exo.Con[===, F] = Exo.unsafe[Dual[===,*,*], * => *, F](f => Is.lift(f.flip).apply(_))
-
-  implicit def leibnizBifunctor[P[_,_]]: Endobifunctor[===, P] = new Endobifunctor[===, P] {
+  implicit def bifunctor[P[_,_]]: Endobifunctor[===, P] = new Endobifunctor[===, P] {
     override def bimap[A, X, B, Y](left: A === X, right: B === Y): P[A, B] === P[X, Y] = left.lift2[P](right)
   }
 
-  private final class Refl[A]() extends Is[A, A] {
-    def subst[F[_]](fa: F[A]): F[A] = fa
-  }
-  private val refl_ : ∀[Refl] = ∀.of[Refl].from(new Refl())
+  private[this] val reflAny = new Is[Any, Any] { def subst[F[_]](fa: F[Any]) = fa }
 
-  implicit def refl[A]: A === A = refl_[A]
+  implicit def refl[A]: A === A = reflAny.asInstanceOf[A === A]
 
   def lift[F[_], A, B](ab: A === B): F[A] === F[B] = {
     type f[α] = F[A] === F[α]

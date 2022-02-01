@@ -84,7 +84,6 @@ object ProdReification {
 
 }
 
-
 trait ProdIndex[P, I] {
   type Length <: XInt
   val len: ProdLength.Aux[P, Length]

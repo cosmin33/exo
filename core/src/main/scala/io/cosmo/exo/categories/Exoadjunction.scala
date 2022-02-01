@@ -18,7 +18,7 @@ trait Exoadjunction[==>[_,_], -->[_,_], F[_], G[_]] {
   def monad  [A, B]: (A --> G[F[B]]) => (G[F[A]] --> G[F[B]]) = iso[A, F[B]].from andThen G.map[F[A], F[B]]
   def comonad[A, B]: (F[G[A]] ==> B) => (F[G[A]] ==> F[G[B]]) = iso[G[A], B].to   andThen F.map[G[A], G[B]]
 
-  def sucatFG: Subcat.Aux[λ[(a,b) => F[G[a]] ==> b], λ[a => subR.TC[G[a]]]] =
+  def subcatFG: Subcat.Aux[λ[(a,b) => F[G[a]] ==> b], λ[a => subR.TC[G[a]]]] =
     new Subcat[λ[(a,b) => F[G[a]] ==> b]] {
       type TC[a] = subR.TC[G[a]]
       def id[A: TC]: F[G[A]] ==> A = counit[A]
@@ -32,7 +32,7 @@ trait Exoadjunction[==>[_,_], -->[_,_], F[_], G[_]] {
       def andThen[A, B, C](ab: A --> G[F[B]], bc: B --> G[F[C]]): A --> G[F[C]] = subR.andThen(ab, monad(bc))
     }
 
-  def sucatFG_(implicit d: Derive[G, subR.TC]): Subcat.Aux[λ[(a,b) => F[G[a]] ==> b], subR.TC] =
+  def subcatFG_(implicit d: Derive[G, subR.TC]): Subcat.Aux[λ[(a,b) => F[G[a]] ==> b], subR.TC] =
     new Subcat[λ[(a,b) => F[G[a]] ==> b]] {
       type TC[a] = subR.TC[a]
       def id[A: TC]: F[G[A]] ==> A = counit[A](d.derive)

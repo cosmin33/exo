@@ -84,12 +84,12 @@ private[categories] object SemicategoryHelpers {
     override type TC[a] = Trivial.T1[a]
     def id[A](implicit A: Trivial.T1[A]): A <~< A = As.refl
     def andThen[A, B, C](ab: A <~< B, bc: B <~< C): A <~< C = ab.andThen(bc)
-    def initialTC: Trivial.T1[Void] = Trivial.trivialInstance
+    def initialTC: Trivial.T1[Void] = Trivial.trivial
     def initiate[A](implicit A: Trivial.T1[A]): Void <~< A = the[Void <~< A]
-    def terminalTC: Trivial.T1[Any] = Trivial.trivialInstance
+    def terminalTC: Trivial.T1[Any] = Trivial.trivial
     def terminate[A](implicit A: Trivial.T1[A]): A <~< Any = the[A <~< Any]
     def concretize[A, B](f: A <~< B): (A, Trivial.T1[A]) => (B, Trivial.T1[B]) =
-      { case (a, _) => (f(a), Trivial.trivialInstance) }
+      { case (a, _) => (f(a), Trivial.trivial) }
     override def toFunction[A: Trivial.T1, B](f: A <~< B): A => B = a => f(a)
     override def concrete[A: Trivial.T1, B](a: A)(f: A <~< B): B = f(a)
   }
@@ -126,9 +126,9 @@ private[categories] object SemicategoryHelpers {
     override def apply[A, B](implicit t: TC[A |-> B]): ((A => B, A)) => B = { case (ab, a) => ab(a) }
     def curry[X, Y, Z](f: ((X, Y)) => Z): X => (Y => Z) = x => y => f((x, y))
     def uncurry[X, Y, Z](f: X => (Y => Z)): ⊙[X, Y] => Z = { case (x, y) => f(x)(y) }
-    def terminalTC: Trivial.T1[Terminal] = Trivial.trivialInstance
+    def terminalTC: Trivial.T1[Terminal] = Trivial.trivial
     def terminate[A: Trivial.T1]: A => Terminal = _ => ()
-    def initialTC: Trivial.T1[Nothing] = Trivial.trivialInstance
+    def initialTC: Trivial.T1[Nothing] = Trivial.trivial
     def initiate[A: Trivial.T1]: Nothing => A = identity
     def distribute[A: Trivial.T1, B: Trivial.T1, C: Trivial.T1] = { case (a, bc) => bc.fold((a, _).asLeft, (a, _).asRight) }
   }

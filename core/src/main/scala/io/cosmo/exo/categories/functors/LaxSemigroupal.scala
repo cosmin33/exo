@@ -4,6 +4,8 @@ import cats._
 import io.cosmo.exo.categories._
 
 trait LaxSemigroupal[⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] { self =>
+  //type TC[_]
+//  def A: Associative.Aux[-->, ⊙-]
   def A: Associative[-->, ⊙-]
   def product[A, B]: (F[A] ⊙- F[B]) --> F[A ⊙= B]
 
@@ -19,6 +21,35 @@ trait LaxSemigroupal[⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] { self =>
     F: Exo[-->, ~~>, G]
   ): LaxSemigroupal[⊙=, ~~>, ⊙~, λ[a => G[F[a]]]] =
     new LaxSemigroupal[⊙=, ~~>, ⊙~, λ[a => G[F[a]]]] { val A = G.A; def product[A, B] = G.map2(self.product[A, B]) }
+//    new LaxSemigroupal[⊙=, ~~>, ⊙~, λ[a => G[F[a]]]] { type TC[a] = G.TC[a]; val A = G.A; def product[A, B] = G.map2(self.product[A, B]) }
+
+  // laws
+  def associativityLaw[==>[_,_], TC1[_], A, B, C](implicit
+    A1: Associative.Aux[==>, ⊙=, TC1],
+    E: Exo[==>, -->, F],
+    sa: SubcatHasId[-->, F[A]],
+    sb: SubcatHasId[-->, F[B]],
+    sc: SubcatHasId[-->, F[C]],
+    ta: TC1[A],
+    tb: TC1[B],
+    tc: TC1[C]
+  ) = {
+    val mm: F[A] ⊙- F[B] ⊙- F[C] --> F[A ⊙= B ⊙= C] = A.C.andThen(A.grouped(product[A, B], sc.id), product[A ⊙= B, C])
+
+    val nn: F[A] ⊙- (F[B] ⊙- F[C]) --> F[A ⊙= (B ⊙= C)] = A.C.andThen(A.grouped(sa.id, product[B, C]), product[A, B ⊙= C])
+
+    val aa: F[A ⊙= B ⊙= C] --> F[A ⊙= (B ⊙= C)] = E.map(A1.associate[A, B, C])
+    val bb: F[A ⊙= (B ⊙= C)] --> F[A ⊙= B ⊙= C] = E.map(A1.diassociate[A, B, C])
+
+
+    val xx: F[A] ⊙- F[B] ⊙- F[C] --> F[A ⊙= (B ⊙= C)] = A.C.andThen(mm, aa)
+
+
+    val y: F[A] ⊙- (F[B] ⊙- F[C]) --> F[A ⊙= B ⊙= C] = A.C.andThen(nn, bb)
+
+
+    ???
+  }
 }
 
 object LaxSemigroupal extends LaxSemigroupalInstances {

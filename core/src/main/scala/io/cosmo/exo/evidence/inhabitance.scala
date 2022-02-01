@@ -71,11 +71,9 @@ object inhabitance {
 
     def witness[A](f: A => Void): ¬[A] = f.coerce[¬[A]]
 
-    def asdfas[A] = implicitly[Coercible[A => Void, ¬[A]]]
-
     def eqCanonic [A]: (A => Void) === ¬[A] = implicitly[(A => Void) === ¬[A]]
 
-    def isoCanonic[A]: (A => Void) <=> ¬[A] = Iso[* => *, A => Void, ¬[A]]
+    def isoCanonic[A]: (A => Void) <=> ¬[A] = <=>[A => Void, ¬[A]]
 
     def contramap2[A, B, C](p: ¬¬[Either[¬[A], ¬[B]]])(f: C => (A, B)): ¬[C] =
       witness { c =>

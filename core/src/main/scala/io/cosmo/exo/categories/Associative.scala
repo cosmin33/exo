@@ -5,7 +5,7 @@ import cats.implicits._
 import io.cosmo
 import io.cosmo.exo
 import io.cosmo.exo._
-import io.cosmo.exo.categories.Trivial.{T1, trivialInstance}
+import io.cosmo.exo.categories.Trivial.{T1, trivial}
 import io.cosmo.exo.categories.functors.{Endobifunctor, Exo, Exobifunctor}
 
 trait Associative[->[_, _], ⊙[_, _]] {
@@ -55,7 +55,7 @@ object Associative extends AssociativeImplicits {
 }
 
 trait AssociativeImplicits extends AssociativeImplicits01 {
-  val cartesianFn1Tuple: Cartesian.Aux[* => *, Tuple2, Trivial.T1, Unit] =
+  def cartesianFn1Tuple: Cartesian.Aux[* => *, Tuple2, Trivial.T1, Unit] =
       new Cartesian[* => *, Tuple2] {
         type TC[a] = Trivial.T1[a]
         type Id = Unit
@@ -71,7 +71,7 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
         def idl[A: TC]: (Unit, A) -> A = { case (_, a) => a }
         def fst[A: TC, B: TC]: (A, B) -> A = { case (a, _) => a }
         def snd[A: TC, B: TC]: (A, B) -> B = { case (_, b) => b }
-        def &&&[X, Y, Z](f: X -> Y, g: X -> Z): X -> (Y, Z) = x => (f(x), g(x))
+        def &&&[A, B, C](f: A -> B, g: A -> C): A -> (B, C) = x => (f(x), g(x))
         def diag[A: TC]: A -> (A, A) = a => (a, a)
       }
 
@@ -80,7 +80,7 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
   implicit def cartesianFn1Conj: Cartesian.Aux[* => *, /\, Trivial.T1, Unit] =
     /\.leibniz.subst[Cartesian.Aux[* => *, *[_,_], Trivial.T1, Unit]](cartesianFn1Tuple)
 
-  implicit val cocartesianFn1Disj: Cartesian.Aux[Opp[* => *]#l, \/, Trivial.T1, Void] =
+  implicit def cocartesianFn1Disj: Cartesian.Aux[Opp[* => *]#l, \/, Trivial.T1, Void] =
       new Cartesian[Opp[* => *]#l, \/] {
         type TC[a] = Trivial.T1[a]
         type Id = Void
@@ -96,18 +96,18 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
         def fst[A: TC, B: TC]: A => (A \/ B) = _.left
         def snd[A: TC, B: TC]: B => (A \/ B) = _.right
         def diag[A: TC]: (A \/ A) => A = _.fold[A](identity, identity)
-        def &&&[X, Y, Z](f: Y => X, g: Z => X): (Y \/ Z) => X = _.fold(f, g)
+        def &&&[X, A, B](f: A => X, g: B => X): (A \/ B) => X = _.fold(f, g)
       }
 
-  implicit val assocFn1Disj: Associative.Aux[* => *, \/, Trivial.T1] =
+  implicit def assocFn1Disj: Associative.Aux[* => *, \/, Trivial.T1] =
     new Associative[* => *, \/] {
       type TC[a] = Trivial.T1[a]
       def C = implicitly
       def bifunctor = implicitly
-      def associate  [X: TC, Y: TC, Z: TC]: X \/ Y \/ Z => X \/ (Y \/ Z) = cocartesianFn1Disj.diassociate(trivialInstance, trivialInstance, trivialInstance)
-      def diassociate[X: TC, Y: TC, Z: TC]: X \/ (Y \/ Z) => X \/ Y \/ Z = cocartesianFn1Disj.associate(trivialInstance, trivialInstance, trivialInstance)
+      def associate  [X: TC, Y: TC, Z: TC]: X \/ Y \/ Z => X \/ (Y \/ Z) = cocartesianFn1Disj.diassociate(trivial, trivial, trivial)
+      def diassociate[X: TC, Y: TC, Z: TC]: X \/ (Y \/ Z) => X \/ Y \/ Z = cocartesianFn1Disj.associate(trivial, trivial, trivial)
     }
-  implicit val assocFn1Eith: Associative.Aux[* => *, Either, Trivial.T1] =
+  implicit def assocFn1Eith: Associative.Aux[* => *, Either, Trivial.T1] =
     \/.leibniz.flip.subst[Associative.Aux[* => *, *[_,_], Trivial.T1]](assocFn1Disj)
 
   def cocartesianFn1Either: Cartesian.Aux[Opp[* => *]#l, Either, Trivial.T1, Void] =
@@ -119,7 +119,7 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
   implicit def cocartesianFn1DisjDual: Cartesian.Aux[Dual[* => *,*,*], \/, Trivial.T1, Void] =
     Dual.leibniz[* => *].subst[Cartesian.Aux[*[_,_], \/, Trivial.T1, Void]](cocartesianFn1Disj)
 
-  val injMonoidalDisj: Monoidal[Opp[Inject]#l, \/] with Symmetric[Opp[Inject]#l, \/] =
+  def injMonoidalDisj: Monoidal[Opp[Inject]#l, \/] with Symmetric[Opp[Inject]#l, \/] =
     new Monoidal[Opp[Inject]#l, \/] with Symmetric[Opp[Inject]#l, \/] {
       override type Id = Void
       override type TC[a] = Trivial.T1[a]
@@ -153,19 +153,19 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
       }
       def associate  [X: TC, Y: TC, Z: TC]: Inject[X \/ (Y \/ Z), X \/ Y \/ Z] =
         new Inject[X \/ (Y \/ Z), X \/ Y \/ Z] {
-          def inj: X \/ (Y \/ Z) => X \/ Y \/ Z = cocartesianFn1Disj.associate[X, Y, Z](trivialInstance, trivialInstance, trivialInstance)
+          def inj: X \/ (Y \/ Z) => X \/ Y \/ Z = cocartesianFn1Disj.associate[X, Y, Z](trivial, trivial, trivial)
           def prj: X \/ Y \/ Z => Option[X \/ (Y \/ Z)] =
-            xyz => cocartesianFn1Disj.diassociate[X, Y, Z](trivialInstance, trivialInstance, trivialInstance)(xyz).some
+            xyz => cocartesianFn1Disj.diassociate[X, Y, Z](trivial, trivial, trivial)(xyz).some
         }
       def diassociate[X: TC, Y: TC, Z: TC]: Inject[X \/ Y \/ Z, X \/ (Y \/ Z)] =
         new Inject[X \/ Y \/ Z, X \/ (Y \/ Z)] {
-          def inj: X \/ Y \/ Z => X \/ (Y \/ Z) = cocartesianFn1Disj.diassociate[X, Y, Z](trivialInstance, trivialInstance, trivialInstance)
+          def inj: X \/ Y \/ Z => X \/ (Y \/ Z) = cocartesianFn1Disj.diassociate[X, Y, Z](trivial, trivial, trivial)
           def prj: X \/ (Y \/ Z) => Option[X \/ Y \/ Z] =
-            xyz => cocartesianFn1Disj.associate[X, Y, Z](trivialInstance, trivialInstance, trivialInstance)(xyz).some
+            xyz => cocartesianFn1Disj.associate[X, Y, Z](trivial, trivial, trivial)(xyz).some
         }
     }
 
-  implicit val injMonoidalTuple: Monoidal.Aux[Inject, (*, *), Trivial.T1, Unit] with Symmetric.Aux[Inject, (*, *), Trivial.T1] =
+  implicit def injMonoidalTuple: Monoidal.Aux[Inject, (*, *), Trivial.T1, Unit] with Symmetric.Aux[Inject, (*, *), Trivial.T1] =
     new Monoidal[Inject, (*, *)] with Symmetric[Inject, (*, *)] {
       type Id = Unit
       type TC[a] = Trivial.T1[a]

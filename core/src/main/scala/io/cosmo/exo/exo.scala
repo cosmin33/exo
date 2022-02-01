@@ -60,10 +60,8 @@ package object exo extends Existence with syntax {
   type Disjunction[L, R] = Disjunction.Type[L, R]
   type \/[L, R] = Disjunction[L, R]
   val \/ : Disjunction.type = Disjunction
-  type -\/[L, R] = \/.TypeL[L, R]
-  type \/-[L, R] = \/.TypeR[L, R]
-  def  -\/[L, R](l: L): \/.TypeL[L, R] = \/.left(l)
-  def  \/-[L, R](r: R): \/.TypeR[L, R] = \/.right(r)
+  def  -\/[L, R](l: L): \/[L, R] = \/.left(l)
+  def  \/-[L, R](r: R): \/[L, R] = \/.right(r)
 
   val Conjunction: ConjunctionModule = ConjunctionModuleImpl
   type Conjunction[L, R] = Conjunction.Type[L, R]

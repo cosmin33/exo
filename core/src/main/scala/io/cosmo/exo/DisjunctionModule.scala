@@ -8,23 +8,19 @@ import io.cosmo.exo.evidence.{=~~=, IsK2}
 import io.estatico.newtype.Coercible
 
 trait DisjunctionModule {
-  type Type [L, R]
-  type TypeL[L, R] <: Type[L, R]
-  type TypeR[L, R] <: Type[L, R]
+  type Type[L, R] >: Either[L, R]
 
   def leibniz: Either =~~= Type
   def bifunctor: Bifunctor[Type]
 
   def fold[L, R, A](d: Type[L, R])(la: L => A, ra: R => A): A
-  def left [L, R](l: L): TypeL[L, R]
-  def right[L, R](r: R): TypeR[L, R]
+  def left [L, R](l: L): Type[L, R]
+  def right[L, R](r: R): Type[L, R]
   def swap[L, R](d: Type[L, R]): Type[R, L]
 
-  final def apply[L, R](e: Either[L, R]): Type[L, R] = leibniz.is[L, R](e)
-  final def iso[L, R]: Either[L, R] <=> Type[L, R] = leibniz.is[L, R].toIso
+  final def apply[L, R](e: Either[L, R]): Type[L, R] = leibniz(e)
+  final def iso[L, R]: Either[L, R] <=> Type[L, R] = leibniz.is.toIso
   final def either[A, B, C](ac: A => C, bc: B => C): Type[A, B] => C = fold(_)(ac, bc)
-
-  //def unapply[L, R](d: Type[L, R]): Option[] = ???
 }
 
 private[exo] object DisjunctionModuleImpl extends DisjunctionModule {
@@ -43,6 +39,7 @@ object DisjunctionModule extends DisjunctionModule01 {
   implicit class DisjunctionOps[L, R](value: L \/ R) {
     def fold[A](la: L => A, ra: R => A): A = \/.fold(value)(la, ra)
     def swap: R \/ L = \/.swap(value)
+    def either: Either[L, R] = \/.leibniz.flip(value)
   }
   implicit class DisjunctionOps3[A, B, C](value: A \/ B \/ C) {
     def fold3[Z](a: A => Z, b: B => Z, c: C => Z): Z = value.fold(_.fold(a, b), c)
@@ -57,10 +54,6 @@ object DisjunctionModule extends DisjunctionModule01 {
   implicit val co: Coercible[∀∀[Either], ∀∀[\/]] = Coercible.instance
 
   implicit val iso: Either <~~> \/ = \/.leibniz.toIso
-
-  implicit def opproductTypeclass[T[_], A, B](implicit
-    L: LaxSemigroupal[\/, * => *, \/, T], tab: T[A] \/ T[B]
-  ): T[A \/ B] = L.product(tab)
 
   implicit def coproductTypeclass[T[_], A, B](implicit
     L: LaxSemigroupal[\/, * => *, /\, T], ta: T[A], tb: T[B]

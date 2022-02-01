@@ -64,7 +64,8 @@ object FunK {
       val fn =  f
     }
 
-  type FunctorFunK[A, B] = EvidenceCat[HasTc[Exo.CovF, *], A, B] /\ FunK[A, B]
+  type TypeclassedFunK[TC[_[_]], A, B] = EvidenceCat[HasTc[TC, *], A, B] /\ FunK[A, B]
+  type FunctorFunK[A, B] = TypeclassedFunK[Exo.CovF, A, B]
 
   def isoFunKUnapply[A, B, F[_], G[_]](i: IsoFunK[A, B])(implicit a: IsKind.Aux[A, F], b: IsKind.Aux[B, G]): F <~> G =
     <~>.unsafe(i.to.unapply, i.from.unapply)
@@ -87,10 +88,10 @@ object FunK {
   implicit def bifunctorEither: Endobifunctor[FunK, Either] = new FunkBifEither {}
 
   implicit def cartesian: Cartesian.Aux[FunK, Tuple2, IsKind, TypeK[UnitK]] = new FunkCartesianTuple {}
-
-  def cocartesianOpp: Cartesian.Aux[Opp[FunK]#l, Either, IsKind, TypeK[VoidK]] = new FunkCocartesianEither {}
   implicit def cocartesian: Cartesian.Aux[Dual[FunK,*,*], Either, IsKind, TypeK[VoidK]] =
     Dual.leibniz[FunK].subst[Cartesian.Aux[*[_,_], Either, IsKind, TypeK[VoidK]]](cocartesianOpp)
+
+  def cocartesianOpp: Cartesian.Aux[Opp[FunK]#l, Either, IsKind, TypeK[VoidK]] = new FunkCocartesianEither {}
 
 
   implicit def compositionFunctor: Endobifunctor[FunK, NestK] =
@@ -178,10 +179,8 @@ private[exo] object FunKHelpers {
       FunK.from(~>.product.diag[ia.Type])(ia, IsKind.pair2(ia, ia))
     def &&&[X, Y, Z](f: FunK[X, Y], g: FunK[X, Z]): FunK[X, (Y, Z)] =
       FunK.from(
-        ~>.product.merge(f.fn, IsKind.injectivity(g.kindA, f.kindA).subst[λ[f[_] => f ~> g.TypeB]](g.fn)))(
-        f.kindA,
-        IsKind.pair2(f.kindB, g.kindB)
-      )
+        ~>.product.merge(f.fn, IsKind.injectivity(g.kindA, f.kindA).subst[λ[f[_] => f ~> g.TypeB]](g.fn))
+      )(f.kindA, IsKind.pair2(f.kindB, g.kindB))
     def idl  [A](implicit ia: IsKind[A]): FunK[(TypeK[UnitK], A), A] =
       FunK.from(~>.product.idl[ia.Type])(IsKind.pair2(IsKind[TypeK[UnitK]], ia), ia)
     def coidl[A](implicit ia: IsKind[A]): FunK[A, (TypeK[UnitK], A)] =

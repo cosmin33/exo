@@ -47,8 +47,8 @@ class IsoTests extends AnyFunSuite with Matchers {
     <~>[Option]
     implicitly[HasIsoK[* => *, Option, Option]]
 
-
-    Iso[4].chain[6] // Isomorphism between singletons
+    Iso[4].chain[4]
+    Iso[4].chain[6]
 
     implicitly[HasIso[* => *, String, Int]]
     implicitly[HasIso[* => *, Int, String]]
@@ -57,6 +57,13 @@ class IsoTests extends AnyFunSuite with Matchers {
     implicitly[Refute[HasIso[* => *, String, Long]]]
 
     Iso[Iso[* => *, String, Int]].chain[HasIso[* => *, String, Int]]
+
+    <=>[Int <=> Long, Long <=> Int]
+    <=>[Int <=> Int, Int <=> Int]
+
+    // injectivity Iso
+    <=>[Int === Long, List[Int] === List[Long]]
+    <=>[Int === Int, List[Int] === List[Int]]
 
     def mrr1[->[_,_], A, B] = implicitly[HasIso[* => *, HasIso[->, A, B], Iso[->, A, B]]]
 
@@ -68,7 +75,9 @@ class IsoTests extends AnyFunSuite with Matchers {
     Iso[(String => Int, Long => Int)].chain[String \/ Long => Int]
     Iso[(String => Int, String => Long)].chain[String => (Int, Long)]
     Iso[(String, Int)].chain[(Int, String)].chain[Int /\ String]
+    Iso[(Int, Int)].chain[(Int, Int)]
     Iso[String /\ (Int \/ Long)].chain[(String /\ Int) \/ (String /\ Long)]
+    Iso[(Int, (Int, Int))].chain[((Int, Int), Int)]
     Iso[(String, Either[Int, Long])].chain[Either[(String, Int), (String, Long)]]
 
     // Isomorphisms from yoneda and corollaries
@@ -83,11 +92,13 @@ class IsoTests extends AnyFunSuite with Matchers {
     type Long1 = InstanceOf[Long]
     type String1 = InstanceOf[String]
     type Double1 = InstanceOf[Double]
+    implicitly[Int <=> Int1]
     implicit val e1: Int === Int1       = InstanceOf.is
     implicit val e2: Long === Long1     = InstanceOf.is
     implicit val e3: String === String1 = InstanceOf.is
     implicit val e4: Double === Double1 = InstanceOf.is
     // checking Iso equality lift implicits (for types *)
+    implicitly[List[Int] === List[Int1]]
     implicitly[List[Int] <=> List[Int1]]
     implicitly[(Int, Long) <=> (Int1, Long1)]
     implicitly[(Int, Long, String) <=> (Int1, Long1, String1)]
@@ -97,10 +108,10 @@ class IsoTests extends AnyFunSuite with Matchers {
     type Option1[a] = Unit
     type Vector1[a] = Unit
     type Order1[a] = Unit
-    implicit val d1: List =~= List1     = Unsafe.isK
-    implicit val d2: Option =~= Option1 = Unsafe.isK
-    implicit val d3: Vector =~= Vector1 = Unsafe.isK
-    implicit val d4: Order =~= Order1   = Unsafe.isK
+    implicit val d1: List =~= List1     = Unsafe.isK // fundamentally incorrect but works for these tests, they'll never run
+    implicit val d2: Option =~= Option1 = Unsafe.isK // fundamentally incorrect but works for these tests, they'll never run
+    implicit val d3: Vector =~= Vector1 = Unsafe.isK // fundamentally incorrect but works for these tests, they'll never run
+    implicit val d4: Order =~= Order1   = Unsafe.isK // fundamentally incorrect but works for these tests, they'll never run
     case class T2[F[_], G[_]](t1: F[Int], t2: G[Int])
     case class T3[F[_], G[_], H[_]](t1: F[Int], t2: G[Int], t3: H[Int])
     case class T4[F[_], G[_], H[_], I[_]](t1: F[Int], t2: G[Int], t3: H[Int], t4: I[Int])
@@ -114,10 +125,10 @@ class IsoTests extends AnyFunSuite with Matchers {
     type Ior1[a, b] = Unit
     type AndThen1[a, b] = Unit
     type Either1[a, b] = Unit
-    implicit val f1: Validated =~~= Validated1 = Unsafe.isK2
-    implicit val f2: Ior =~~= Ior1 = Unsafe.isK2
-    implicit val f3: AndThen =~~= AndThen1 = Unsafe.isK2
-    implicit val f4: Either =~~= Either1 = Unsafe.isK2
+    implicit val f1: Validated =~~= Validated1 = Unsafe.isK2 // fundamentally incorrect but works for these tests, they'll never run
+    implicit val f2: Ior =~~= Ior1             = Unsafe.isK2 // fundamentally incorrect but works for these tests, they'll never run
+    implicit val f3: AndThen =~~= AndThen1     = Unsafe.isK2 // fundamentally incorrect but works for these tests, they'll never run
+    implicit val f4: Either =~~= Either1       = Unsafe.isK2 // fundamentally incorrect but works for these tests, they'll never run
     case class F2[F[_,_], G[_,_]](t1: F[Int, Int], t2: G[Int, Int])
     case class F3[F[_,_], G[_,_], H[_,_]](t: Int)
     case class F4[F[_,_], G[_,_], H[_,_], I[_,_]](t: Int)

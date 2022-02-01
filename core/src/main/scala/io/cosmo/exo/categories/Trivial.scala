@@ -16,8 +16,9 @@ object Trivial {
 
   implicitly[DummyImplicit]
 
-  implicit val trivialInstance: Trivial = new Trivial {}
-  implicit def faTrivial[F[_]]: ∀[λ[a => T1[F[a]]]] = ∀.of[λ[a => T1[F[a]]]].from(trivialInstance)
-  implicit def faTrivial2[F[_,_]]: ∀∀[λ[(a,b) => T1[F[a, b]]]] = ∀∀.of[λ[(a, b) => T1[F[a, b]]]].from(trivialInstance)
-  implicit def faTrivialK[A[_[_]]]: ∀~[λ[f[_] => T1[A[f]]]] = ∀~.of[λ[f[_] => T1[A[f]]]].from(trivialInstance)
+  private [this] val instance = new Trivial {}
+  implicit def trivial: Trivial = instance
+  implicit def faTrivial[F[_]]: ∀[λ[a => T1[F[a]]]] = ∀.of[λ[a => T1[F[a]]]].from(trivial)
+  implicit def faTrivial2[F[_,_]]: ∀∀[λ[(a,b) => T1[F[a, b]]]] = ∀∀.of[λ[(a, b) => T1[F[a, b]]]].from(trivial)
+  implicit def faTrivialK[A[_[_]]]: ∀~[λ[f[_] => T1[A[f]]]] = ∀~.of[λ[f[_] => T1[A[f]]]].from(trivial)
 }

@@ -8,7 +8,7 @@ trait LaxMonoidal[⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends LaxSemigroupal[�
   type I
   def id: I --> F[I]
 
-  def preserveCMonoid[==>[_,_], TC2[_], M](ma: CMonoid.Aux[==>, ⊙=, I, M])(implicit E: Exo[==>, -->, F]): CMonoid.Aux[-->, ⊙-, I, F[M]] =
+  def preserveCMonoid[==>[_,_], TC2[_], M](ma: CMonoid.Aux[==>, ⊙=, M, I])(implicit E: Exo[==>, -->, F]): CMonoid.Aux[-->, ⊙-, F[M], I] =
     CMonoid.unsafe(A.C.andThen(id, E.map(ma.id)), map2(ma.op))(A)
 
   def compose[~~>[_,_], ⊙~[_,_], G[_]](
@@ -22,6 +22,8 @@ trait LaxMonoidal[⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends LaxSemigroupal[�
       def id = G.A.C.andThen(G.id, E.map(self.id))
       def product[A, B] = G.map2(self.product[A, B])
     }
+
+  // laws
 }
 
 object LaxMonoidal {

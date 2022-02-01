@@ -1,8 +1,10 @@
 package io.cosmo.exo.categories.data
 
 import io.cosmo.exo./\
+import cats.implicits._
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import mouse.any._
 
 class IndexedProductTests extends AnyFunSuite with Matchers {
 
@@ -29,13 +31,13 @@ class IndexedProductTests extends AnyFunSuite with Matchers {
   implicitly[ProdIndex.AuxT[Byte /\ (String /\ Int), 2, Int]]
 
   test("IndexedProduct") {
-    val tup = (1, ("Blah", 2L))
-    val p = IndexedProduct(tup)
+    val tup: (Int, (String, Long)) = (1, ("Word", 2L))
+    val p: IndexedProduct[(Int, (String, Long))] = IndexedProduct(tup)
     val p0: Int = p(0)
     val p1: String = p(1)
     val p2: Long = p(2)
     p0 should be (1)
-    p1 should be ("Blah")
+    p1 should be ("Word")
     p2 should be (2L)
     val reif = ProdReification[tup.type]
     reif.iso.from(reif.iso.to(tup)) should be (tup)

@@ -3,6 +3,7 @@ package io.cosmo.exo.categories
 import io.cosmo.exo._
 import mouse.any._
 import io.cosmo.exo.categories.functors._
+import io.cosmo.exo.evidence.===
 
 trait Ccc[->[_, _]] extends Subcat[->] {
   type |->[_, _] // Hom objects representation
@@ -60,7 +61,7 @@ object Ccc {
   type Aux1[->[_,_], ->#[_], P[_,_], E[_,_]] =
     Ccc[->] {type |->[A, B] = E[A, B]; type ⊙[A, B] = P[A, B]; type TC[x] = ->#[x]}
 
-  //type Homoiconic[->[_,_]] = InstanceOf[CccClass.Homoiconic[->]]
+  type Homoiconic[->[_,_]] = Ccc[->] { type |->[a,b] = ->[a,b] }
 
   case class SingleOf[T, U <: {type TC[_]; type |->[_,_]; type ⊙[_, _]; type ProductId}](
     widen: T {type TC[_]; type |->[_,_]; type ⊙[_, _]; type ProductId}

@@ -33,8 +33,8 @@ package object functors {
     def apply[H[_[_]]](implicit F: CovariantK[H]): CovariantK[H] = F
     trait Proto[H[_[_]]] extends CovariantK[H] {
       def map[A, B](f: Dual[FunK, A, B]): HasTc[H, A] => HasTc[H, B] = {
-        val f1 = f.toFn
-        HasTc.isoFun1[H, A, f1.TypeB, B, f1.TypeA](f1.kindB, f1.kindA).flip(comapK(f1.fn))
+        val fn = f.toFn
+        HasTc.isoFun1[H, A, fn.TypeB, B, fn.TypeA](fn.kindB, fn.kindA).flip(comapK(fn.fn))
       }
       protected def comapK[F[_], G[_]](f: G ~> F): H[F] => H[G]
     }
