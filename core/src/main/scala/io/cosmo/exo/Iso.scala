@@ -26,7 +26,7 @@ trait Iso[->[_,_], A, B] { ab =>
   final def compose[Z](za: Z <-> A): Z <-> B = za.andThen(ab)
 
   /** Flips the isomorphism from A <-> B to B <-> A grace to it's reflexivity property */
-  lazy val flip: B <-> A = new (B <-> A) {
+  def flip: B <-> A = new (B <-> A) {
     val (cat, to, from) = (ab.cat, ab.from, ab.to)
     override lazy val flip = ab
   }
@@ -102,7 +102,7 @@ object Iso extends IsoInstances with IsoImplicits {
   /** Isomorphism between a case class and it's generic representation (from shapeless) */
   def forGeneric[A, Repr](implicit g: Generic.Aux[A, Repr]): A <=> Repr = Iso.unsafe(g.to, g.from)
 
-  /** iso's for categorical constructs applied to tuple */
+  /** iso's for categorical constructs applied to Function1 + tuple */
   object product {
     final def associate[A, B, C]: (A, (B, C)) <=> ((A, B), C) =
       Iso.unsafe(p => ((p._1, p._2._1), p._2._2), { p => (p._1._1, (p._1._2, p._2)) })
@@ -122,7 +122,7 @@ object Iso extends IsoInstances with IsoImplicits {
       )
   }
 
-  /** iso's for categorical constructs applied to /\ */
+  /** iso's for categorical constructs applied to Function1 + /\ */
   object product1 {
     final def associate[A, B, C]: (A /\ (B /\ C)) <=> ((A /\ B) /\ C) =
       Iso.unsafe(p => ((p._1, p._2._1), p._2._2), p => (p._1._1, (p._1._2, p._2)))
@@ -142,7 +142,7 @@ object Iso extends IsoInstances with IsoImplicits {
       )
   }
 
-  /** iso's for categorical constructs applied to Either */
+  /** iso's for categorical constructs applied to Function1 + Either */
   object coproduct {
     final def associate[A, B, C]: (A Either (B Either C)) <=> ((A Either B) Either C) = Iso.unsafe(
       _.fold(a => Left(Left(a)), _.fold(b => Left(Right(b)), c => Right(c))),
@@ -156,7 +156,7 @@ object Iso extends IsoInstances with IsoImplicits {
       Iso.unsafe(p => _.fold(p._1, p._2), f => (a => f(Left(a)), b => f(Right(b))))
   }
 
-  /** iso's for categorical constructs applied to \/ */
+  /** iso's for categorical constructs applied to Function1 + \/ */
   object coproduct1 {
     final def associate[A, B, C]: (A \/ (B \/ C)) <=> ((A \/ B) \/ C) = Iso.unsafe(
       _.fold(a => -\/(-\/(a)), _.fold(b => -\/(\/-(b)), c => \/-(c))),
@@ -170,7 +170,7 @@ object Iso extends IsoInstances with IsoImplicits {
       Iso.unsafe(p => _.fold(p._1, p._2), f => (a => f(Left(a)), b => f(Right(b))))
   }
 
-  /** Class equivalent to an Iso; useful for implicit searching of isomorphisms as it searches also for flipped and for reflexive iso */
+  /** Newtype for Iso; useful for implicit searching of isomorphisms as it searches also for flipped and for reflexive iso */
   @newtype case class HasIso[->[_,_], A, B](iso: Iso[->, A, B])
   object HasIso {
     implicit def impl[->[_,_], A, B](implicit
@@ -191,7 +191,7 @@ object Iso extends IsoInstances with IsoImplicits {
       EqImpIso(eq.subst(r.iso))
   }
 
-  /** Class equivalent to an IsoK; useful for implicit searching of isomorphisms as it searches also for flipped iso and for reflective iso */
+  /** Newtype for IsoK; useful for implicit searching of isomorphisms as it searches also for flipped iso and for reflexive iso */
   @newtype case class HasIsoK[->[_,_], F[_], G[_]](iso: IsoK[->, F, G])
   object HasIsoK {
     implicit def impl[->[_,_], F[_], G[_]](implicit
@@ -273,21 +273,21 @@ trait IsoImplicits extends IsoImplicits01 {
   implicit def coyoLemma[->[_,_], A, F[_]](implicit
     C: SubcatHasId[->, A], E: Exo.Con[->, F]
   ): ((* -> A) ~> F) <=> F[A] = yoneda.lemmaCoyoIso
-  implicit def yoEmbeddingCov[->[_,_], A, B](implicit
+  implicit def yoEmbedding[->[_,_], A, B](implicit
     C: SubcatHasId[->, A]
-  ): ((A -> *) ~> (B -> *)) <=> (B -> A) = yoneda.yoEmbeddingCov[->, A, B]
-  implicit def yoEmbeddingCon[->[_,_], A, B](implicit
+  ): ((A -> *) ~> (B -> *)) <=> (B -> A) = yoneda.yoEmbedding[->, A, B]
+  implicit def coyoEmbedding[->[_,_], A, B](implicit
     C: SubcatHasId[->, A]
-  ): ((* -> A) ~> (* -> B)) <=> (A -> B) = yoneda.yoEmbeddingCon[->, A, B]
+  ): ((* -> A) ~> (* -> B)) <=> (A -> B) = yoneda.coyoEmbedding[->, A, B]
   implicit def yoDoubleEmbed[->[_,_], A, B](implicit
     cat: Subcat[->]
   ): (A -> B) <=> ∀~[λ[f[_] => Endofunctor[->, f] => f[A] -> f[B]]] = yoneda.yoDoubleEmbed
-  implicit def yoCorolCov[->[_,_], A, B](implicit
+  implicit def yoCorol[->[_,_], A, B](implicit
     CA: SubcatHasId[->, A], CB: SubcatHasId[->, B]
-  ): ((A -> *) <~> (B -> *)) <=> Iso[->, B, A] = yoneda.yoCorol1Cov
-  implicit def yoCorolCon[->[_,_], A, B](implicit
+  ): ((A -> *) <~> (B -> *)) <=> Iso[->, B, A] = yoneda.yoCorol1
+  implicit def coyoCorol[->[_,_], A, B](implicit
     CA: SubcatHasId[->, A], CB: SubcatHasId[->, B]
-  ): ((* -> A) <~> (* -> B)) <=> Iso[->, A, B] = yoneda.yoCorol1Con
+  ): ((* -> A) <~> (* -> B)) <=> Iso[->, A, B] = yoneda.coyoCorol1
 
   implicit def isoUnitToA[A]: (Unit => A) <=> A = Iso.unsafe(_(()), a => _ => a)
 

@@ -10,12 +10,12 @@ inThisBuild(Seq(
 
 lazy val versionOf = new {
   val simulacrum = "1.0.0"
-  val mouse = "0.25-SNAPSHOT"
+  val mouse = "1.0.10"
   val cats = "2.1.1"
   val shapeless = "2.3.3"
   val scalaCheck = "1.14.3"
   val scalatest = "3.3.0-SNAP2"
-  val estaticoNewtype = "0.4.4-SNAPSHOT"
+  val estaticoNewtype = "0.4.4"
   val singletonOps = "0.5.1"
 }
 

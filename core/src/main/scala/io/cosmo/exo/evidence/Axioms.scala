@@ -3,7 +3,7 @@ package io.cosmo.exo.evidence
 import io.cosmo.exo._
 import io.cosmo.exo.evidence.internal.Unsafe
 
-/** Copied from alexknvl Leibniz library: https://github.com/alexknvl/leibniz */
+/** Copied from alexknvl "Leibniz" library: https://github.com/alexknvl/leibniz */
 object Axioms {
   def predefEq[A, B](ab: A =:= B): A === B = Unsafe.is[A, B]
 

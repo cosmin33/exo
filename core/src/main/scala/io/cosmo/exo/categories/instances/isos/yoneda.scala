@@ -17,13 +17,10 @@ object yoneda {
   ): ((* -> A) ~> F) <=> F[A] =
     Iso.unsafe(_[A](C.id), fa => ∀.of[λ[x => x -> A => F[x]]].from(xa => E.map(Dual(xa))(fa)))
 
-  private def lemmaYoUnrestricted  [A, F[_]]: ((A === *) ~> F) <=> F[A] = lemmaYoIso  [===, A, F]
-  private def lemmaCoyoUnrestricted[A, F[_]]: ((* === A) ~> F) <=> F[A] = lemmaCoyoIso[===, A, F]
-
-  def yoEmbeddingCov[->[_,_], A, B](implicit
+  def yoEmbedding[->[_,_], A, B](implicit
     C: SubcatHasId[->, A]
   ): ((A -> *) ~> (B -> *)) <=> (B -> A) = lemmaYoIso[->, A, B -> *](C, Exo.semiFunctorCov(C.s))
-  def yoEmbeddingCon[->[_,_], A, B](implicit
+  def coyoEmbedding[->[_,_], A, B](implicit
     C: SubcatHasId[->, A]
   ): ((* -> A) ~> (* -> B)) <=> (A -> B) = lemmaCoyoIso[->, A, * -> B](C, Exo.semiFunctorCon(C.s))
 
@@ -35,43 +32,47 @@ object yoneda {
       fa => fa.apply[λ[a => a]](Exo.idEndofunctor)
     )
 
-  def yoCorol1Cov[->[_,_], A, B](implicit
+  def yoCorol1[->[_,_], A, B](implicit
     ca: SubcatHasId[->, A], cb: SubcatHasId[->, B]
   ): ((A -> *) <~> (B -> *)) <=> Iso[->, B, A] =
       Iso.unsafe(
         i => Iso.unsafe(i.apply[A].to(ca.id), i.apply[B].from(cb.id))(ca.s),
-        i => <~>.unsafe(yoEmbeddingCov[->, A, B].from(i.to), yoEmbeddingCov[->, B, A].from(i.from))
+        i => <~>.unsafe(yoEmbedding[->, A, B].from(i.to), yoEmbedding[->, B, A].from(i.from))
       )
 
-  def yoCorol1Con[->[_,_], A, B](implicit
+  def coyoCorol1[->[_,_], A, B](implicit
     ca: SubcatHasId[->, A], cb: SubcatHasId[->, B]
   ): ((* -> A) <~> (* -> B)) <=> Iso[->, A, B] =
     Iso.unsafe(
       i => Iso.unsafe(i.apply[A].to(ca.id), i.apply[B].from(cb.id))(ca.s),
-      i => <~>.unsafe(yoEmbeddingCon[->, A, B].from(i.to), yoEmbeddingCon[->, B, A].from(i.from))
+      i => <~>.unsafe(coyoEmbedding[->, A, B].from(i.to), coyoEmbedding[->, B, A].from(i.from))
     )
-
-  private def isoIndirectLiskov [A, B]: ((A <~< *)  ~> (B <~< *)) <=> (B <~< A) = yoEmbeddingCov
-  private def isoIndirectLeibniz[A, B]: ((A === *)  ~> (B === *)) <=> (A === B) = yoEmbeddingCov[===, A, B] andThen Iso.isoGroupoidFlip
-  private def isoIndirectLeibni_[A, B]: ((A === *) <~> (B === *)) <=> (A === B) =
-    yoCorol1Cov[===, A, B] andThen Iso.isoGroupoid[===, B, A].flip andThen Iso.isoGroupoidFlip
-//     yoCorol1Cov[===, A, B].chain[B === A].chain[A === B] // strange compile error for this one but it should work, I think it's a scala bug ?!?!
-    // TODO: investigate why the above doesn't work
 
   /** object containing all general yoneda isomorphisms applied to Function1 */
   object function1 {
-    /** yoneda lemma covariant for Function1 */
-    def lemmaYoIso  [A, F[_]: Exo.CovF]: ((A => *) ~> F) <=> F[A] = yoneda.lemmaYoIso
-    /** yoneda lemma contravariant for Function1 */
-    def lemmaCoyoIso[A, F[_]: Exo.ConF]: ((* => A) ~> F) <=> F[A] = yoneda.lemmaCoyoIso
-    /** yoneda embedding - covariant for Function1 */
+    /** yoneda lemma - covariant functors on Function1 */
+    def lemmaYoIso  [A, F[_]: Exo.CovF]: ((A => *) ~> F) <=> F[A] = yoneda.lemmaYoIso  [* => *, A, F]
+    /** yoneda lemma - contravariant functors on Function1 */
+    def lemmaCoyoIso[A, F[_]: Exo.ConF]: ((* => A) ~> F) <=> F[A] = yoneda.lemmaCoyoIso[* => *, A, F]
+    /** yoneda embedding - covariant functors on Function1 */
     def yoEmbedding  [A, B]: ((A => *) ~> (B => *)) <=> (B => A) = lemmaYoIso  [A, B => *]
-    /** yoneda embedding - contravariant for Function1 */
+    /** yoneda embedding - contravariant functors on Function1 */
     def coyoEmbedding[A, B]: ((* => A) ~> (* => B)) <=> (A => B) = lemmaCoyoIso[A, * => B]
-    /** yoneda embedding corollary 1 - covariant for Function1 */
-    def yoCorol1Cov[A, B]: ((A => *) <~> (B => *)) <=> (B <=> A) = yoneda.yoCorol1Cov
-    /** yoneda embedding corollary 1 - contravariant for Function1 */
-    def yoCorol1Con[A, B]: ((* => A) <~> (* => B)) <=> (A <=> B) = yoneda.yoCorol1Con
+    /** yoneda embedding corollary 1 - covariant functors on Function1 */
+    def yoCorol1  [A, B]: ((A => *) <~> (B => *)) <=> (B <=> A) = yoneda.yoCorol1[* => *, A, B]
+    /** yoneda embedding corollary 1 - contravariant functors on Function1 */
+    def coyoCorol1[A, B]: ((* => A) <~> (* => B)) <=> (A <=> B) = yoneda.coyoCorol1[* => *, A, B]
   }
+
+  // applied yoneda examples
+  private def lemmaYoUnrestricted  [A, F[_]]: ((A === *) ~> F) <=> F[A] = lemmaYoIso  [===, A, F]
+  private def lemmaCoyoUnrestricted[A, F[_]]: ((* === A) ~> F) <=> F[A] = lemmaCoyoIso[===, A, F]
+
+  private def isoIndirectLiskov [A, B]: ((A <~< *)  ~> (B <~< *)) <=> (B <~< A) = yoEmbedding
+  private def isoIndirectLeibniz[A, B]: ((A === *)  ~> (B === *)) <=> (A === B) = yoEmbedding[===, A, B] andThen Iso.isoGroupoidFlip
+  private def isoIndirectLeibni_[A, B]: ((A === *) <~> (B === *)) <=> (A === B) =
+    yoCorol1[===, A, B] andThen Iso.isoGroupoid[===, B, A].flip andThen Iso.isoGroupoidFlip
+//       yoCorol1Cov[===, A, B].chain[B === A].chain[A === B] // strange compile error for this one but it should work, I think it's a scala bug ?!?!
+  // TODO: investigate why the above doesn't work
 
 }

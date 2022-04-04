@@ -89,8 +89,8 @@ trait ProdIndex[P, I] {
   val len: ProdLength.Aux[P, Length]
   def ev: Require[(I >= 0) && (I < Length)]
   type T
-  def get(prod: P, index: I): T
-  def set(prod: P, index: I, value: T): P
+  def get(prod: P): T
+  def set(prod: P, value: T): P
 }
 object ProdIndex {
   type Aux[P, I, T0, L] = ProdIndex[P, I] { type T = T0; type Length = L }
@@ -102,8 +102,8 @@ object ProdIndex {
       val len = l
       val ev = implicitly
       type T = A
-      def get(prod: A, index: 0) = prod
-      def set(prod: A, index: 0, value: T) = value
+      def get(prod: A) = prod
+      def set(prod: A, value: T) = value
     }
 
   implicit def impPairA[A, B, IA <: XInt, TA, LA <: XInt, LB <: XInt, LAB <: XInt](implicit
@@ -117,8 +117,8 @@ object ProdIndex {
       val len: ProdLength.Aux[A /\ B, LAB] = ProdLength.impPair(i1.len, l2, ll)
       override def ev: Require[IA >= 0 && (IA < LAB)] = proof
       type T = TA
-      def get(prod: A /\ B, index: IA): TA = i1.get(prod._1, index)
-      def set(prod: A /\ B, index: IA, value: TA): A /\ B = /\(i1.set(prod._1, index, value), prod._2)
+      def get(prod: A /\ B): TA = i1.get(prod._1)
+      def set(prod: A /\ B, value: TA): A /\ B = /\(i1.set(prod._1, value), prod._2)
     }
   implicit def impPairATup[A, B, IA <: XInt, TA, LA <: XInt, LB <: XInt, LAB <: XInt](implicit
     i1: ProdIndex.Aux[A, IA, TA, LA],
@@ -139,8 +139,8 @@ object ProdIndex {
       val len = ProdLength.impPair(l1, i2.len, ll)
       def ev: Require[IB1 >= 0 && (IB1 < LAB)] = proof
       type T = TB
-      def get(prod: A /\ B, index: IB1): TB = i2.get(prod._2, ib.value)
-      def set(prod: A /\ B, index: IB1, value: TB): A /\ B = /\(prod._1, i2.set(prod._2, ib.value, value))
+      def get(prod: A /\ B): TB = i2.get(prod._2)
+      def set(prod: A /\ B, value: TB): A /\ B = /\(prod._1, i2.set(prod._2, value))
     }
   implicit def impPairBTup[A, B, IB <: XInt, TB, LA <: XInt, LB <: XInt, IB1 <: XInt, LAB <: XInt](implicit
     l1: ProdLength.Aux[A, LA],

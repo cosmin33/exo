@@ -22,6 +22,8 @@ trait LaxSemigroupal[⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] { self =>
   ): LaxSemigroupal[⊙=, ~~>, ⊙~, λ[a => G[F[a]]]] =
     new LaxSemigroupal[⊙=, ~~>, ⊙~, λ[a => G[F[a]]]] { type TC[a] = G.TC[a]; val A = G.A; def product[A, B] = G.map2(self.product[A, B]) }
 
+  implicit private val SUBCAT: Subcat.Aux[-->, TC] = A.C
+
   // laws
   def associativityLeftLaw[==>[_,_], TC1[_], A, B, C](implicit
     A1: Associative.Aux[==>, ⊙=, TC1],
@@ -32,13 +34,11 @@ trait LaxSemigroupal[⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] { self =>
     ta: TC1[A],
     tb: TC1[B],
     tc: TC1[C]
-  ) = {
-    implicit val ss: Subcat.Aux[-->, TC] = A.C
+  ) =
     IsEq(
       A.grouped(product[A, B], A.C.id[F[C]]) >>>> product[A ⊙= B, C] >>>> E.map(A1.associate[A, B, C]),
       A.associate[F[A], F[B], F[C]] >>>> A.grouped(A.C.id[F[A]], product[B, C]) >>>> product[A, B ⊙= C]
     )
-  }
 
   def associativityRightLaw[==>[_,_], TC1[_], A, B, C](implicit
     A1: Associative.Aux[==>, ⊙=, TC1],
@@ -49,13 +49,11 @@ trait LaxSemigroupal[⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] { self =>
     ta: TC1[A],
     tb: TC1[B],
     tc: TC1[C]
-  ) = {
-    implicit val ss: Subcat.Aux[-->, TC] = A.C
+  ) =
     IsEq(
       A.grouped(A.C.id[F[A]], product[B, C]) >>>> product[A, B ⊙= C] >>>> E.map(A1.diassociate[A, B, C]),
       A.diassociate[F[A], F[B], F[C]] >>>> A.grouped(product[A, B], A.C.id[F[C]]) >>>> product[A ⊙= B, C]
     )
-  }
 }
 
 object LaxSemigroupal extends LaxSemigroupalInstances {

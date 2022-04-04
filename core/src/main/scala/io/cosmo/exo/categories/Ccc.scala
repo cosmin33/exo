@@ -21,10 +21,8 @@ trait Ccc[->[_, _]] extends Subcat[->] {
   def apply  [A, B](implicit t: TC[A |-> B]): ⊙[A |-> B, A] -> B = uncurry(id[A |-> B])
   def unapply[A, B](implicit t: TC[A ⊙ B]): A -> (B |-> (A ⊙ B)) = curry(id[A ⊙ B])
 
-//  def const[A, B, C](f: B -> C): A -> (B |-> C) = curry(andThen(cartesian.snd[A, B], f))
   def const[A: TC, B: TC, C](f: B -> C): A -> (B |-> C) = curry(andThen(cartesian.snd[A, B], f))
 
-//  def thing[A, B](in: ProductId -> (A |-> B)): A -> B = andThen(cartesian.coidl[A], uncurry(in))
   def thing[A: TC, B](in: ProductId -> (A |-> B)): A -> B = andThen(cartesian.coidl[A], uncurry(in))
 
   /** Iso between ''PId -> (A |-> B)'' and ''A -> B'''' */

@@ -7,8 +7,6 @@ import io.cosmo.exo.categories.{Dual, Endobifunctor, Endofunctor, Groupoid, Semi
 import io.estatico.newtype.Coercible
 
 sealed abstract class Is[A, B] private[Is]()  { ab =>
-  import Is._
-
   def subst[F[_]](fa: F[A]): F[B]
 
   def apply(a: A): B = coerce(a)
@@ -19,7 +17,7 @@ sealed abstract class Is[A, B] private[Is]()  { ab =>
 
   final def compose[Z](za: Z === A): Z === B = za.andThen(ab)
 
-  final def flip: B === A = subst[* === A](refl)
+  final def flip: B === A = subst[* === A](Is.refl)
 
   final def lift[F[_]]: F[A] === F[B] = Is.lift[F, A, B](ab)
 
@@ -40,10 +38,7 @@ object Is extends IsInstances {
   def apply[A, B](implicit ev: A Is B): A Is B = ev
 
   implicit def isoCanonic[A, B]: ∀~[λ[f[_] => f[A] => f[B]]] <=> (A === B) =
-    Iso.unsafe(
-      fa => new Is[A, B] { def subst[F[_]](f: F[A]): F[B] = fa.apply[F](f) },
-      ab => ∀~.of[λ[f[_] => f[A] => f[B]]].from(ab.subst)
-    )
+    Iso.unsafe(_.of[* === A](refl).flip, ab => ∀~.of[λ[f[_] => f[A] => f[B]]].from(ab.subst))
 
   implicit def isoInjectivity[F[_]: IsInjective, A, B]: (F[A] === F[B]) <=> (A === B) =
     Iso.unsafe(IsInjective[F].apply(_), _.lift)
@@ -65,10 +60,7 @@ object Is extends IsInstances {
 
   implicit def refl[A]: A === A = reflAny.asInstanceOf[A === A]
 
-  def lift[F[_], A, B](ab: A === B): F[A] === F[B] = {
-    type f[α] = F[A] === F[α]
-    ab.subst[f](refl)
-  }
+  def lift[F[_], A, B](ab: A === B): F[A] === F[B] = ab.subst[λ[α => F[A] === F[α]]](refl)
 
   def lift2[F[_,_]] = new LiftHelper[F]; final class LiftHelper[F[_,_]] {
     def apply[A, B, I, J](ab: A === B, ij: I === J): F[A, I] === F[B, J] = {
