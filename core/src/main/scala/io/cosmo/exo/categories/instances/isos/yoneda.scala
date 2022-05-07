@@ -1,6 +1,7 @@
 package io.cosmo.exo.categories.instances.isos
 
 import cats.implicits._
+import io.cosmo.exo.Iso.HasIso
 import io.cosmo.exo._
 import io.cosmo.exo.categories._
 import io.cosmo.exo.categories.functors._
@@ -72,7 +73,7 @@ object yoneda {
   private def isoIndirectLeibniz[A, B]: ((A === *)  ~> (B === *)) <=> (A === B) = yoEmbedding[===, A, B] andThen Iso.isoGroupoidFlip
   private def isoIndirectLeibni_[A, B]: ((A === *) <~> (B === *)) <=> (A === B) =
     yoCorol1[===, A, B] andThen Iso.isoGroupoid[===, B, A].flip andThen Iso.isoGroupoidFlip
-//       yoCorol1Cov[===, A, B].chain[B === A].chain[A === B] // strange compile error for this one but it should work, I think it's a scala bug ?!?!
+  //       yoCorol1Cov[===, A, B].chain[B === A].chain[A === B] // strange compile error for this one but it should work, I think it's a scala bug ?!?!
   // TODO: investigate why the above doesn't work
 
 }

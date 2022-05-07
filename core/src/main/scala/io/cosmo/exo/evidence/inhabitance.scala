@@ -1,6 +1,6 @@
 package io.cosmo.exo.evidence
 
-import cats.{Contravariant, ContravariantSemigroupal, FlatMap, Monad, Semigroupal}
+import cats.{Contravariant, ContravariantSemigroupal, FlatMap, Monad, Semigroupal, StackSafeMonad}
 import cats.implicits._
 import io.cosmo.exo.Iso.HasIso
 import io.cosmo.exo._
@@ -145,9 +145,6 @@ object inhabitance {
      */
     def lem[A]: ¬¬[¬[A] \/ A] = lemEither[A].map(e => \/(e.left.map(¬.witness[A])))
 
-    //def and1[A, B](f: ¬[(A, B)]): ¬¬[¬[A] \/ ¬[B]] = ???
-    //def imp1[A, B](f: A => B): ¬¬[¬[A] \/ B] = ???
-
     def and[A, B](f: (A, B) => Void): ¬¬[(A => Void) \/ (B => Void)] =
       witness(p => p(\/-(b => p(-\/(a => f(a, b))))))
 
@@ -162,13 +159,9 @@ object inhabitance {
     def pierce[A]: ¬¬[((A => Void) => A) => A] =
       witness(k => k((p: (A => Void) => A) => p((a: A) => k(_ => a))))
 
-    implicit def monad: Monad[Inhabited] = new Monad[¬¬] {
-      override def pure[A](a: A) = value(a)
-      override def map[A, B](fa: ¬¬[A])(f: A => B) = Inhabited.witness[B](k => fa.run(a => k(f(a))))
-      override def flatMap[A, B](fa: ¬¬[A])(f: A => ¬¬[B]) = ¬¬.witness[B](k => fa.run(a => f(a).run(k)))
-      override def product[A, B](fa: ¬¬[A], fb: ¬¬[B]) = flatMap(fa)(a => flatMap(fb)(b => ¬¬.value((a, b))))
-      override def map2[A, B, Z](fa: ¬¬[A], fb: ¬¬[B])(f: (A, B) => Z) = flatMap(fa)(a => flatMap(fb)(b => ¬¬.value(f(a, b))))
-      override def tailRecM[A, B](a: A)(f: A => ¬¬[Either[A, B]]): ¬¬[B] = ???
+    implicit def monad: Monad[Inhabited] = new StackSafeMonad[¬¬] {
+      def pure[A](a: A): ¬¬[A] = value(a)
+      def flatMap[A, B](fa: ¬¬[A])(f: A => ¬¬[B]): ¬¬[B] = ¬¬.witness[B](k => fa.run(a => f(a).run(k)))
     }
 
   }

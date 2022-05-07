@@ -13,6 +13,8 @@ import cats.laws._
 trait Exofunctor[==>[_,_], -->[_,_], F[_]] { self =>
   def map[A, B](f: A ==> B): F[A] --> F[B]
 
+  def map_[>=>[_,_], A, B](f: A >=> B)(implicit to: >=> ~~> ==>): F[A] --> F[B] = map(to.apply(f))
+
   final def compose[>->[_,_], G[_]](G: Exo[>->, ==>, G]): Exofunctor[>->, -->, λ[α => F[G[α]]]] =
     Exo.unsafe[>->, -->, λ[α => F[G[α]]]](f => map(G.map(f)))
 
@@ -69,10 +71,6 @@ object Exofunctor extends ExofunctorImplicits {
   /** This is isomorphic to cats Contravariant */
   type ConF[F[_]] = Con[* => *, F]
   object ConF { def apply[F[_]](implicit E: ConF[F]) = E }
-
-
-  def to: Int => String = _.toString
-  def from: String => Int = s => s.toIntOption.getOrElse(0)
 
   type Inv[->[_,_], F[_]] = Exo[Dicat[->,*,*], * => *, F]
   object Inv { def apply[->[_,_], F[_]](E: Inv[->, F]) = E }
@@ -169,7 +167,14 @@ object Exofunctor extends ExofunctorImplicits {
       p => new FlatMap[F] {
         def flatMap[A, B](fa: F[A])(f: A => F[B]): F[B] = p._2.map(f)(fa)
         def tailRecM[A, B](a: A)(f: A => F[Either[A, B]]): F[B] = {
-
+          val xx = flatMap(f(a)) {
+            case Left(a)  => tailRecM(a)(f)
+            case Right(b) => ???
+          }
+          val yy: F[Either[F[B], B]] = map(f(a)) {
+            case Left(a)  => Left(tailRecM(a)(f))
+            case Right(b) => Right(b)
+          }
 
           ???
         }
