@@ -5,7 +5,7 @@ import io.cosmo.exo.Iso.HasIso
 import io.cosmo.exo._
 import io.cosmo.exo.categories._
 import io.cosmo.exo.categories.functors._
-import io.cosmo.exo.evidence.{<~<, ===}
+import io.cosmo.exo.evidence.{<~<, ===, As}
 
 object yoneda {
   /** yoneda lemma for covariant functor */
@@ -17,6 +17,10 @@ object yoneda {
     C: SubcatHasId[->, A], E: Exo.Con[->, F]
   ): ((* -> A) ~> F) <=> F[A] =
     Iso.unsafe(_[A](C.id), fa => ∀.of[λ[x => x -> A => F[x]]].from(xa => E.map(Dual(xa))(fa)))
+
+  def yoEmbeddingGeneric[->[_,_], ==>[_,_], A, B](implicit
+    C: SubcatHasId[->, A], F: Exo.Cov[->, B ==> *]
+  ): ((A -> *) ~> (B ==> *)) <=> (B ==> A) = lemmaYoIso[->, A, B ==> *]
 
   def yoEmbedding[->[_,_], A, B](implicit
     C: SubcatHasId[->, A]

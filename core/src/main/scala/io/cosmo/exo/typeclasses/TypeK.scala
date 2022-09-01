@@ -20,9 +20,3 @@ object TypeK {
     Iso.unsafe(injectivity(_), _.lower[TypeK])
 }
 
-sealed abstract class TypeH[H[_[_]]]
-
-object TypeH {
-  def apply[H[_[_]]]: TypeH[H] = new TypeH[H] {}
-  //def injectivity[H[_[_]], J[_[_]]](ev: TypeH[H] === TypeH[J]): ForallK[λ[f[_] => H[f] === J[f]]] = ???
-}

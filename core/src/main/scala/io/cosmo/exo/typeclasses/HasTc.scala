@@ -1,6 +1,5 @@
 package io.cosmo.exo.typeclasses
 
-import cats.implicits._
 import io.cosmo.exo._
 
 sealed trait HasTc[TC[_[_]], TF] {
@@ -30,7 +29,7 @@ object HasTc {
   ): (HasTc[TC, A] => HasTc[TC, B]) <=> (TC[F] => TC[G]) = {
     val i1 = isoKanonic[TC, A, F]
     val i2 = isoKanonic[TC, B, G]
-    Iso.unsafe(i1.from >>> _ >>> i2.to, i1.to >>> _ >>> i2.from)
+    Iso.unsafe(i1.from andThen _ andThen i2.to, i1.to andThen _ andThen i2.from)
   }
   implicit def isoIso1[TC[_[_]], A, F[_], B, G[_]](implicit
     ia: IsKind.Aux[A, F], ib: IsKind.Aux[B, G]
