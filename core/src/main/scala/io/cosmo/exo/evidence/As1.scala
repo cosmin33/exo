@@ -34,15 +34,6 @@ object As1 {
     val lower, upper = Is.refl[A]
   }
 
-  case class SingleOf[A, B, U <: {type Upper >: A; type Lower <: B with Upper}](
-    widen: As1[A, B] {type Upper = U#Upper; type Lower = U#Lower}
-  )
-  object SingleOf {
-    implicit def mkSingleOf[A, B, T <: As1[A, B] {type Upper; type Lower}](implicit
-      as: As1[A, B]
-    ): SingleOf[A, B, as.type] = SingleOf(as)
-  }
-
   implicit def proposition[A, B]: Proposition[As1[A, B]] = Proposition[A <~< B].isomap(Iso.unsafe(_.fix, _.loosen))
 
   def refl[A]: A As1 A = new Refl[A]()

@@ -12,7 +12,6 @@ lazy val versionOf = new {
   val simulacrum = "1.0.0"
   val mouse = "1.0.10"
   val cats = "2.1.1"
-  val shapeless = "2.3.3"
   val scalaCheck = "1.14.3"
   val scalatest = "3.3.0-SNAP2"
   val estaticoNewtype = "0.4.4"
@@ -78,7 +77,6 @@ lazy val commonSettings = Seq(
     "io.estatico"          %%% "newtype"             % versionOf.estaticoNewtype,
     "org.scalatest"        %%% "scalatest"           % versionOf.scalatest % Test,
     "org.scalacheck"       %%% "scalacheck"          % versionOf.scalaCheck % Test,
-    "com.chuusai"          %%% "shapeless"           % versionOf.shapeless,
     "eu.timepit"           %%% "singleton-ops"       % versionOf.singletonOps,
   )
 )
