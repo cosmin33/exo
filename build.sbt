@@ -70,7 +70,6 @@ lazy val commonSettings = Seq(
     "org.typelevel"        %%% "cats-core"           % versionOf.cats,
     "org.typelevel"        %%% "cats-laws"           % versionOf.cats,
     "org.typelevel"        %%% "cats-free"           % versionOf.cats,
-    "org.typelevel"        %%% "alleycats-core"      % versionOf.cats,
     "org.scala-lang"       % "scala-reflect" % scalaVersion.value,
     "io.estatico"          %%% "newtype"             % versionOf.estaticoNewtype,
     "org.scalatest"        %%% "scalatest"           % versionOf.scalatest % Test,
