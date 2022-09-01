@@ -5,7 +5,7 @@ import io.cosmo.exo._
 import io.cosmo.exo.categories._
 import io.cosmo.exo.evidence.=~~=
 import io.estatico.newtype.Coercible
-import mouse.any._
+import io.cosmo.exo.internal.any._
 
 trait Exobifunctor[==>[_, _], -->[_, _], >->[_, _], Bi[_, _]] { self =>
   def bimap[A, X, B, Y](left: A ==> X, right: B --> Y): Bi[A, B] >-> Bi[X, Y]

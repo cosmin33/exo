@@ -4,7 +4,7 @@ import io.cosmo.exo.categories.data.{KleisModule, KleisModuleImpl}
 import io.cosmo.exo.categories.functors._
 import io.cosmo.exo.categories.instances.ProdcatInstances
 import io.cosmo.exo.evidence.{===, =~~=}
-import mouse.any._
+import io.cosmo.exo.internal.any._
 
 package object categories extends ProdcatInstances with categories.syntax {
 

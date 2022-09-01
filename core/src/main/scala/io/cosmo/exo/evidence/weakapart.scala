@@ -104,7 +104,7 @@ object weakapart {
     implicit def uninhabited[A, B](implicit na: ¬[A === B]): ¬¬[A =!= B] =
       ¬¬.value(witness(na.contradicts))
 
-    implicit def mkWeakApart[A, B]: A =!= B = macro internal.MacroUtil.mkWeakApart[A, B]
+    implicit def mkWeakApart[A, B]: A =!= B = macro evidence.internal.MacroUtil.mkWeakApart[A, B]
 
     /**
      * Inequality is an irreflexive relation.

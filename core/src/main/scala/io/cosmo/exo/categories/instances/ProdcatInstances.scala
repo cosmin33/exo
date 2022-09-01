@@ -4,7 +4,7 @@ import io.cosmo.exo.categories._
 import io.cosmo.exo.categories.functors._
 import io.cosmo.exo.categories.Cartesian.Aux
 import io.cosmo.exo.evidence.=~~=
-import mouse.any._
+import io.cosmo.exo.internal.any._
 
 import ProdcatHelpers._
 

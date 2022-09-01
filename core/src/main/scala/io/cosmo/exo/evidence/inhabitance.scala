@@ -112,7 +112,7 @@ object inhabitance {
     def proved(implicit ev: Proposition[A]): A = ev.proved(this)
   }
   trait InhabitedLowerPriority {
-    implicit def mkInhabited[A]: ¬¬[A] = macro internal.MacroUtil.mkInhabited[A]
+    implicit def mkInhabited[A]: ¬¬[A] = macro evidence.internal.MacroUtil.mkInhabited[A]
   }
   object Inhabited extends InhabitedLowerPriority {
     def apply[A](implicit A: ¬¬[A]): ¬¬[A] = A

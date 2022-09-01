@@ -4,7 +4,7 @@ import io.cosmo.exo.categories._
 import io.cosmo.exo.categories.functors.{Exobifunctor, LaxSemigroupal}
 import io.cosmo.exo.evidence.=~~=
 import io.cosmo.exo.{/\, Void, \/}
-import mouse.any._
+import io.cosmo.exo.internal.any._
 
 object EvidenceCatInstances extends EvidenceCatInstances
 

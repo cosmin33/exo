@@ -38,7 +38,7 @@ trait IsConstant[F[_]] { F =>
 
 trait ConstantLowerPriority {
   implicit def mkConstant[F[_]]: IsConstant[F] =
-    macro internal.MacroUtil.mkConstant[F]
+    macro evidence.internal.MacroUtil.mkConstant[F]
 }
 
 object IsConstant extends ConstantLowerPriority {

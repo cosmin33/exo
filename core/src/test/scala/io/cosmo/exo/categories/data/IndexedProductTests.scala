@@ -4,7 +4,7 @@ import io.cosmo.exo./\
 import cats.implicits._
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import mouse.any._
+import io.cosmo.exo.internal.any._
 
 class IndexedProductTests extends AnyFunSuite with Matchers {
 
