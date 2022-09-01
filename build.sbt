@@ -9,7 +9,6 @@ inThisBuild(Seq(
 ))
 
 lazy val versionOf = new {
-  val simulacrum = "1.0.0"
   val cats = "2.1.1"
   val scalaCheck = "1.14.3"
   val scalatest = "3.3.0-SNAP2"
@@ -66,7 +65,6 @@ lazy val commonSettings = Seq(
     "-Ycache-macro-class-loader:last-modified", // and macro definitions. This can lead to performance improvements.
   ),
   libraryDependencies ++= Seq(
-    "org.typelevel"        %%% "simulacrum"          % versionOf.simulacrum,
     "org.typelevel"        %%% "cats-core"           % versionOf.cats,
     "org.typelevel"        %%% "cats-laws"           % versionOf.cats,
     "org.scala-lang"       % "scala-reflect" % scalaVersion.value,
