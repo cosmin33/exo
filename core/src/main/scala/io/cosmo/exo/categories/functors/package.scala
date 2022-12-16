@@ -17,7 +17,7 @@ package object functors {
   type StrongSemigroupal[=⊙[_,_], -->[_,_], -⊙[_,_], F[_]] = LaxSemigroupal[=⊙, Iso[-->,*,*], -⊙, F]
   type StrongMonoidal   [=⊙[_,_], -->[_,_], -⊙[_,_], F[_]] = LaxMonoidal   [=⊙, Iso[-->,*,*], -⊙, F]
 
-  type IsoFunctor[F[_]] = Exo[Iso[* => *,*,*], * => *, F]
+  type IsoFunctor[F[_]] = Exo[<=>, * => *, F]
 
   type FunctorK[H[_[_]]] = Exo[FunK, * => *, HasTc[H, *]]
   object FunctorK {
@@ -40,14 +40,18 @@ package object functors {
     }
   }
 
-  type IsoFunctorK[H[_[_]]] = Exo[IsoFunK, * => *, HasTc[H, *]]
+  type IsoFunctorK[H[_[_]]] = Exo[IsoFunK, <=>, HasTc[H, *]]
   object IsoFunctorK {
     def apply[H[_[_]]](implicit F: IsoFunctorK[H]): IsoFunctorK[H] = F
+
     trait Proto[H[_[_]]] extends IsoFunctorK[H] {
-      def map[A, B](i: IsoFunK[A, B]): HasTc[H, A] => HasTc[H, B] = {
+      def map[A, B](i: IsoFunK[A, B]): HasTc[H, A] <=> HasTc[H, B] = {
         val ito = i.to
         val isok: ito.TypeA <~> ito.TypeB = FunK.isoFunKUnapply(i)(ito.kindA, ito.kindB)
-        HasTc.isoFun1(ito.kindA, ito.kindB).flip(mapK(isok))
+        Iso.unsafe(
+          HasTc.isoFun1(ito.kindA, ito.kindB).flip(mapK(isok)),
+          HasTc.isoFun1(ito.kindB, ito.kindA).flip(mapK(isok.flip))
+        )
       }
       protected def mapK[F[_], G[_]](f: F <~> G): H[F] => H[G]
     }

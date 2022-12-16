@@ -69,7 +69,7 @@ object inhabitance {
   object Uninhabited {
     def apply[A](implicit ev: ¬[A]): ¬[A] = ev
 
-    def witness[A](f: A => Void): ¬[A] = f.coerce[¬[A]]
+    def witness[A](f: A => Void): ¬[A] = eqCanonic(f)
 
     def eqCanonic [A]: (A => Void) === ¬[A] = implicitly[(A => Void) === ¬[A]]
 

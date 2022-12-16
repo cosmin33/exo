@@ -25,7 +25,7 @@ object CMonoid {
   implicit def fromCats[A](implicit m: Monoid[A]): CMonoid.Aux[* => *, (*, *), A, Unit] =
     unsafe((_: Unit) => m.empty, p => m.combine(p._1, p._2))
 
-  def toCats[A](implicit m: CMonoid.Aux[* => *, (*, *), A, Unit]): Monoid[A] =
+  implicit def toCats[A](implicit m: CMonoid.Aux[* => *, (*, *), A, Unit]): Monoid[A] =
     Monoid.instance(m.id(()), {case (a, b) => m.op((a, b))})
 
   implicit def isoCats[A]: Monoid[A] <=> CMonoid.Aux[* => *, (*, *), A, Unit] =

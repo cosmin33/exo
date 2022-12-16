@@ -2,6 +2,8 @@ package io.cosmo.exo.categories.data
 
 import cats.implicits._
 import io.cosmo.exo.ConjunctionModule.IsConjunction
+import io.cosmo.exo.categories.data.ProdIndex.AuxT
+import io.cosmo.exo.evidence.<~<
 import io.cosmo.exo.{/\, <=>, ConjunctionModule, Iso}
 import shapeless.ops.hlist.{Length, Prepend, Split, ToTraversable}
 import shapeless.{::, HList, HNil, Nat, Refute}
@@ -13,7 +15,10 @@ trait ProdLength[P] {
 object ProdLength {
   type Aux[P, L <: XInt] = ProdLength[P] { type Length = L }
 
-  implicit def impSingle[A](implicit ev: Refute[IsConjunction[A]]): ProdLength.Aux[A, 1] = new ProdLength[A] { type Length = 1 }
+  implicit def impSingle[A](implicit
+    ev: Refute[IsConjunction[A]],
+    ev2: Refute[A <~< Product]
+  ): ProdLength.Aux[A, 1] = new ProdLength[A] { type Length = 1 }
 
   implicit def impPair[A, B, LA <: XInt, LB <: XInt, LAB <: XInt](implicit
     la: ProdLength.Aux[A, LA],
@@ -26,6 +31,12 @@ object ProdLength {
     lb: ProdLength.Aux[B, LB],
     lab: OpAuxInt[LA + LB, LAB]
   ): ProdLength.Aux[(A, B), LAB] = new ProdLength[(A, B)] { type Length = LAB }
+
+  implicit def impProduct2[P <: Product, A, B](implicit x: P <~< Product2[A, B])
+    : ProdLength.Aux[P, 2] = new ProdLength[P] { type Length = 2 }
+  implicit def impProduct3[P <: Product, A1, A2, A3](implicit x: P <~< Product3[A1, A2, A3])
+    : ProdLength.Aux[P, 3] = new ProdLength[P] { type Length = 3 }
+
 }
 
 trait ProdReification[P] {
@@ -96,7 +107,7 @@ object ProdIndex {
   type Aux[P, I, T0, L] = ProdIndex[P, I] { type T = T0; type Length = L }
   type AuxT[P, I, T0] = ProdIndex[P, I] { type T = T0 }
 
-  implicit def impSingle[A](implicit l: ProdLength.Aux[A, 1]): ProdIndex.Aux[A, 0, A, 1] =
+  implicit def impSingle[A](implicit ev: Refute[A <~< Product], l: ProdLength.Aux[A, 1]): ProdIndex.Aux[A, 0, A, 1] =
     new ProdIndex[A, 0] {
       type Length = 1
       val len = l
@@ -154,10 +165,10 @@ object ProdIndex {
 trait IndexedProduct[P] {
   type Length <: XInt
   def pl: ProdLength.Aux[P, Length]
-  protected def data: Vector[Any]
-  def apply[I <: XInt, T](i: I)(implicit pi: ProdIndex.AuxT[P, I, T]): T = data(i).asInstanceOf[T]
+  def apply[I <: XInt, T](i: I)(implicit pi: ProdIndex.AuxT[P, I, T]): T
 }
 object IndexedProduct {
+  type Aux[P, L] = IndexedProduct[P] { type Length = L }
   def apply[P, L <: XInt, H <: HList](p: P)(implicit
     l: ProdLength.Aux[P, L],
     reif: ProdReification.Aux[P, H],
@@ -165,6 +176,35 @@ object IndexedProduct {
   ): IndexedProduct[P] = new IndexedProduct[P] {
     type Length = L
     def pl: ProdLength.Aux[P, L] = l
-    def data: Vector[Any] = reif.iso.to(p).to[Vector]
+    val data: Vector[Any] = reif.iso.to(p).to[Vector]
+    def apply[I <: XInt, T](i: I)(implicit pi: ProdIndex.AuxT[P, I, T]) = data(i).asInstanceOf[T]
   }
+
+  def from2[P <: Product, A1, A2, L <: XInt](p: P)(implicit l: ProdLength.Aux[P, L], ev: P <~< Product2[A1, A2]): IndexedProduct.Aux[P, L] =
+    new IndexedProduct[P] {
+      type Length = L
+      def pl: ProdLength.Aux[P, L] = l
+      def apply[I <: XInt, T](i: I)(implicit pi: ProdIndex.AuxT[P, I, T]) = p.productElement(i).asInstanceOf[T]
+    }
+
+  def from3[P <: Product, A1, A2, A3, L <: XInt](p: P)(implicit l: ProdLength.Aux[P, L], ev: P <~< Product3[A1, A2, A3]): IndexedProduct.Aux[P, L] =
+    new IndexedProduct[P] {
+      type Length = L
+      def pl: ProdLength.Aux[P, L] = l
+      def apply[I <: XInt, T](i: I)(implicit pi: ProdIndex.AuxT[P, I, T]) = p.productElement(i).asInstanceOf[T]
+    }
+
+
+  case class Person(id: Int, name: String, address: String) extends Product3[Int, String, String] {
+    def _1 = id
+    def _2 = name
+    def _3 = address
+  }
+
+  val ip: IndexedProduct.Aux[Person, 3] = from3(Person(1, "Jotun", "Jotunheim"))
+//  val personId = ip(0)
+//  val personName = ip(1)
+//  val personAddres = ip(2)
+
+
 }

@@ -26,7 +26,7 @@ class IsoTests extends AnyFunSuite with Matchers {
   }
 
   test("Iso syntax") {
-    assert(6.isoTo[String] == "6")
+    assert(6.isoWith[String] == "6")
   }
 
   test("derive") {
@@ -121,14 +121,14 @@ class IsoTests extends AnyFunSuite with Matchers {
     implicitly[T3[List, Option, Vector] <=> T3[List1, Option1, Vector1]]
     implicitly[T4[List, Option, Vector, Order] <=> T4[List1, Option1, Vector1, Order1]]
 
-    type Validated1[a, b] = Unit
-    type Ior1[a, b] = Unit
-    type AndThen1[a, b] = Unit
-    type Either1[a, b] = Unit
-    implicit val f1: Validated =~~= Validated1 = Unsafe.isK2 // fundamentally incorrect but works for these tests, they'll never run
-    implicit val f2: Ior =~~= Ior1             = Unsafe.isK2 // fundamentally incorrect but works for these tests, they'll never run
-    implicit val f3: AndThen =~~= AndThen1     = Unsafe.isK2 // fundamentally incorrect but works for these tests, they'll never run
-    implicit val f4: Either =~~= Either1       = Unsafe.isK2 // fundamentally incorrect but works for these tests, they'll never run
+    type Validated1[a, b] = Validated[a, b]
+    type Ior1[a, b] = Ior[a, b]
+    type AndThen1[a, b] = AndThen[a, b]
+    type Either1[a, b] = Either[a, b]
+//    implicit val f1: Validated =~~= Validated1 = Unsafe.isK2 // fundamentally incorrect but works for these tests, they'll never run
+//    implicit val f2: Ior =~~= Ior1             = Unsafe.isK2 // fundamentally incorrect but works for these tests, they'll never run
+//    implicit val f3: AndThen =~~= AndThen1     = Unsafe.isK2 // fundamentally incorrect but works for these tests, they'll never run
+//    implicit val f4: Either =~~= Either1       = Unsafe.isK2 // fundamentally incorrect but works for these tests, they'll never run
     case class F2[F[_,_], G[_,_]](t1: F[Int, Int], t2: G[Int, Int])
     case class F3[F[_,_], G[_,_], H[_,_]](t: Int)
     case class F4[F[_,_], G[_,_], H[_,_], I[_,_]](t: Int)
@@ -165,7 +165,7 @@ class IsoTests extends AnyFunSuite with Matchers {
     implicitly[HasIso[FunK, TypeK[Vector], TypeK[List]]]
 
     val rrr: HasIso[FunK, TypeK[List], TypeK[Vector]] = implicitly[HasIso[FunK, TypeK[List], TypeK[Vector]]]
-    val lv2: List <~> Vector = TypeK[List].isoWith[Vector]
+    val lv2: List <~> Vector = TypeK[List].isoWithK[Vector]
 
   }
 

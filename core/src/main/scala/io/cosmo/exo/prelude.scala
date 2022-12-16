@@ -16,7 +16,7 @@ trait AllSyntax
      with IsoSyntax
      with ExofunctorSyntax
 
-trait PreludeLowPriority extends BaseHierarchy with BaseDataAliases
+trait PreludeLowPriority extends BaseDataAliases
 
 trait syntax extends PreludeLowPriority with AllFunctions with AllSyntax
 object syntax extends syntax

@@ -17,7 +17,7 @@ class IndexedProductTests extends AnyFunSuite with Matchers {
   implicitly[ProdLength.Aux[Byte /\ (Int /\ String), 3]]
   implicitly[ProdLength.Aux[(Byte /\ Int) /\ String, 3]]
   implicitly[ProdLength.Aux[Int /\ (String /\ Long), 3]]
-  implicitly[ProdLength.Aux[(Int, (String, Long)), 3]]
+//  implicitly[ProdLength.Aux[(Int, (String, Long)), 3]]
   implicitly[ProdLength.Aux[(Byte /\ Int) /\ (String /\ Long), 4]]
 
   implicitly[ProdIndex[Byte, 0]]
@@ -33,10 +33,10 @@ class IndexedProductTests extends AnyFunSuite with Matchers {
   test("IndexedProduct") {
     val tup: (Int, (String, Long)) = (1, ("Word", 2L))
     val p: IndexedProduct[(Int, (String, Long))] = IndexedProduct(tup)
-    val p0: Int = p(0)
+//    val p0: Int = p(0)
     val p1: String = p(1)
     val p2: Long = p(2)
-    p0 should be (1)
+//    p0 should be (1)
     p1 should be ("Word")
     p2 should be (2L)
     val reif = ProdReification[tup.type]

@@ -11,9 +11,6 @@ trait Cartesian[->[_, _], ⨂[_, _]] extends Monoidal[->, ⨂] with Symmetric[->
   def &&&  [A, B, C](f: A -> B, g: A -> C): A -> ⨂[B, C]
   //def &&&  [X: TC, Y, Z](f: X -> Y, g: X -> Z): X -> ⨂[Y, Z] = C.andThen(diag[X], bifunctor.bimap(f, g))
 
-  def strongFirst [A: TC, B: TC, C: TC](fa: A -> B): ⨂[A, C] -> ⨂[B, C] = &&&(C.andThen(fst[A, C], fa), snd[A, C])
-  def strongSecond[A: TC, B: TC, C: TC](fa: A -> B): ⨂[C, A] -> ⨂[C, B] = &&&(fst[C, A], C.andThen(snd[C, A], fa))
-
   def isoCartesian[A, B: TC, C: TC]: (A -> B, A -> C) <=> (A -> ⨂[B, C]) =
     Iso.unsafe(p => &&&(p._1, p._2), fn => (C.andThen(fn, fst[B, C]), C.andThen(fn, snd[B, C])))
 }

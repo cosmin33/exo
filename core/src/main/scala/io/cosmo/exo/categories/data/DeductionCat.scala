@@ -3,7 +3,7 @@ package io.cosmo.exo.categories.data
 import cats.implicits._
 import io.cosmo.exo.categories.functors.{Exobifunctor, LaxSemigroupal, OplaxSemigroupal}
 import io.cosmo.exo.categories.syntax._
-import io.cosmo.exo.categories.{Semicategory, Subcat, Trivial}
+import io.cosmo.exo.categories.{Exoadjunction, Semicategory, Subcat, Trivial}
 import io.cosmo.exo._
 
 final case class DeductionCat[->[_,_], F[_], G[_], A, B](fn: F[A] -> G[B])
@@ -24,13 +24,17 @@ import DeductionCatHelpers._
 
   trait SubcatDeductionCat[->[_,_], T[_], F[_], G[_]] extends Subcat[DeductionCat[->, F, G, *, *]] {
     protected def sub: Subcat.Aux[->, T]
-    protected def ft: T ~> λ[a => T[F[a]]]
     protected def fg: ∀[λ[a => T[a] => (F[a] -> G[a])]]
+    protected def adj: Exoadjunction[->, ->, F, G]
     type TC[a] = T[a]
     def id[A](implicit ta: T[A]): DeductionCat[->, F, G, A, A] = DeductionCat(fg.apply[A](ta))
     def andThen[A, B, C](ab: DeductionCat[->, F, G, A, B], bc: DeductionCat[->, F, G, B, C]): DeductionCat[->, F, G, A, C] = {
       val a1: F[A] -> G[B] = ab.fn
       val a2: F[B] -> G[C] = bc.fn
+      val x1: F[G[B]] -> B <=> (G[B] -> G[B]) = adj.iso[G[B], B]
+      val x2: F[B] -> G[B] <=> (B -> G[G[B]]) = adj.iso[B, G[B]]
+      val x3: F[B] -> B <=> (B -> G[B]) = adj.iso[B, B]
+
       ??? //DeductionCat(sub.andThen(ab.fn, bc.fn))
     }
   }

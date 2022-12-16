@@ -1,9 +1,10 @@
 package io.cosmo.exo
 
 import io.cosmo.exo.Iso.{HasIso, HasIsoK}
+import io.cosmo.exo.categories.Cartesian.Aux
 import io.cosmo.exo.categories.data.EvidenceCat
-import io.cosmo.exo.categories.{Cartesian, Cocartesian, Distributive, Dual, DualModule, Endobifunctor, Initial, Monoidal, Opp, Subcat, Terminal}
-import io.cosmo.exo.categories.functors.{Endobifunctor, Exo}
+import io.cosmo.exo.categories.{Cartesian, Ccc, Cocartesian, Distributive, Dual, DualModule, Endobifunctor, Initial, Monoidal, Opp, Subcat, Terminal, Trivial}
+import io.cosmo.exo.categories.functors.{Endobifunctor, Exo, Exofunctor}
 import io.cosmo.exo.evidence.{===, =~=, IsK}
 import io.cosmo.exo.evidence.internal.Unsafe
 import io.cosmo.exo.typeclasses.{HasTc, TypeK}
@@ -36,7 +37,7 @@ object IsKind {
 
 sealed trait NestK[A, B]
 object NestK {
-  implicit def nestImp[A, B](implicit a: IsKind[A], b: IsKind[B]): IsKind.Aux[NestK[A, B], λ[x => a.Type[b.Type[x]]]] =
+  implicit def isKind[A, B](implicit a: IsKind[A], b: IsKind[B]): IsKind.Aux[NestK[A, B], λ[x => a.Type[b.Type[x]]]] =
     new IsKind[NestK[A, B]] { type Type[x] = a.Type[b.Type[x]] }
 }
 
@@ -50,6 +51,12 @@ trait FunK[A, B] {
     ia: IsKind.Aux[A, F],
     ib: IsKind.Aux[B, G]
   ): F ~> G = IsK.lower2(IsKind.injectivity(kindA, ia), IsKind.injectivity(kindB, ib))(fn)
+}
+
+/** Natural transformation: besides being a FunK this one asks for underlying types to have functors in Function1, also some laws */
+trait NatK[A, B] extends FunK[A, B] {
+  def functorA: Exo.CovF[TypeA]
+  def functorB: Exo.CovF[TypeB]
 }
 
 object FunK {
@@ -70,7 +77,7 @@ object FunK {
   def isoFunKUnapply[A, B, F[_], G[_]](i: IsoFunK[A, B])(implicit a: IsKind.Aux[A, F], b: IsKind.Aux[B, G]): F <~> G =
     <~>.unsafe(i.to.unapply, i.from.unapply)
 
-  implicit def impIsoFunK[F[_], G[_]](implicit i: F <~> G): Iso[FunK, TypeK[F], TypeK[G]] = i.isoTo[Iso[FunK, TypeK[F], TypeK[G]]]
+  implicit def impIsoFunK[F[_], G[_]](implicit i: F <~> G): Iso[FunK, TypeK[F], TypeK[G]] = i.isoWith[Iso[FunK, TypeK[F], TypeK[G]]]
 
   implicit def isoToFun[F[_], G[_]]: FunK[TypeK[F], TypeK[G]] <=> (F ~> G) = Iso.unsafe(_.unapply, apply)
   implicit def isoKIso[F[_], G[_]]: IsoFunK[TypeK[F], TypeK[G]] <=> (F <~> G) =
@@ -96,36 +103,36 @@ object FunK {
 
   implicit def compositionFunctor: Endobifunctor[FunK, NestK] =
     new Endobifunctor[FunK, NestK] {
-      def bimap[A, X, B, Y](l: FunK[A, X], r: FunK[B, Y]): FunK[NestK[A, B], NestK[X, Y]] = ???
+      def bimap[A, X, B, Y](l: FunK[A, X], r: FunK[B, Y]): FunK[NestK[A, B], NestK[X, Y]] = ??? //FunK.from(~>.composition.bimap(l.fn, r.fn))
     }
 
 
-  implicit def compositionMonoidal: Monoidal.Aux[FunK, NestK, IsKind, TypeK[cats.Id]] =
+  implicit def compositionMonoidal: Monoidal.Aux[FunK, NestK, IsKind, TypeK[λ[a => a]]] =
     new Monoidal[FunK, NestK] {
       type TC[a] = IsKind[a]
-      type Id = TypeK[cats.Id]
+      type Id = TypeK[λ[a => a]]
       def C: Subcat.Aux[FunK, IsKind] = implicitly
       def bifunctor: Endobifunctor[FunK, NestK] = implicitly
-      def idl  [A](implicit ia: TC[A]) = FunK.from(~>.composition.idl[ia.Type])(NestK.nestImp(IsKind[TypeK[cats.Id]], ia), ia)
-      def coidl[A](implicit ia: TC[A]) = FunK.from(~>.composition.coidl[ia.Type])(ia, NestK.nestImp(IsKind[TypeK[cats.Id]], ia))
-      def idr  [A](implicit ia: TC[A]) = FunK.from(~>.composition.idr[ia.Type])(NestK.nestImp(ia, IsKind[TypeK[cats.Id]]), ia)
-      def coidr[A](implicit ia: TC[A]) = FunK.from(~>.composition.coidr[ia.Type])(ia, NestK.nestImp(ia, IsKind[TypeK[cats.Id]]))
+      def idl  [A](implicit ia: TC[A]) = FunK.from(~>.composition.idl[ia.Type])(NestK.isKind(IsKind[TypeK[cats.Id]], ia), ia)
+      def coidl[A](implicit ia: TC[A]) = FunK.from(~>.composition.coidl[ia.Type])(ia, NestK.isKind(IsKind[TypeK[cats.Id]], ia))
+      def idr  [A](implicit ia: TC[A]) = FunK.from(~>.composition.idr[ia.Type])(NestK.isKind(ia, IsKind[TypeK[cats.Id]]), ia)
+      def coidr[A](implicit ia: TC[A]) = FunK.from(~>.composition.coidr[ia.Type])(ia, NestK.isKind(ia, IsKind[TypeK[cats.Id]]))
       def associate  [X, Y, Z](implicit ix: IsKind[X], iy: IsKind[Y], iz: IsKind[Z]) = FunK.from(
         ~>.composition.associate[ix.Type, iy.Type, iz.Type])(
-        NestK.nestImp(NestK.nestImp(ix, iy), iz),
-        NestK.nestImp(ix, NestK.nestImp(iy, iz))
+        NestK.isKind(NestK.isKind(ix, iy), iz),
+        NestK.isKind(ix, NestK.isKind(iy, iz))
       )
       def diassociate[X, Y, Z](implicit ix: IsKind[X], iy: IsKind[Y], iz: IsKind[Z]) = FunK.from(
         ~>.composition.diassociate[ix.Type, iy.Type, iz.Type])(
-        NestK.nestImp(ix, NestK.nestImp(iy, iz)),
-        NestK.nestImp(NestK.nestImp(ix, iy), iz)
+        NestK.isKind(ix, NestK.isKind(iy, iz)),
+        NestK.isKind(NestK.isKind(ix, iy), iz)
       )
     }
 
 }
 
 private[exo] object FunKHelpers {
-  trait FunkSubcat extends Distributive[FunK, Tuple2, Either] with Initial[FunK]  with Terminal[FunK] {
+  trait FunkSubcat extends Distributive[FunK, Tuple2, Either] with Initial[FunK]  with Terminal[FunK] with Ccc[FunK] {
     type TC[a] = IsKind[a]
     type ProductId = TypeK[UnitK]
     type ⨂[a,b] = (a, b)
@@ -141,6 +148,19 @@ private[exo] object FunKHelpers {
       FunK.from(~>.terminate[ia.Type])(ia, IsKind[TypeK[UnitK]])
     def cartesian = implicitly
     def cocartesian = implicitly
+
+    type |->[A, B] = FunK[A, B]
+    type ⊙[A, B] = (A, B)
+    def curry[A, B, C](f: FunK[(A, B), C]): FunK[A, FunK[B, C]] = {
+      val f1: f.TypeA ~> f.TypeB = f.fn
+      val x1: IsKind.Aux[(A, B), f.TypeA] = f.kindA
+//      val x2 = IsKind.pair2()
+      //val f2 = ~>.curry(f.fn)
+//      FunK.from()
+      ???
+    }
+    def uncurry[A, B, C](f: FunK[A, FunK[B, C]]): FunK[(A, B), C] = ???
+
     def id[A](implicit ia: IsKind[A]): FunK[A, A] = FunK.from(~>.id[ia.Type])(ia, ia)
     def andThen[A, B, C](ab: FunK[A, B], bc: FunK[B, C]): FunK[A, C] =
       FunK.from(~>.andThen(ab.fn, IsKind.injectivity(bc.kindA, ab.kindB).subst[λ[f[_] => f ~> bc.TypeB]](bc.fn)))(ab.kindA, bc.kindB)

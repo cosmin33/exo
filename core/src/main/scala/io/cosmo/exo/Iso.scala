@@ -123,7 +123,7 @@ object Iso extends IsoInstances with IsoImplicits {
   }
 
   /** iso's for categorical constructs applied to Function1 + /\ */
-  object product1 {
+  object product_ {
     final def associate[A, B, C]: (A /\ (B /\ C)) <=> ((A /\ B) /\ C) =
       Iso.unsafe(p => ((p._1, p._2._1), p._2._2), p => (p._1._1, (p._1._2, p._2)))
     final def commute[A, B]: (A /\ B) <=> (B /\ A) = Iso.unsafe(_.swap, _.swap)
@@ -157,7 +157,7 @@ object Iso extends IsoInstances with IsoImplicits {
   }
 
   /** iso's for categorical constructs applied to Function1 + \/ */
-  object coproduct1 {
+  object coproduct_ {
     final def associate[A, B, C]: (A \/ (B \/ C)) <=> ((A \/ B) \/ C) = Iso.unsafe(
       _.fold(a => -\/(-\/(a)), _.fold(b => -\/(\/-(b)), c => \/-(c))),
       _.fold(_.fold(a => -\/(a), b => \/-(-\/(b))), c => \/-(\/-(c))))
@@ -314,10 +314,10 @@ trait IsoSyntax {
 }
 
 final class IsokSyntaxOps[F[_]](val self: TypeK[F]) extends AnyVal {
-  def isoWith[G[_]](implicit h: HasIso[FunK, TypeK[F], TypeK[G]]): F <~> G = FunK.isoKIso(h.iso)
+  def isoWithK[G[_]](implicit h: HasIso[FunK, TypeK[F], TypeK[G]]): F <~> G = FunK.isoKIso(h.iso)
 }
 final class IsoSyntaxOps[A](val self: A) extends AnyVal {
-  def isoTo[B](implicit h: Iso.HasIso[* => *, A, B]): B = h(self)
+  def isoWith[B](implicit h: Iso.HasIso[* => *, A, B]): B = h(self)
 }
 
 import io.cosmo.exo.IsoHelperTraits._

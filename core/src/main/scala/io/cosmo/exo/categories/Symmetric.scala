@@ -1,6 +1,7 @@
 package io.cosmo.exo.categories
 
 import io.cosmo.exo.Iso
+import io.cosmo.exo.categories.Trivial.T1
 
 trait Symmetric[->[_, _], ⊙[_, _]] extends Braided[->, ⊙] {
   def swap[A: TC, B: TC]: ⊙[A, B] -> ⊙[B, A] = braid

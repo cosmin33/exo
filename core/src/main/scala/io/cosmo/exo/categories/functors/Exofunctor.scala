@@ -16,7 +16,7 @@ trait Exofunctor[==>[_,_], -->[_,_], F[_]] { self =>
   def map_[>=>[_,_], A, B](f: A >=> B)(implicit to: >=> ~~> ==>): F[A] --> F[B] = map(to.apply(f))
 
   final def compose[>->[_,_], G[_]](G: Exo[>->, ==>, G]): Exofunctor[>->, -->, λ[α => F[G[α]]]] =
-    Exo.unsafe[>->, -->, λ[α => F[G[α]]]](f => map(G.map(f)))
+    Exo.unsafe[>->, -->, λ[α => F[G[α]]]](f => self.map(G.map(f)))
 
   // Laws
   def identityLaw[A](implicit C1: SubcatHasId[==>, A], C2: SubcatHasId[-->, F[A]]): IsEq[F[A] --> F[A]] =
@@ -41,15 +41,15 @@ object Exofunctor extends ExofunctorImplicits {
   }
 
   implicit class ExofunctorKOps[A[_[_]]](val F: FunctorK[A]) extends AnyVal {
-    def mapK[F[_], G[_]](f: F ~> G): A[F] => A[G] = F.map(FunK(f)).isoTo[A[F] => A[G]]
+    def mapK[F[_], G[_]](f: F ~> G): A[F] => A[G] = F.map(FunK(f)).isoWith[A[F] => A[G]]
   }
 
   implicit class CovariantExofunctorKOps[A[_[_]]](val F: CovariantK[A]) extends AnyVal {
-    def contramapK[F[_], G[_]](f: G ~> F): A[F] => A[G] = F.map(Dual(FunK(f))).isoTo[A[F] => A[G]]
+    def contramapK[F[_], G[_]](f: G ~> F): A[F] => A[G] = F.map(Dual(FunK(f))).isoWith[A[F] => A[G]]
   }
 
   implicit class IsoExofunctorKOps[A[_[_]]](val F: IsoFunctorK[A]) extends AnyVal {
-    def isoMapK[F[_], G[_]](i: F <~> G): A[F] => A[G] = F.map(IsoFunK(i)).isoTo[A[F] => A[G]]
+    def isoMapK[F[_], G[_]](i: F <~> G): A[F] <=> A[G] = F.map(IsoFunK(i)).isoWith[A[F] <=> A[G]]
   }
 
   implicit class ExofunctorDualOps[==>[_,_], -->[_,_], F[_]](val F: Exofunctor[Dual[==>,*,*], -->, F]) extends AnyVal {
@@ -238,9 +238,12 @@ final class ExofunctorKSyntaxOps[A[_[_]], F[_]](val af: A[F]) extends AnyVal {
 }
 
 trait ExofunctorImplicits extends ExofunctorImplicits01 {
-  // TODO: generalize these:
-  implicit def isoFunToIsoIso[->[_,_], F[_]](implicit e: Exo.IsoFun[->, F]): Exo.IsoIso[->, F] =
+  def unsafeIsoFunToIsoIso[->[_,_], F[_]](implicit e: Exo.IsoFun[->, F]): Exo.IsoIso[->, F] =
     Exo.unsafe[Iso[->,*,*], <=>, F](i => Iso.unsafe(e.map(i), e.map(i.flip)))
+
+  // TODO: generalize these:
+  implicit def isoIsoToFun[->[_,_], F[_]](implicit e: Exo.IsoIso[->, F]): Exo.IsoFun[->, F] =
+    Exo.unsafe[Iso[->,*,*], * => *, F](i => e.map(i).to)
 }
 
 trait ExofunctorImplicits01 extends ExofunctorImplicits02 {

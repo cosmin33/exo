@@ -18,6 +18,9 @@ trait Associative[->[_, _], ⊙[_, _]] {
 
   def grouped[A, B, X, Y](f: A -> B, g: X -> Y): ⊙[A, X] -> ⊙[B, Y] = bifunctor.bimap(f, g)
 
+  def strongFirst [A, B, C: TC](fa: A -> B): ⊙[C, A] -> ⊙[C, B] = grouped(C.id[C], fa)
+  def strongSecond[A, B, C: TC](fa: A -> B): ⊙[A, C] -> ⊙[B, C] = grouped(fa, C.id[C])
+
   private type <->[a, b] = Iso[->, a, b]
   def isoAssociator[X: TC, Y: TC, Z: TC]: ⊙[⊙[X, Y], Z] <-> ⊙[X, ⊙[Y, Z]] = Iso.unsafe(associate[X,Y,Z], diassociate[X,Y,Z])(C)
 }
@@ -29,8 +32,7 @@ object Associative extends AssociativeImplicits {
   def fromIso[->[_,_], ⊙[_,_], Tc[_]](i: ∀∀∀[λ[(a,b,c) => Iso[->, ⊙[⊙[a, b], c], ⊙[a, ⊙[b, c]]]]])(implicit
     cat: Subcat.Aux[->, Tc],
     bif: Endobifunctor[->, ⊙]
-  ): Associative.Aux[->, ⊙, Tc] = new Associative[->, ⊙] {
-    type TC[a] = Tc[a]
+  ): Associative.Aux[->, ⊙, Tc] = new Associative.Proto[->, ⊙, Tc] {
     val C = cat
     val bifunctor = bif
     def associate  [X: TC, Y: TC, Z: TC] = i.apply[X, Y, Z].to
@@ -44,8 +46,7 @@ object Associative extends AssociativeImplicits {
     dual(a).asInstanceOf[Associative.Aux[->, ⊙, T]]
 
   def dual[->[_,_], ⊙[_,_], T[_]](a: Associative.Aux[->, ⊙, T]): Associative.Aux[Dual[->,*,*], ⊙, T] =
-    new Associative[Dual[->,*,*], ⊙] {
-      type TC[a] = T[a]
+    new Associative.Proto[Dual[->,*,*], ⊙, T] {
       def C: Subcat.Aux[Dual[->, *, *], T] = a.C.dual
       def bifunctor: Endobifunctor[Dual[->, *, *], ⊙] = Exobifunctor.dual(a.bifunctor)
       def associate  [X: TC, Y: TC, Z: TC] = Dual(a.diassociate)

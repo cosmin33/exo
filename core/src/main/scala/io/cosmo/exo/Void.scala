@@ -7,7 +7,7 @@ object Void {
 
   def absurd[A](v: Nothing): A = v
 
-  val isNotUnit: Void =!= Unit = WeakApart.witness(_.flip.coerce(()))
-  implicit val isNotAny:  Void =!= Any  = WeakApart.witness(_.flip.coerce(()))
+  val isNotUnit: Void =!= Unit = WeakApart.witness(_.flip(()))
+  implicit val isNotAny:  Void =!= Any  = WeakApart.witness(_.flip(()))
   implicit val uninhabited: Uninhabited[Void] = Uninhabited.witness(identity[Void])
 }

@@ -13,11 +13,11 @@ object CatsInstances extends CatsInstances01 {
   implicit def semi2comp[->[_,_]](implicit lp: LowPriority, s: Semicategory[->]): Compose[->] = new ComposeFromSemicat[->] { val S = s }
   implicit def comp2semi[->[_,_]](implicit c: Compose[->]): Semicategory[->] = new SemicatFromCompose[->] { val C = c }
 
-  implicit def exo2cov[F[_]](implicit lp: LowPriority, F: Endofunctor.CovF[F]): Functor[F] = F.isoTo[Functor[F]]
-  implicit def cov2exo[F[_]](implicit F: Functor[F]): Endofunctor.CovF[F] = F.isoTo[Endofunctor.CovF[F]]
+  implicit def exo2cov[F[_]](implicit lp: LowPriority, F: Endofunctor.CovF[F]): Functor[F] = F.isoWith[Functor[F]]
+  implicit def cov2exo[F[_]](implicit F: Functor[F]): Endofunctor.CovF[F] = F.isoWith[Endofunctor.CovF[F]]
 
-  implicit def exo2con[F[_]](implicit lp: LowPriority, F: Exofunctor.ConF[F]): Contravariant[F] = F.isoTo[Contravariant[F]]
-  implicit def con2exo[F[_]](implicit F: Contravariant[F]): Exofunctor.ConF[F] = F.isoTo[Exofunctor.ConF[F]]
+  implicit def exo2con[F[_]](implicit lp: LowPriority, F: Exofunctor.ConF[F]): Contravariant[F] = F.isoWith[Contravariant[F]]
+  implicit def con2exo[F[_]](implicit F: Contravariant[F]): Exofunctor.ConF[F] = F.isoWith[Exofunctor.ConF[F]]
 
   implicit def optionTFunctorK[A]: FunctorK[OptionT[*[_], A]] =
     new FunctorK.Proto[OptionT[*[_], A]] {
@@ -38,8 +38,8 @@ trait CatsInstances01 {
   implicit def sub2cat[->[_,_]](implicit lp: LowPriority, s: Subcat.Aux[->, Trivial.T1]): Category[->] = new CategoryFromSubcat[->] { val S = s }
   implicit def cat2sub[->[_,_]](implicit lp: LowPriority, c: Category[->]): Subcat.Aux[->, Trivial.T1] = new SubcatFromCategory[->] { val C = c }
 
-  implicit def inv2exo[F[_]](implicit lp: LowPriority, F: Exofunctor.InvF[F]): Invariant[F] = F.isoTo[Invariant[F]]
-  implicit def exo2inv[F[_]](implicit F: Invariant[F]): Exofunctor.InvF[F] = F.isoTo[Exofunctor.InvF[F]]
+  implicit def inv2exo[F[_]](implicit lp: LowPriority, F: Exofunctor.InvF[F]): Invariant[F] = F.isoWith[Invariant[F]]
+  implicit def exo2inv[F[_]](implicit F: Invariant[F]): Exofunctor.InvF[F] = F.isoWith[Exofunctor.InvF[F]]
 }
 
 object CatsInstancesHelpers {

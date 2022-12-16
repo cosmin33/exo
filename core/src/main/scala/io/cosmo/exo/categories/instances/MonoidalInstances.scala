@@ -27,7 +27,7 @@ class MonoidalInstances {
     B1: Exobifunctor.EndoPro[* => *, ->],
     B2: Exobifunctor.Endo[* => *, ⊙],
     neq: NotEqK2[->, * => *] // otherwise would collide at implicit search with exoMonoidalIdIso when -> is Function1
-  ): Exo.IsoFun[* => *, Monoidal.Aux[->, ⊙, TC0, *]] = exoMonoidalIdIsoFun
+  ): Exo.IsoIso[* => *, Monoidal.Aux[->, ⊙, TC0, *]] = Exo.unsafeIsoFunToIsoIso(exoMonoidalIdIsoFun)
 
   implicit def exoMonoidalIdIso[->[_, _], ⊙[_, _], TC0[_]]: Exo.IsoFun[->, Monoidal.Aux[->, ⊙, TC0, *]] =
     new Exo[Iso[->,*,*], * => *, Monoidal.Aux[->, ⊙, TC0, *]] {

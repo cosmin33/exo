@@ -20,7 +20,7 @@ trait DisjunctionModule {
 
   final def apply[L, R](e: Either[L, R]): Type[L, R] = leibniz(e)
   final def iso[L, R]: Either[L, R] <=> Type[L, R] = leibniz.is.toIso
-  final def either[A, B, C](ac: A => C, bc: B => C): Type[A, B] => C = fold(_)(ac, bc)
+  final def eitherFn[A, B, C](ac: A => C, bc: B => C): Type[A, B] => C = fold(_)(ac, bc)
 }
 
 private[exo] object DisjunctionModuleImpl extends DisjunctionModule {
