@@ -13,8 +13,6 @@ import cats.laws._
 trait Exofunctor[==>[_,_], -->[_,_], F[_]] { self =>
   def map[A, B](f: A ==> B): F[A] --> F[B]
 
-  def map_[>=>[_,_], A, B](f: A >=> B)(implicit to: >=> ~~> ==>): F[A] --> F[B] = map(to.apply(f))
-
   final def compose[>->[_,_], G[_]](G: Exo[>->, ==>, G]): Exofunctor[>->, -->, λ[α => F[G[α]]]] =
     Exo.unsafe[>->, -->, λ[α => F[G[α]]]](f => self.map(G.map(f)))
 

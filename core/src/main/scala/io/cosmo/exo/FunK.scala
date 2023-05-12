@@ -154,8 +154,8 @@ private[exo] object FunKHelpers {
     def curry[A, B, C](f: FunK[(A, B), C]): FunK[A, FunK[B, C]] = {
       val f1: f.TypeA ~> f.TypeB = f.fn
       val x1: IsKind.Aux[(A, B), f.TypeA] = f.kindA
-//      val x2 = IsKind.pair2()
-      //val f2 = ~>.curry(f.fn)
+//      val x2 = IsKind.pair2(f.)
+//      val f2 = ~>.curry(f.fn)
 //      FunK.from()
       ???
     }

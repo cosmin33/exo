@@ -2,11 +2,9 @@ package io.cosmo.exo.categories
 
 import cats.Inject
 import cats.implicits._
-import io.cosmo
-import io.cosmo.exo
 import io.cosmo.exo._
-import io.cosmo.exo.categories.Trivial.{T1, trivial}
-import io.cosmo.exo.categories.functors.{Endobifunctor, Exo, Exobifunctor}
+import io.cosmo.exo.categories.Trivial.trivial
+import io.cosmo.exo.categories.functors.{Endobifunctor, Exobifunctor}
 
 trait Associative[->[_, _], ⊙[_, _]] {
   type TC[_]
@@ -120,102 +118,115 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
   implicit def cocartesianFn1DisjDual: Cartesian.Aux[Dual[* => *,*,*], \/, Trivial.T1, Void] =
     Dual.leibniz[* => *].subst[Cartesian.Aux[*[_,_], \/, Trivial.T1, Void]](cocartesianFn1Disj)
 
-  def injMonoidalDisj: Monoidal[Opp[Inject]#l, \/] with Symmetric[Opp[Inject]#l, \/] =
-    new Monoidal[Opp[Inject]#l, \/] with Symmetric[Opp[Inject]#l, \/] {
-      override type Id = Void
-      override type TC[a] = Trivial.T1[a]
-      override def idl[A: TC]: Inject[A, Void \/ A] = new Inject[A, Void \/ A] {
-        val inj: A => Void \/ A = _.right[Void]
-        val prj: Void \/ A => Option[A] = _.fold(_ => Option.empty[A], _.some)
-      }
-      override def coidl[A: TC]: Inject[Void \/ A, A] = new Inject[Void \/ A, A] {
-        val inj: Void \/ A => A = _.fold(v => v, a => a)
-        val prj: A => Option[Void \/ A] = _.right[Void].some
-      }
-      override def idr[A: TC]: Inject[A, A \/ Void] = new Inject[A, A \/ Void] {
-        val inj: A => A \/ Void = _.left[Void]
-        val prj: A \/ Void => Option[A] = _.fold(_.some, _ => Option.empty[A])
-      }
-      override def coidr[A: TC]: Inject[A \/ Void, A] = new Inject[A \/ Void, A] {
-        val inj: A \/ Void => A = _.fold(a => a, v => v)
-        val prj: A => Option[A \/ Void] = _.left[Void].some
-      }
-      override def braid[A: TC, B: TC]: Inject[B \/ A, A \/ B] = new Inject[B \/ A, A \/ B] {
-        val inj: B \/ A => A \/ B = _.swap
-        val prj: A \/ B => Option[B \/ A] = _.swap.some
-      }
-      def C: Subcat.Aux[Opp[Inject]#l, Trivial.T1] = DualModule.oppSubcat(implicitly[Subcat.Aux[Inject, Trivial.T1]])
-      def bifunctor: Endobifunctor[Opp[Inject]#l, \/] = new Endobifunctor[Opp[Inject]#l, \/] {
-        override def bimap[A, X, B, Y](left: Inject[X, A], right: Inject[Y, B]): Inject[X \/ Y, A \/ B] =
-          new Inject[X \/ Y, A \/ B] {
-            def inj: X \/ Y => A \/ B = _.fold(x => -\/(left.inj(x)), y => \/-(right.inj(y)))
-            def prj: A \/ B => Option[X \/ Y] = _.fold(a => left.prj(a).map(-\/[X, Y]), b => right.prj(b).map(\/-[X, Y]))
-          }
-      }
-      def associate  [X: TC, Y: TC, Z: TC]: Inject[X \/ (Y \/ Z), X \/ Y \/ Z] =
-        new Inject[X \/ (Y \/ Z), X \/ Y \/ Z] {
-          def inj: X \/ (Y \/ Z) => X \/ Y \/ Z = cocartesianFn1Disj.associate[X, Y, Z](trivial, trivial, trivial)
-          def prj: X \/ Y \/ Z => Option[X \/ (Y \/ Z)] =
-            xyz => cocartesianFn1Disj.diassociate[X, Y, Z](trivial, trivial, trivial)(xyz).some
-        }
-      def diassociate[X: TC, Y: TC, Z: TC]: Inject[X \/ Y \/ Z, X \/ (Y \/ Z)] =
-        new Inject[X \/ Y \/ Z, X \/ (Y \/ Z)] {
-          def inj: X \/ Y \/ Z => X \/ (Y \/ Z) = cocartesianFn1Disj.diassociate[X, Y, Z](trivial, trivial, trivial)
-          def prj: X \/ (Y \/ Z) => Option[X \/ Y \/ Z] =
-            xyz => cocartesianFn1Disj.associate[X, Y, Z](trivial, trivial, trivial)(xyz).some
-        }
-    }
+  private type >->[A, B] = Inject[A, B]
 
   implicit def injMonoidalTuple: Monoidal.Aux[Inject, (*, *), Trivial.T1, Unit] with Symmetric.Aux[Inject, (*, *), Trivial.T1] =
     new Monoidal[Inject, (*, *)] with Symmetric[Inject, (*, *)] {
       type Id = Unit
       type TC[a] = Trivial.T1[a]
-
-      def C: Subcat.Aux[Inject, Trivial.T1] = Semicategory.injSubcat
-
-      def idl[A: TC]: Inject[(Unit, A), A] = new Inject[(Unit, A), A] {
+      def C: Subcat.Aux[>->, Trivial.T1] = Semicategory.injSubcat
+      def idl[A: TC]: >->[(Unit, A), A] = new >->[(Unit, A), A] {
         val inj: ((Unit, A)) => A = _._2
         val prj: A => Option[(Unit, A)] = a => ((), a).some
       }
-
-      def coidl[A: TC]: Inject[A, (Unit, A)] = new Inject[A, (Unit, A)] {
+      def coidl[A: TC]: >->[A, (Unit, A)] = new >->[A, (Unit, A)] {
         val inj: A => (Unit, A) = ((), _)
         val prj: ((Unit, A)) => Option[A] = _._2.some
       }
-
-      def idr[A: TC]: Inject[(A, Unit), A] = new Inject[(A, Unit), A] {
+      def idr[A: TC]: >->[(A, Unit), A] = new >->[(A, Unit), A] {
         val inj: ((A, Unit)) => A = _._1
         val prj: A => Option[(A, Unit)] = a => (a, ()).some
       }
-
-      def coidr[A: TC]: Inject[A, (A, Unit)] = new Inject[A, (A, Unit)] {
+      def coidr[A: TC]: >->[A, (A, Unit)] = new >->[A, (A, Unit)] {
         val inj: A => (A, Unit) = (_, ())
         val prj: ((A, Unit)) => Option[A] = _._1.some
       }
-
-      def bifunctor: Endobifunctor[Inject, (*, *)] = new Endobifunctor[Inject, (*, *)] {
-        override def bimap[A, X, B, Y](left: Inject[A, X], right: Inject[B, Y]): Inject[(A, B), (X, Y)] =
-          new Inject[(A, B), (X, Y)] {
+      def bifunctor: Endobifunctor[>->, (*, *)] = new Endobifunctor[>->, (*, *)] {
+        override def bimap[A, X, B, Y](left: >->[A, X], right: >->[B, Y]): >->[(A, B), (X, Y)] =
+          new >->[(A, B), (X, Y)] {
             val inj: ((A, B)) => (X, Y)         = ab => (left(ab._1), right(ab._2))
             val prj: ((X, Y)) => Option[(A, B)] = xy => left.prj(xy._1) zip right.prj(xy._2)
           }
       }
-
-      def associate[X: TC, Y: TC, Z: TC]: Inject[((X, Y), Z), (X, (Y, Z))] = new Inject[((X, Y), Z), (X, (Y, Z))] {
+      def associate[X: TC, Y: TC, Z: TC]: >->[((X, Y), Z), (X, (Y, Z))] = new >->[((X, Y), Z), (X, (Y, Z))] {
         val inj: (((X, Y), Z)) => (X, (Y, Z)) = { case ((x, y), z) => (x, (y, z)) }
         val prj: ((X, (Y, Z))) => Option[((X, Y), Z)] = { case (x, (y, z)) => ((x, y), z).some }
       }
-
-      def diassociate[X: TC, Y: TC, Z: TC]: Inject[(X, (Y, Z)), ((X, Y), Z)] = new Inject[(X, (Y, Z)), ((X, Y), Z)] {
+      def diassociate[X: TC, Y: TC, Z: TC]: >->[(X, (Y, Z)), ((X, Y), Z)] = new >->[(X, (Y, Z)), ((X, Y), Z)] {
         val inj: ((X, (Y, Z))) => ((X, Y), Z) = { case (x, (y, z)) => ((x, y), z) }
         val prj: (((X, Y), Z)) => Option[(X, (Y, Z))] = { case ((x, y), z) => (x, (y, z)).some }
       }
-
-      def braid[A: TC, B: TC]: Inject[(A, B), (B, A)] = new Inject[(A, B), (B, A)] {
+      def braid[A: TC, B: TC]: >->[(A, B), (B, A)] = new >->[(A, B), (B, A)] {
         val inj: ((A, B)) => (B, A) = { case (a, b) => (b, a) }
         val prj: ((B, A)) => Option[(A, B)] = { case (b, a) => (a, b).some }
       }
 
+    }
+
+  implicit def injMonoidalDisj: Cartesian.Aux[Opp[Inject]#l, \/, Trivial.T1, Void] =
+    new Cartesian[Opp[Inject]#l, \/] {
+      override type Id = Void
+      override type TC[a] = Trivial.T1[a]
+      def C: Subcat.Aux[Opp[>->]#l, Trivial.T1] = DualModule.oppSubcat(implicitly[Subcat.Aux[>->, Trivial.T1]])
+      override def idl[A: TC]: >->[A, Void \/ A] = new >->[A, Void \/ A] {
+        val inj: A => Void \/ A = _.right[Void]
+        val prj: Void \/ A => Option[A] = _.fold(_ => none[A], _.some)
+      }
+      override def coidl[A: TC]: >->[Void \/ A, A] = new >->[Void \/ A, A] {
+        val inj: Void \/ A => A = _.fold(v => v, a => a)
+        val prj: A => Option[Void \/ A] = _.right[Void].some
+      }
+      override def idr[A: TC]: >->[A, A \/ Void] = new >->[A, A \/ Void] {
+        val inj: A => A \/ Void = _.left[Void]
+        val prj: A \/ Void => Option[A] = _.fold(_.some, _ => none[A])
+      }
+      override def coidr[A: TC]: >->[A \/ Void, A] = new >->[A \/ Void, A] {
+        val inj: A \/ Void => A = _.fold(a => a, v => v)
+        val prj: A => Option[A \/ Void] = _.left[Void].some
+      }
+      override def braid[A: TC, B: TC]: >->[B \/ A, A \/ B] = new >->[B \/ A, A \/ B] {
+        val inj: B \/ A => A \/ B = _.swap
+        val prj: A \/ B => Option[B \/ A] = _.swap.some
+      }
+      def bifunctor: Endobifunctor[Opp[>->]#l, \/] = new Endobifunctor[Opp[>->]#l, \/] {
+        override def bimap[A, X, B, Y](left: >->[X, A], right: >->[Y, B]): >->[X \/ Y, A \/ B] =
+          new >->[X \/ Y, A \/ B] {
+            def inj: X \/ Y => A \/ B = _.fold(x => -\/(left.inj(x)), y => \/-(right.inj(y)))
+            def prj: A \/ B => Option[X \/ Y] = _.fold(a => left.prj(a).map(-\/[X, Y]), b => right.prj(b).map(\/-[X, Y]))
+          }
+      }
+      def associate  [X: TC, Y: TC, Z: TC]: >->[X \/ (Y \/ Z), X \/ Y \/ Z] =
+        new >->[X \/ (Y \/ Z), X \/ Y \/ Z] {
+          def inj: X \/ (Y \/ Z) => X \/ Y \/ Z = cocartesianFn1Disj.associate[X, Y, Z](trivial, trivial, trivial)
+          def prj: X \/ Y \/ Z => Option[X \/ (Y \/ Z)] =
+            xyz => cocartesianFn1Disj.diassociate[X, Y, Z](trivial, trivial, trivial)(xyz).some
+        }
+      def diassociate[X: TC, Y: TC, Z: TC]: >->[X \/ Y \/ Z, X \/ (Y \/ Z)] =
+        new >->[X \/ Y \/ Z, X \/ (Y \/ Z)] {
+          def inj: X \/ Y \/ Z => X \/ (Y \/ Z) = cocartesianFn1Disj.diassociate[X, Y, Z](trivial, trivial, trivial)
+          def prj: X \/ (Y \/ Z) => Option[X \/ Y \/ Z] =
+            xyz => cocartesianFn1Disj.associate[X, Y, Z](trivial, trivial, trivial)(xyz).some
+        }
+      override def fst[A: TC, B: TC]: >->[A, A \/ B] =
+        new >->[A, A \/ B] {
+          def inj: A => A \/ B = _.left[B]
+          def prj: A \/ B => Option[A] = _.fold(_.some, _ => none[A])
+        }
+      override def snd[A: TC, B: TC]: >->[B, A \/ B] =
+        new >->[B, A \/ B] {
+          def inj: B => A \/ B = _.right[A]
+          def prj: A \/ B => Option[B] = _.fold(_ => none[B], _.some)
+        }
+      override def diag[A: TC]: >->[A \/ A, A] =
+        new >->[A \/ A, A] {
+          def inj: A \/ A => A = _.fold(identity, identity)
+          def prj: A => Option[A \/ A] = _.left[A].some
+        }
+      override def &&&[A, B, C](f: >->[B, A], g: >->[C, A]): >->[B \/ C, A] =
+        new >->[B \/ C, A] {
+          def inj: B \/ C => A = _.fold(f.inj, g.inj)
+          def prj: A => Option[B \/ C] = a => f.prj(a).map(_.left[C]) orElse g.prj(a).map(_.right[B])
+        }
     }
 
 }
