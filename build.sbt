@@ -67,7 +67,6 @@ lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "org.typelevel"        %%% "cats-core"           % versionOf.cats,
     "org.typelevel"        %%% "cats-laws"           % versionOf.cats,
-    "org.scala-lang"       % "scala-reflect" % scalaVersion.value,
     "io.estatico"          %%% "newtype"             % versionOf.estaticoNewtype,
     "org.scalatest"        %%% "scalatest"           % versionOf.scalatest % Test,
     "org.scalacheck"       %%% "scalacheck"          % versionOf.scalaCheck % Test,
