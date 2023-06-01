@@ -1,127 +1,90 @@
-package io.cosmo
+package io.cosmo.exo
 
-import cats.implicits._
-import io.cosmo.exo.Iso.{HasIso, HasIsoK}
-import io.cosmo.exo.categories.{Associative, Cartesian, Cocartesian, Distributive, Dual, Trivial}
-import io.cosmo.exo.typeclasses.TypeK
+import io.cosmo.exo.inhabitance.*
+import io.cosmo.exo.evidence.*
 
-package object exo extends Existence with syntax {
-  val InstanceOf: InstanceOfModule = InstanceOfImpl
-  type InstanceOf[T] = InstanceOf.Type[T]
-  @inline final def instanceOf[T](t: T): InstanceOf[T] = InstanceOf.is(t)
+opaque type Void <: Nothing = Nothing
+object Void:
+  def absurd[A](v: Void): A = v
+  given isNotAny: =!=[Void, Any] = WeakApart.witness(_.flip(()))
+  given uninhabited: ¬[Void] = Uninhabited.witness(identity[Void])
+extension(v: Void)
+  def absurd[A]: A = v
 
-  type Void <: Nothing with Void.Tag
+type Trivial[A] = DummyImplicit
+object Trivial:
+  def apply[A]: Trivial[A] = DummyImplicit.dummyImplicit
+def trivial[A]: Trivial[A] = Trivial[A]
 
-  val Forall: foralls.ForallModule = foralls.ForallImpl
-  val ∀ : Forall.type = Forall
-  type Forall[F[_]]   = Forall.Forall[F]
-  type ∀[F[_]]        = Forall.Forall[F]
+type VoidK[x] = Void
+type VoidK2[x, y] = Void
+type VoidHK[f[_]] = Void
+type UnitK[x] = Unit
+type UnitK2[x, y] = Unit
+type UnitHK[f[_]] = Unit
+type AnyK[x] = Any
+type AnyK2[x, y] = Any
+type AnyHK[f[_]] = Any
 
-  val Forall2: foralls.Forall2Module = foralls.Forall2Impl
-  val ∀∀ : Forall2.type = Forall2
-  type Forall2[F[_, _]] = Forall2.Forall2[F]
-  type ∀∀[F[_, _]]      = Forall2.Forall2[F]
+type <=>[A, B] = Iso[Function, A, B]
+object `<=>`:
+  def apply[A]: A <=> A = Iso.refl[A]
+  def apply[A, B](using h: HasIso[Function, A, B]): A <=> B = h
+  def unsafe[A, B](f: A => B, g: B => A): A <=> B = Iso.unsafe(f, g)
 
-  val Forall3: foralls.Forall3Module = foralls.Forall3Impl
-  val ∀∀∀ : Forall3.type = Forall3
-  type Forall3[F[_,_,_]] = Forall3.Forall3[F]
-  type ∀∀∀[F[_,_,_]]     = Forall3.Forall3[F]
+opaque type ~>[F[_], G[_]] >: [A] => F[A] => G[A] = [A] => F[A] => G[A]
+object `~>`:
+  extension [F[_], G[_]](fg: F ~> G)
+    def exec[A](fa: F[A]): G[A] = fg(fa)
+    def forall: ∀[[a] =>> F[a] => G[a]] = ∀.of[[a] =>> F[a] => G[a]].from(exec)
+    def $(f: ∀[F]): ∀[G] = ∀.of[G].from(exec(f.apply))
+    def andThen[H[_]](gh: G ~> H): F ~> H = [A] => (fa: F[A]) => gh(fg(fa))
+    def compose[E[_]](ef: E ~> F): E ~> G = [A] => (ea: E[A]) => fg(ef(ea))
+type <~[F[_], G[_]] = ~>[G, F]
+opaque type <~>[F[_], G[_]] >: [A] => () => F[A] <=> G[A] = [A] => () => F[A] <=> G[A]
+object `<~>`:
+  def unsafe[F[_], G[_]](f: [A] => F[A] => G[A], g: [A] => G[A] => F[A]): F <~> G = [A] => () => Iso.unsafe(f[A], g[A])
+  extension [F[_], G[_]](iso: F <~> G)
+    def to:   F ~> G = [A] => (fa: F[A]) => iso[A]().to(fa)
+    def from: G ~> F = [A] => (ga: G[A]) => iso[A]().from(ga)
+    def flip: G <~> F = [A] => () => iso[A]().flip
+    def andThen[H[_]](gh: G <~> H): F <~> H = [A] => () => iso[A]().andThen(gh[A]())
 
-  val ForallK: foralls.ForallKModule = foralls.ForallKImpl
-  val ∀~ : ForallK.type = ForallK
-  type ForallK[A[_[_]]] = ForallK.ForallK[A]
-  type ∀~[A[_[_]]]      = ForallK.ForallK[A]
+opaque type ~~>[F[_,_], G[_,_]] >: [A, B] => F[A, B] => G[A, B] = [A, B] => F[A, B] => G[A, B]
+object `~~>`:
+  def from[F[_,_], G[_,_]](fg: [A, B] => F[A, B] => G[A, B]): F ~~> G = fg
+  extension[F[_,_], G[_,_] ](fg: F ~~> G)
+    def exec[A, B](fab: F[A, B]): G[A, B] = fg(fab)
+    def andThen[H[_,_]](gh: G ~~> H): F ~~> H = [A, B] => (fab: F[A, B]) => gh(fg(fab))
+    def compose[E[_,_]](ef: E ~~> F): E ~~> G = [A, B] => (eab: E[A, B]) => fg(ef(eab))
+type <~~[F[_,_], G[_,_]] = [A, B] => G[A, B] => F[A, B]
+opaque type <~~>[F[_,_], G[_,_]] >: [A, B] => () => F[A, B] <=> G[A, B] = [A, B] => () => F[A, B] <=> G[A, B]
+object `<~~>`:
+  def unsafe[F[_,_], G[_,_]](fg: F ~~> G, gf: G ~~> F): F <~~> G =
+    [A, B] => () => Iso.unsafe(fg[A, B], gf[A, B])
+  extension[F[_,_], G[_,_]](iso: F <~~> G)
+    def to:   F ~~> G = [A, B] => (fab: F[A, B]) => iso[A, B]().to(fab)
+    def from: G ~~> F = [A, B] => (gab: G[A, B]) => iso[A, B]().from(gab)
+    def flip: G <~~> F = [A, B] => () => iso[A, B]().flip
 
-  val ForallHK: foralls.ForallHKModule = foralls.ForallHKImpl
-  val ∀≈ : ForallHK.type    = ForallHK
-  type ForallHK[A[_[_[_]]]] = ForallHK.ForallHK[A]
-  type ∀≈[A[_[_[_]]]]       = ForallHK.ForallHK[A]
+opaque type ≈>[A[_[_]], B[_[_]]] >: [F[_]] => A[F] => B[F] = [F[_]] => A[F] => B[F]
+type <≈[A[_[_]], B[_[_]]] = [F[_]] => B[F] => A[F]
+opaque type <≈>[A[_[_]], B[_[_]]] >: [F[_]] => () => A[F] <=> B[F] = [F[_]] => () => A[F] <=> B[F]
+object `<≈>`:
+  def unsafe[A[_[_]], B[_[_]]](ab: [F[_]] => A[F] => B[F], ba: [F[_]] => B[F] => A[F]): A <≈> B =
+    [F[_]] => () => Iso.unsafe(ab[F], ba[F])
+  extension[A[_[_]], B[_[_]]](iso: A <≈> B)
+    def to:   A ≈> B = [F[_]] => (af: A[F]) => iso[F]().to(af)
+    def from: B ≈> A = [F[_]] => (bf: B[F]) => iso[F]().from(bf)
+    def flip: B <≈> A = [F[_]] => () => iso[F]().flip
 
-  val ForallK1: foralls.ForallK1Module = foralls.ForallK1Impl
-  type ForallK1[A[_[_],_]]   = ForallK1.ForallK1[A]
-
-  val ForallK11: foralls.ForallK11Module = foralls.ForallK11Impl
-  type ForallK11[A[_[_],_,_]]   = ForallK11.ForallK11[A]
-
-  val ForallK2: foralls.ForallK2Module = foralls.ForallK2Impl
-  val ∀∀~ : ForallK2.type   = ForallK2
-  type ForallK2[Bi[_[_,_]]] = ForallK2.ForallK2[Bi]
-  type ∀∀~[Bi[_[_,_]]]      = ForallK2.ForallK2[Bi]
-
-  val ForallK211: foralls.ForallK211Module = foralls.ForallK211Impl
-  type ForallK211[Bi[_[_,_],_,_]] = ForallK211.ForallK211[Bi]
-
-  val ForallKBi: foralls.ForallKKModule = foralls.ForallKKImpl
-  val ∀~∀~ : ForallKBi.type      = ForallKBi
-  type ForallKBi[Bi[_[_], _[_]]] = ForallKBi.ForallKBi[Bi]
-  type ∀~∀~[Bi[_[_], _[_]]]      = ForallKBi.ForallKBi[Bi]
-
-  val Disjunction: DisjunctionModule = DisjunctionModuleImpl
-  type Disjunction[L, R] = Disjunction.Type[L, R]
-  type \/[L, R] = Disjunction[L, R]
-  val \/ : Disjunction.type = Disjunction
-  def  -\/[L, R](l: L): \/[L, R] = \/.left(l)
-  def  \/-[L, R](r: R): \/[L, R] = \/.right(r)
-
-  val Conjunction: ConjunctionModule = ConjunctionModuleImpl
-  type Conjunction[L, R] = Conjunction.Type[L, R]
-  type /\[L, R] = Conjunction[L, R]
-  val /\ : Conjunction.type = Conjunction
-
-  type VoidK[x]     = Void
-  type VoidK2[x,y]  = Void
-  type VoidHK[f[_]] = Void
-  type UnitK[x]     = Unit
-  type UnitK2[x,y]  = Unit
-  type UnitHK[f[_]] = Unit
-  type AnyK[x]      = Any
-  type AnyK2[x,y]   = Any
-  type AnyHK[f[_]]  = Any
-
-  // morphisms and isomorphisms
-  type IsoFunK[A, B] = Iso[FunK, A, B]
-  object IsoFunK {
-    def apply[F[_], G[_]](i: F <~> G): IsoFunK[TypeK[F], TypeK[G]] = FunK.impIsoFunK(i)
-  }
-
-  type IsoK [->[_,_], F[_], G[_]]       =  ∀[λ[a     => Iso[->, F[a], G[a]]]]
-  type IsoK2[->[_,_], F[_,_], G[_,_]]   = ∀∀[λ[(a,b) => Iso[->, F[a,b], G[a,b]]]]
-  type IsoHK[->[_,_], A[_[_]], B[_[_]]] = ∀~[λ[f[_]  => Iso[->, A[f], B[f]]]]
-
-  type <==[A, B] = Dual[* => *, A, B]
-  type <=>[A, B] = Iso[* => *, A, B]
-  object <=> {
-    def apply[A]: A <=> A = Iso.refl
-    def apply[A, B](implicit h: HasIso[* => *, A, B]): A <=> B = h.iso
-    def unsafe[A, B](ab: A => B, ba: B => A): A <=> B = Iso.unsafe(ab, ba)
-  }
-  type ~>[F[_], G[_]] = ∀[λ[α => F[α] => G[α]]]
-  object ~> extends internalstuff.FunctionKObject
-  type <~ [F[_], G[_]] = ∀[λ[α => Dual[* => *, F[α], G[α]]]]
-  type <~>[F[_], G[_]] = ∀[λ[α => F[α] <=> G[α]]]
-  object <~> {
-    def apply[F[_]]: F <~> F = apply[F, F]
-    def apply[F[_], G[_]](implicit h: HasIsoK[* => *, F, G]): F <~> G = h.iso
-    def unsafe[F[_], G[_]](fg: F ~> G, gf: G ~> F): F <~> G = ∀.mk[F <~> G].from(Iso.unsafe(fg.apply, gf.apply))
-  }
-  type ~~> [F[_,_], G[_,_]] = ∀∀[λ[(a,b) => F[a,b] =>  G[a,b]]]
-  object ~~> extends internalstuff.FunctionK2Object
-  type <~~ [F[_,_], G[_,_]] = ∀∀[λ[(a,b) => Dual[* => *, F[a,b], G[a,b]]]]
-  type <~~>[F[_,_], G[_,_]] = ∀∀[λ[(a,b) => F[a,b] <=> G[a,b]]]
-  object <~~> {
-    def apply[F[_,_]]: F <~~> F = ∀∀.mk[F <~~> F].from(Iso.unsafe(identity, identity))
-    def unsafe[F[_,_], G[_,_]](fg: F ~~> G, gf: G ~~> F): F <~~> G = ∀∀.mk[F <~~> G].from(Iso.unsafe(fg.apply, gf.apply))
-  }
-  type ≈>  [A[_[_]], B[_[_]]] = ∀~[λ[f[_]  => A[f] =>  B[f]]]
-  type <≈  [A[_[_]], B[_[_]]] = ∀~[λ[f[_]  => Dual[* => *, A[f], B[f]]]]
-  object ≈> extends internalstuff.FunctionHKObject
-  type <≈> [A[_[_]], B[_[_]]] = ∀~[λ[f[_]  => A[f] <=> B[f]]]
-  object <≈> {
-    def apply[A[_[_]]]: A <≈> A = ∀~.mk[A <≈> A].from(Iso.unsafe(identity, identity))
-    def unsafe[A[_[_]], B[_[_]]](ab: A ≈> B, ba: B ≈> A): A <≈> B = ∀~.mk[A <≈> B].from(Iso.unsafe(ab.apply, ba.apply))
-  }
-  type ≈≈>  [A[_[_],_[_]], B[_[_],_[_]]] = ∀~∀~[λ[(f[_],g[_]) => A[f, g] =>  B[f, g]]]
-  type <≈≈  [A[_[_],_[_]], B[_[_],_[_]]] = ∀~∀~[λ[(f[_],g[_]) => Dual[* => *, A[f, g], B[f, g]]]]
-  type <≈≈> [A[_[_],_[_]], B[_[_],_[_]]] = ∀~∀~[λ[(f[_],g[_]) => A[f, g] <=> B[f, g]]]
-
-}
+opaque type ≈≈>[A[_[_],_[_]], B[_[_],_[_]]] >: [F[_], G[_]] => A[F, G] => B[F, G] = [F[_], G[_]] => A[F, G] => B[F, G]
+type <≈≈[A[_[_],_[_]], B[_[_],_[_]]] = [F[_], G[_]] => B[F, G] => A[F, G]
+opaque type <≈≈>[A[_[_],_[_]], B[_[_],_[_]]] >: [F[_], G[_]] => () => A[F, G] <=> B[F, G] = [F[_], G[_]] => () => A[F, G] <=> B[F, G]
+object `<≈≈>`:
+  def unsafe[A[_[_],_[_]], B[_[_],_[_]]](ab: [F[_], G[_]] => A[F, G] => B[F, G], ba: [F[_], G[_]] => B[F, G] => A[F, G]): A <≈≈> B =
+    [F[_], G[_]] => () => Iso.unsafe(ab[F, G], ba[F, G])
+  extension[A[_[_],_[_]], B[_[_],_[_]]](iso: A <≈≈> B)
+    def to:   A ≈≈> B = [F[_], G[_]] => (af: A[F, G]) => iso[F, G]().to(af)
+    def from: B ≈≈> A = [F[_], G[_]] => (bf: B[F, G]) => iso[F, G]().from(bf)
+    def flip: B <≈≈> A = [F[_], G[_]] => () => iso[F, G]().flip
