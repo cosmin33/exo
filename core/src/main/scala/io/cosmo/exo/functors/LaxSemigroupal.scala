@@ -17,8 +17,8 @@ trait LaxSemigroupal[⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] { self =>
     CSemigroup.unsafe(map2(ma.op))(using A)
 
   def compose[~~>[_,_], ⊙~[_,_], G[_]](G: LaxSemigroupal[⊙-, ~~>, ⊙~, G])(using F: Exo[-->, ~~>, G]
-  ): LaxSemigroupal[⊙=, ~~>, ⊙~, λ[a => G[F[a]]]] =
-    new LaxSemigroupal[⊙=, ~~>, ⊙~, λ[a => G[F[a]]]] { type TC[a] = G.TC[a]; val A = G.A; def product[A, B] = G.map2(self.product[A, B]) }
+  ): LaxSemigroupal[⊙=, ~~>, ⊙~, [a] =>> G[F[a]]] =
+    new LaxSemigroupal[⊙=, ~~>, ⊙~, [a] =>> G[F[a]]] { type TC[a] = G.TC[a]; val A = G.A; def product[A, B] = G.map2(self.product[A, B]) }
 
 }
 

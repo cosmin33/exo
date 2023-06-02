@@ -27,7 +27,7 @@ trait IsInjective[F[_]] { F =>
    * In other words, injective type constructors are precisely the monomorphisms in the category
    * of types and type constructors.
    */
-  def monomorphism[G[_], H[_]](p: λ[x => F[G[x]]] =~= λ[x => F[H[x]]]): G =~= H =
+  def monomorphism[G[_], H[_]](p: ([x] =>> F[G[x]]) =~= ([x] =>> F[H[x]])): G =~= H =
     Axioms.tcExtensionality[G, H].applyT([T] => () => F[G[T], H[T]](p.lower[[x[_]] =>> x[T]]))
 
   /**
@@ -39,16 +39,16 @@ trait IsInjective[F[_]] { F =>
   /**
    * If G ∘ F is injective, then F is injective (but G need not be).
    */
-  def decompose[G[_], H[_]](implicit p: F =~= λ[x => G[H[x]]]): IsInjective[H] = {
-    val GH: IsInjective[λ[x => G[H[x]]]] = p.subst[IsInjective](F)
+  def decompose[G[_], H[_]](using p: F =~= ([x] =>> G[H[x]])): IsInjective[H] = {
+    val GH: IsInjective[[x] =>> G[H[x]]] = p.subst[IsInjective](F)
 
     new IsInjective[H] {
       override def apply[A, B](implicit ev: H[A] === H[B]): A === B =
         GH(ev.lift[G])
 
-      override def monomorphism[I[_], J[_]](p: λ[x => H[I[x]]] =~= λ[x => H[J[x]]]): I =~= J = {
+      override def monomorphism[I[_], J[_]](p: ([x] =>> H[I[x]]) =~= ([x] =>> H[J[x]])): I =~= J = {
         type f[x[_], a] = G[x[a]]
-        val q : λ[x => G[H[I[x]]]] =~= λ[x => G[H[J[x]]]] = p.lift[f]
+        val q : ([x] =>> G[H[I[x]]]) =~= ([x] =>> G[H[J[x]]]) = p.lift[f]
         GH.monomorphism[I, J](q)
       }
     }
@@ -58,13 +58,13 @@ trait IsInjective[F[_]] { F =>
   /**
    * If F and G are both injective, then F ∘ G is injective.
    */
-  def compose[G[_]](implicit G: IsInjective[G]): IsInjective[λ[x => F[G[x]]]] =
+  def compose[G[_]](implicit G: IsInjective[G]): IsInjective[[x] =>> F[G[x]]] =
     new IsInjective.Compose[F, G](F, G)
 
   /**
    * If F and G are both injective, then G ∘ F is injective.
    */
-  def andThen[G[_]](implicit G: IsInjective[G]): IsInjective[λ[x => G[F[x]]]] =
+  def andThen[G[_]](implicit G: IsInjective[G]): IsInjective[[x] =>> G[F[x]]] =
     new IsInjective.Compose[G, F](G, F)
 
 }
@@ -72,13 +72,13 @@ trait IsInjective[F[_]] { F =>
 object IsInjective {
   def apply[F[_]](implicit F: IsInjective[F]): IsInjective[F] = F
 
-//  type Canonic[F[_]] = ∀∀[λ[(a,b) => (F[a] === F[b]) => (a === b)]]
-//
-//  implicit def isoCanonic[F[_]]: Canonic[F] <=> IsInjective[F] =
-//    Iso.unsafe(
-//      can => new IsInjective[F] { def apply[A, B](implicit ev: F[A] === F[B]): A === B = can[A, B](ev) },
-//      isi => ∀∀.mk[Canonic[F]].from(isi.apply(_))
-//    )
+  type Canonic[F[_]] = [a,b] => (F[a] === F[b]) => (a === b)
+
+  implicit def isoCanonic[F[_]]: Canonic[F] <=> IsInjective[F] =
+    <=>.unsafe[Canonic[F], IsInjective[F]](
+      can => new IsInjective[F] { def apply[A, B](implicit ev: F[A] === F[B]): A === B = can[A, B](ev) },
+      isi => [a, b] => (ev: F[a] === F[b]) => isi.apply(ev)
+    )
 
   implicit def witness[F[_]](implicit fnab: F[Void] =!= F[Any]): IsInjective[F] =
     witness1[F, Void, Any](fnab)
@@ -100,18 +100,7 @@ object IsInjective {
       ab.subst[f](x).notUninhabited(y)
     }))
 
-//  def viaRetraction[F[_], R[_ <: F[_]]](retraction: λ[x => R[F[x]]] =~= λ[x => x]): IsInjective[F] =
-//    witness1[F, Void, Unit](WeakApart.witness(
-//      (ab: F[Void] === F[Unit]) => {
-//        val p = Leibniz.fromIs[Nothing, F[_], F[Void], F[Unit]](ab)
-//        val r: R[F[Unit]] === R[F[Void]] = p.lift[Nothing, Any, R].toIs.flip
-//        val q: R[F[Void]] === Void = retraction.lower[λ[x[_] => x[Void]]]
-//        val s: Unit === R[F[Unit]] = retraction.flip.lower[λ[x[_] => x[Unit]]]
-//        (s andThen r andThen q).coerce(())
-//      }
-//    ))
-
-  final case class Compose[F[_], G[_]](F: IsInjective[F], G: IsInjective[G]) extends IsInjective[λ[x => F[G[x]]]] {
+  final case class Compose[F[_], G[_]](F: IsInjective[F], G: IsInjective[G]) extends IsInjective[[x] =>> F[G[x]]] {
     override def apply[A, B](implicit ev: F[G[A]] === F[G[B]]): A === B =
       G[A, B](F[G[A], G[B]](ev))
   }

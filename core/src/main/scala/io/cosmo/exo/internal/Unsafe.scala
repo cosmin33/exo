@@ -15,7 +15,7 @@ object Unsafe {
 
   @inline def isK[A[_], B[_]]: A =~= B = IsK.refl[A].asInstanceOf[A =~= B]
 
-//  @inline def isK2[A[_,_], B[_,_]]: A =~~= B = IsK2.refl[A].asInstanceOf[A =~~= B]
+  @inline def isK2[A[_,_], B[_,_]]: A =~~= B = IsK2.refl[A].asInstanceOf[A =~~= B]
 
   @inline def as[A, B]: A <~< B = As.refl[A].asInstanceOf[A <~< B]
 

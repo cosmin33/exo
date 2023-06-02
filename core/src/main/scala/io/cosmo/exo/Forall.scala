@@ -14,11 +14,9 @@ sealed trait ForallModule {
   type Forall[F[_]]
   type ∀[F[_]] = Forall[F]
 
-  trait Prototype[F[_]] {
+  trait Prototype[F[_]]:
     def apply[X]: F[X]
-
     final def make: ∀[F] = from(this)
-  }
 
   def specialize[F[_], A](v: ∀[F]): F[A]
   def instantiation[F[_], A]: ∀[F] <~< F[A]
@@ -29,23 +27,21 @@ sealed trait ForallModule {
   def mk[X](implicit u: Unapply[X]): MkForall[u.F] = of[u.F]
   def const[A](a: A): ∀[[α] =>> A]
 
-  trait MkForall[F[_]] extends Any {
+  trait MkForall[F[_]] extends Any:
     type T
     def from(ft: F[T]): ∀[F]
     def apply(ft: F[T]): ∀[F] = from(ft)
     def fromH(ft: [T] => () => F[T]): Forall[F] = from(ft[T]())
-  }
 
   trait Unapply[X]:
     type F[_]
 
-  object Unapply {
+  object Unapply:
     type Aux[X, F0[_]] = Unapply[X] { type F[a] = F0[a] }
     given [G[_]]: Unapply.Aux[∀[G], G] = new Unapply[∀[G]] { type F[A] = G[A] }
-  }
 }
 
-object ForallModule extends ForallSyntax:
+object ForallModule extends ForallFunctions:
   def isoCanonic[F[_]]: ∀[F] <=> ([A] => () => F[A]) =
     Iso.unsafe[Function, ∀[F], [A] => () => F[A]](
       faf => [A] => () => faf[A],
@@ -57,7 +53,7 @@ object ForallModule extends ForallSyntax:
     def lift[G[_]]: ∀[[α] =>> F[G[α]]] = ∀.of[[α] =>> F[G[α]]].from(of)
 
 
-private[exo] object ForallImpl extends ForallModule {
+private[exo] object ForallImpl extends ForallModule:
   type Forall[F[_]] = F[Any]
   def specialize[F[_], A](f: ∀[F]): F[A] = f.asInstanceOf[F[A]]
   def instantiation[F[_], A]: ∀[F] <~< F[A] = As.refl[Any].asInstanceOf[∀[F] <~< F[A]]
@@ -66,14 +62,12 @@ private[exo] object ForallImpl extends ForallModule {
   def from[F[_]](p: Prototype[F]): ∀[F] = p[Any]
   def of[F[_]]: MkForall[F] = new MkForallImpl[F]
   def const[A](a: A): ∀[[α] =>> A] = of[[α] =>> A].from(a)
-}
 
-private[exo] final class MkForallImpl[F[_]](val dummy: Boolean = false) extends AnyVal with ForallImpl.MkForall[F] {
+private[exo] final class MkForallImpl[F[_]](val dummy: Boolean = false) extends AnyVal with ForallImpl.MkForall[F]:
   type T = Any
   def from(ft: F[T]): ForallImpl.∀[F] = ft
-}
 
-trait ForallSyntax {
+trait ForallFunctions {
 
   // https://nokyotsu.com/qscripts/2014/07/distribution-of-quantifiers-over-logic-connectives.html
   ////////////////////////
@@ -104,7 +98,7 @@ trait ForallSyntax {
     cc: Cartesian.AuxT[* => *, ⨂, Trivial]
   ): ∀[[x] =>> F[x] ⨂ G[x]] <=> (∀[F] ⨂ ∀[G]) = Iso.unsafe(fnDistribCartesianTo, fnDistribCartesianFrom)
 
-  // these are no longer needed because they are a specific type (for Tuple2) of those above
+  // these are not really needed because they are a specific type (for Tuple2) of those above
   def fnDistribTupleTo[F[_], G[_]]: ∀[[x] =>> (F[x], G[x])] => (∀[F], ∀[G]) =
     f => (∀.of[F].fromH([T] => () => f.apply[T]._1), ∀.of[G].fromH([T] => () => f.apply[T]._2))
 
@@ -126,7 +120,7 @@ trait ForallSyntax {
       ∀.of[[x] =>> F[x] ⨁ G[x]].fromH([T] => () => cc.&&&(Dual(f1[T]), Dual(f2[T]))(coproduct))
     }
 
-  // these are no longer needed because they are a specific type (for \/) of those above
+  // these are not really needed because they are a specific type (for \/) of those above
   def fnDistribDisj[F[_], G[_]]: (∀[F] \/ ∀[G]) => ∀[[x] =>> F[x] \/ G[x]] =
     e => ∀.of[[x] =>> F[x] \/ G[x]].fromH([T] => () => e.fold(_.apply[T].left, _.apply[T].right))
 

@@ -35,7 +35,7 @@ trait IsConstant[F[_]] { F =>
 object IsConstant {
   def apply[F[_]](using ev: IsConstant[F]): IsConstant[F] = ev
 
-  type Canonic[F[_]] = ∀∀[λ[(a,b) => F[a] === F[b]]]
+  type Canonic[F[_]] = ∀∀[[a,b] =>> F[a] === F[b]]
 
   def isoCanonic[F[_]]: Canonic[F] <=> IsConstant[F] =
     Iso.unsafe(
@@ -50,7 +50,7 @@ object IsConstant {
     new IsConstant[F]:
       def apply[X, Y]: F[X] === F[Y] = Parametric[F].liftPh[A, B, X, Y](nab, fab)
 
-  given const[A]: IsConstant[λ[X => A]] = witness[λ[X => A]](using Is.refl[A])
+  given const[A]: IsConstant[[x] =>> A] = witness[[x] =>> A](using Is.refl[A])
 
   def bracket[F[_]](cvF: IsCovariant[F], ctF: IsContravariant[F]): IsConstant[F] = {
     val p :   Void  <~<   Any  = As.bottomTop

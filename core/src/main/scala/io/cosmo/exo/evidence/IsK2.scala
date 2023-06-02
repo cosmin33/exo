@@ -38,7 +38,13 @@ object IsK2 {
   private[this] val forall: IsK2[AnyK2, AnyK2] = new IsK2[AnyK2, AnyK2]:
     def subst[Alg[_[_,_]]](fa: Alg[AnyK2]): Alg[AnyK2] = fa
 
-  implicit def refl[A[_,_]]: A =~~= A = forall.asInstanceOf
+  given refl[A[_,_]]: (A =~~= A) = forall.asInstanceOf
+
+  given isoExtensionality[F[_, _], G[_, _]]: (∀∀[[a, b] =>> F[a, b] === G[a, b]] <=> (F =~~= G)) =
+    Iso.unsafe(
+      fa => Axioms.tcExtensionality2[F, G].applyT([A, B] => () => fa[A, B]),
+      fg => ∀∀.of[[a, b] =>> F[a, b] === G[a, b]].from(fg.is)
+    )
 
   /** Given `F =~= G` we can prove that `A[F] === A[G]`. */
   def lower[A[_[_,_]], F[_,_], G[_,_]](ab: F =~~= G): A[F] === A[G] = ab.subst[[a[_,_]] =>> A[F] === A[a]](Is.refl[A[F]])
@@ -74,9 +80,4 @@ object IsK2 {
 //        fj.lower[A[F1, G1, H1, I1, *[_,_]]]
 //  }
 //
-//  implicit def isoExtensionality[F[_,_], G[_,_]]: ∀∀[λ[(a,b) => F[a,b] === G[a,b]]] <=> (F =~~= G) =
-//    Iso.unsafe(
-//      fa => Axioms.tcExtensionality2[F, G].applyT(t => fa[t.A, t.B]),
-//      fg => ∀∀.of[λ[(a,b) => F[a,b] === G[a,b]]].from(fg.is)
-//    )
 }

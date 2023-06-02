@@ -1,7 +1,11 @@
 package io.cosmo.exo.evidence
 
+import io.cosmo.exo.*
 import io.cosmo.exo.inhabitance.*
+import io.cosmo.exo.categories.*
+import io.cosmo.exo.functors.*
 import io.cosmo.exo.internal.*
+import io.cosmo.exo.variance.*
 
 sealed abstract class As[-A, +B] private[As]() { ab =>
   import As._
@@ -22,7 +26,7 @@ sealed abstract class As[-A, +B] private[As]() { ab =>
 
   final def compose[Z](za: Z <~< A): Z <~< B = za.andThen(ab)
 
-  final def coerce(a: A): B = substCv[λ[`+x` => x]](a)
+  final def coerce(a: A): B = substCv[[x] =>> x](a)
 
   final def liftCo[F[+_]]: F[A] <~< F[B] = {
     type f[+x] = F[A] <~< F[x]
@@ -41,25 +45,25 @@ sealed abstract class As[-A, +B] private[As]() { ab =>
     substCv[f](implicitly[A <:< A])
   }
 
-//  /** a ≤ b ⟷ a < b \/ a ~ b */
-//  def decompose[AA <: A, BB >: B]: ¬¬[(AA </< BB) Either (AA === BB)] =
-//    Inhabited.lem[AA === BB].map {
-//      _.fold(
-//        notEqual => Left(StrictAs.witness[AA, BB](WeakApart.witness(notEqual.run), ab)),
-//        equal => Right(equal)
-//      )
-//    }
+  /** a ≤ b ⟷ a < b \/ a ~ b */
+  def decompose[AA <: A, BB >: B]: ¬¬[(AA </< BB) Either (AA === BB)] =
+    Inhabited.lem[AA === BB].map {
+      _.fold(
+        notEqual => Left(StrictAs.witness[AA, BB](WeakApart.witness(notEqual), ab)),
+        equal => Right(equal)
+      )
+    }
 
 }
 
 object As extends LiskovInstances {
   def apply[A, B](implicit ev: A <~< B): A <~< B = ev
 
-  private[this] val reflAny: Any <~< Any = new (Any <~< Any) {
-    def fix[A1 <: Any, B1 >: Any] = As1.proved(Is.refl[A1], Is.refl[B1])
-  }
+  private[this] val forall: ∀[[a] =>> a <~< a] = ∀.of[[a] =>> a <~< a].fromH(
+    [A] => () => new (A <~< A) { def fix[A1 <: A, B1 >: A] = As1.proved(Is.refl[A1], Is.refl[B1])}
+  )
 
-  def refl[A]: A <~< A = reflAny.asInstanceOf[A <~< A]
+  def refl[A]: A <~< A = forall[A]
 
   given reify[A, B >: A]: (A <~< B) = refl[A]
 
@@ -92,27 +96,14 @@ object As extends LiskovInstances {
 
   val bottomTop: Void <~< Any = reify[Void, Any]
 
-//  implicit def asIsCovariant[A]: IsCovariant[A <~< *] = IsCovariant.reify[λ[`+x` => A <~< x]]
-//
-//  implicit def asIsContravariant[A]: IsContravariant[* <~< A] = IsContravariant.reify[λ[`-x` => x <~< A]]
-//
-//  implicit def liskovCovFunctor[F[_]](implicit
-//                                      ec: IsCovariant[F] \/ IsConstant[F]
-//                                     ): Exofunctor[<~<, <~<, F] =
-//    Exo.unsafe[<~<, <~<, F].applyH(T => f => ec.fold(cv => cv(f), const => const[T.A, T.B].toAs))
-//
-//  def liskovCovFunctorFn[F[_]](implicit
-//                               ec: IsCovariant[F] \/ IsConstant[F]
-//                              ): Exofunctor[<~<, * => *, F] =
-//    Exo.unsafe[<~<, * => *, F].applyH(T => f => ec.fold(cv => cv(f), const => const[T.A, T.B].toAs).apply(_))
-//
-//  implicit def liskovConFunctor[F[_]](implicit
-//                                      ec: IsContravariant[F] \/ IsConstant[F]
-//                                     ): Exofunctor[Opp[<~<]#l, <~<, F] =
-//    new Exofunctor[Opp[<~<]#l, <~<, F] {
-//      def map[A, B](f: B <~< A): F[A] <~< F[B] =
-//        ec.fold(cn => cn(f), const => const[A, B].toAs)
-//    }
-//
-//  object syntax extends AsSyntax
+  given asIsCovariant[A]: IsCovariant[[x] =>> A <~< x] = IsCovariant.reify[[x] =>> A <~< x]
+
+  given asIsContravariant[A]: IsContravariant[[x] =>> x <~< A] = IsContravariant.reify[[x] =>> x <~< A]
+
+  given liskovCovFunctor[F[_]](using ec: IsCovariant[F] \/ IsConstant[F]): Exo[<~<, <~<, F] =
+    Exo.unsafe[<~<, <~<, F]([A, B] => (f: A <~< B) => ec.fold(cv => cv(using f), const => const[A, B].toAs))
+
+  given liskovConFunctor[F[_]](using ec: IsContravariant[F] \/ IsConstant[F]): Exofunctor[Opp[<~<]#l, <~<, F] =
+    Exo.unsafe[Opp[<~<]#l, <~<, F]([A, B] => (f: B <~< A) => ec.fold(cn => cn(using f), const => const[A, B].toAs))
+
 }

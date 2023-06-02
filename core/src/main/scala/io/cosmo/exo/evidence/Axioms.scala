@@ -54,15 +54,15 @@ object Axioms {
     def applyT(f: [T] => () => (F[T] === G[T])): F =~= G = apply(f())
   }
 
-//  /** (∀ x,y . f x,y = g x,y) => f = g */
-//  def tcExtensionality2[F[_,_], G[_,_]]: TCExtensionality2[F, G] = new TCExtensionality2[F, G]
-//  final class TCExtensionality2[F[_,_], G[_,_]](val b: Boolean = true) extends AnyVal {
-//    type T1
-//    type T2
-//    def apply(uv: F[T1, T2] === G[T1, T2]): F =~~= G = Unsafe.isK2[F, G]
-//    def applyT(f: TypeHolder2[T1, T2] => (F[T1, T2] === G[T1, T2])): F =~~= G = apply(f(TypeHolder2[T1, T2]))
-//  }
-//
+  /** (∀ x,y . f x,y = g x,y) => f = g */
+  def tcExtensionality2[F[_,_], G[_,_]]: TCExtensionality2[F, G] = new TCExtensionality2[F, G]
+  final class TCExtensionality2[F[_,_], G[_,_]](val b: Boolean = true) extends AnyVal {
+    type T1
+    type T2
+    def apply(uv: F[T1, T2] === G[T1, T2]): F =~~= G = Unsafe.isK2[F, G]
+    def applyT(f: [T1, T2] => () => (F[T1, T2] === G[T1, T2])): F =~~= G = apply(f[T1, T2]())
+  }
+
 //  def fBounded[F[X <: F[X]], A <: F[A], B <: F[B], G[X <: F[X]]](eq: A === B, fa: G[A]): G[B] =
 //    Unsafe.is[G[A], G[B]].apply(fa)
 //

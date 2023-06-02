@@ -45,8 +45,8 @@ object Exobifunctor extends ExobifunctorInstances with DualBifunctorInstances {
   }
 
   implicit class ExobifunctorOps[==>[_,_], >->[_,_], F[_,_]](val self: Exobifunctor[==>, ==>, >->, F]) extends AnyVal {
-    def compose[G[_,_]](implicit G: Endobifunctor[==>, G]): Exobifunctor[==>, ==>, >->, λ[(α, β) => F[G[α, β], G[α, β]]]] =
-      new Exobifunctor[==>, ==>, >->, λ[(α, β) => F[G[α, β], G[α, β]]]] {
+    def compose[G[_,_]](implicit G: Endobifunctor[==>, G]): Exobifunctor[==>, ==>, >->, [α, β] =>> F[G[α, β], G[α, β]]] =
+      new Exobifunctor[==>, ==>, >->, [α, β] =>> F[G[α, β], G[α, β]]] {
         def bimap[A, X, B, Y](l: A ==> X, r: B ==> Y) = G.bimap(l, r) |> (i => self.bimap(i, i))
       }
   }

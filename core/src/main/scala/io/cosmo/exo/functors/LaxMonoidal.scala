@@ -15,8 +15,8 @@ trait LaxMonoidal[⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends LaxSemigroupal[�
 
   def compose[~~>[_,_], ⊙~[_,_], TC0[_], G[_]](G: LaxMonoidal.Aux[⊙-, ~~>, ⊙~, TC0, I, G])(using
     E: Exo[-->, ~~>, G]
-  ): LaxMonoidal[⊙=, ~~>, ⊙~, λ[a => G[F[a]]]] =
-    new LaxMonoidal[⊙=, ~~>, ⊙~, λ[a => G[F[a]]]] {
+  ): LaxMonoidal[⊙=, ~~>, ⊙~, [a] =>> G[F[a]]] =
+    new LaxMonoidal[⊙=, ~~>, ⊙~, [a] =>> G[F[a]]] {
       type I = self.I
       type TC[a] = TC0[a]
       def A = G.A

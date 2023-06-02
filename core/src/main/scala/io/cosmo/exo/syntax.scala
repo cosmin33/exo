@@ -21,10 +21,10 @@ object syntax:
 
     def associateR[X, Y, Z, ⊙[_,_], TC[_]](using
       A: Associative.Aux[->, ⊙, TC], ev: B === ⊙[⊙[X, Y], Z], tx: TC[X], ty: TC[Y], tz: TC[Z]
-    ): A -> ⊙[X, ⊙[Y, Z]] = A.C.andThen(ev.subst[λ[α => A -> α]](self), A.associate[X, Y, Z])
+    ): A -> ⊙[X, ⊙[Y, Z]] = A.C.andThen(ev.subst[[α] =>> A -> α](self), A.associate[X, Y, Z])
     def diassociateR[X, Y, Z, ⊙[_,_], TC[_]](using
       A: Associative.Aux[->, ⊙, TC], ev: B === ⊙[X, ⊙[Y, Z]], tx: TC[X], ty: TC[Y], tz: TC[Z]
-    ): A -> ⊙[⊙[X, Y], Z] = A.C.andThen(ev.subst[λ[α => A -> α]](self), A.diassociate[X, Y, Z])
+    ): A -> ⊙[⊙[X, Y], Z] = A.C.andThen(ev.subst[[α] =>> A -> α](self), A.diassociate[X, Y, Z])
 
     def braid[X, Y, ⊙[_,_]](using B: Braided[->, ⊙], ev: B === ⊙[X, Y], tx: B.TC[X], ty: B.TC[Y]
     ): A -> ⊙[Y, X] = B.C.andThen(ev.subst[[b] =>> A -> b](self), B.braid[X, Y])
@@ -34,10 +34,5 @@ object syntax:
 
     def merge[⊙[_, _], D](fn: A -> D)(using c: Cartesian[->, ⊙]): A -> ⊙[D, B] = c.&&&(fn, self)
     def merge3[⊙[_, _], D, E](f1: A -> D, f2: A -> E)(using c: Cartesian[->, ⊙]): A -> ⊙[D, ⊙[E, B]] = c.&&&(f1, c.&&&(f2, self))
-
-//    def curry[A1, A2](using C: Ccc[->], ev: A === C.⊙[A1, A2]): A1 -> C.|->[A2, B] =
-//      C.curry(ev.subst[[a] =>> a -> B](self))
-//    def uncurry[B1, B2](using C: Ccc[->], ev: B === C.|->[B1, B2]): C.⊙[A, B1] -> B2 =
-//      C.uncurry(ev.subst[λ[b => A -> b]](self))
 
     def toFunction(using C: Concrete[->], tc: C.TC[A]): A => B = C.toFunction(self)
