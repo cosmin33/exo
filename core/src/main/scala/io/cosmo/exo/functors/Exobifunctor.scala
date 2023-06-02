@@ -4,6 +4,7 @@ import io.cosmo.exo._
 import io.cosmo.exo.categories._
 import io.cosmo.exo.syntax._
 import io.cosmo.exo.internal.any._
+import io.cosmo.exo.internal._
 
 trait Exobifunctor[==>[_, _], -->[_, _], >->[_, _], ⊙[_, _]] { self =>
   def bimap[A, X, B, Y](left: A ==> X, right: B --> Y): ⊙[A, B] >-> ⊙[X, Y]
@@ -23,7 +24,7 @@ trait Exobifunctor[==>[_, _], -->[_, _], >->[_, _], ⊙[_, _]] { self =>
 
 }
 
-object Exobifunctor extends ExobifunctorInstances {
+object Exobifunctor extends ExobifunctorInstances with DualBifunctorInstances {
 
   type EndoPro[->[_,_], B[_,_]] = Exobifunctor[Dual[->,*,*], ->, ->, B]
   type Endo[->[_,_], B[_,_]] = Exobifunctor[->, ->, ->, B]

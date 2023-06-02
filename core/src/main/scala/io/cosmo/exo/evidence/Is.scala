@@ -33,7 +33,6 @@ sealed abstract class Is[A, B] { self =>
 
 object Is {
   def apply[A, B](using ev: A === B): A === B = ev
-
   def from[A, B](fn: [F[_]] => F[A] => F[B]): A === B =
     new Is[A, B]:
       def subst[F[_]](fa: F[A]): F[B] = fn(fa)

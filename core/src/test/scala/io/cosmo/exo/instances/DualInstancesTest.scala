@@ -1,6 +1,6 @@
 package io.cosmo.exo.instances
 
-import io.cosmo.exo.categories.{Symmetric, *}
+import io.cosmo.exo.categories.*
 import io.cosmo.exo.*
 
 object DualInstancesTest {

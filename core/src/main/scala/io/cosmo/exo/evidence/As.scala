@@ -1,6 +1,7 @@
 package io.cosmo.exo.evidence
 
 import io.cosmo.exo.inhabitance.*
+import io.cosmo.exo.internal.*
 
 sealed abstract class As[-A, +B] private[As]() { ab =>
   import As._
@@ -51,7 +52,7 @@ sealed abstract class As[-A, +B] private[As]() { ab =>
 
 }
 
-object As {
+object As extends LiskovInstances {
   def apply[A, B](implicit ev: A <~< B): A <~< B = ev
 
   private[this] val reflAny: Any <~< Any = new (Any <~< Any) {

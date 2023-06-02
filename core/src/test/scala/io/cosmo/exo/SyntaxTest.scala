@@ -9,7 +9,7 @@ object SyntaxTest extends ZIOSpecDefault {
   def spec = suite("syntax")(
     test("curry") {
       val fn: (Int, Int) => String = (a, b) => "(" + a.toString + ", " + b.toString + ")"
-      summon[Ccc[Function]]
+      summon[Ccc[Function, Tuple2]]
 //      val fn1 = fn.curry
       assertTrue(fn(1, 2) == "(1, 2)")
     },

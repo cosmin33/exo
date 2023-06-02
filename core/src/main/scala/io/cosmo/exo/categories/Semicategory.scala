@@ -8,7 +8,8 @@ trait Semicategory[->[_,_]]:
   def andThen[A, B, C](ab: A -> B, bc: B -> C): A -> C
 
 object Semicategory
-  extends Function1SemicategoryInstances:
+  extends Function1SemicategoryInstances
+  with DualSemicategoryInstances:
   
   def apply[->[_,_]](using ev: Semicategory[->]): Semicategory[->] = ev
 

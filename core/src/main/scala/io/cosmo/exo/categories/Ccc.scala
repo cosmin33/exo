@@ -3,36 +3,34 @@ package io.cosmo.exo.categories
 import io.cosmo.exo._
 import io.cosmo.exo.functors._
 
-trait Ccc[->[_,_]] extends Subcat[->] { self =>
+// TODO: move to the Associative hierarchy
+trait Ccc[->[_,_], ⊙[_,_]] extends Cartesian[->, ⊙] { self =>
   type |->[_,_] // Hom objects representation
-  type ⊙[_,_] // product
-  type Id
-  def cartesian: Cartesian.Aux[->, ⊙, TC, Id]
 
   def curry  [A, B, C](f: (A ⊙ B) -> C): A -> (B |-> C)
   def uncurry[A, B, C](f: A -> (B |-> C)): (A ⊙ B) -> C
 
-  def rcurry  [A: TC, B: TC, C: TC](f: (A ⊙ B) -> C): B -> (A |-> C) = curry(compose(f, cartesian.swap))
-  def runcurry[A: TC, B: TC, C: TC](f: B -> (A |-> C)): (A ⊙ B) -> C = compose(uncurry(f), cartesian.swap)
+  def rcurry  [A: TC, B: TC, C: TC](f: (A ⊙ B) -> C): B -> (A |-> C) = curry(C.compose(f, swap))
+  def runcurry[A: TC, B: TC, C: TC](f: B -> (A |-> C)): (A ⊙ B) -> C = C.compose(uncurry(f), swap)
 
-  def apply  [A, B](using t: TC[A |-> B]): ⊙[A |-> B, A] -> B = uncurry(id[A |-> B])
-  def unapply[A, B](using t: TC[A ⊙ B]): A -> (B |-> (A ⊙ B)) = curry(id[A ⊙ B])
+  def apply  [A, B](using t: TC[A |-> B]): ⊙[A |-> B, A] -> B = uncurry(C.id[A |-> B])
+  def unapply[A, B](using t: TC[A ⊙ B]): A -> (B |-> (A ⊙ B)) = curry(C.id[A ⊙ B])
 
-  def const[A: TC, B: TC, C](f: B -> C): A -> (B |-> C) = curry(andThen(cartesian.snd[A, B], f))
+  def const[A: TC, B: TC, C](f: B -> C): A -> (B |-> C) = curry(C.andThen(snd[A, B], f))
 
-  def thing[A: TC, B](in: Id -> (A |-> B)): A -> B = andThen(cartesian.coidl[A], uncurry(in))
+  def thing[A: TC, B](in: Id -> (A |-> B)): A -> B = C.andThen(coidl[A], uncurry(in))
 
   /** Iso between `Id -> (A |-> B)` and `A -> B` */
   def isoConstThing[A, B](using ta: TC[A], term: Terminal.Aux[->, TC, Id])
   : (Id -> (A |-> B)) <=> (A -> B) =
     Iso.unsafe(thing(_)(ta), const(_)(using term.TC, ta))
 
-  def precmp [A, B, C](f: A -> B)(using t: TC[C |-> A]): (C |-> A) -> (C |-> B) = curry(andThen(apply[C, A], f))
+  def precmp [A, B, C](f: A -> B)(using t: TC[C |-> A]): (C |-> A) -> (C |-> B) = curry(C.andThen(apply[C, A], f))
   def postcmp[A, B, C](f: A -> B)(using t: TC[B |-> C]): (B |-> C) -> (A |-> C) =
-    curry(andThen(cartesian.grouped(id[B |-> C], f), apply[B, C]))
+    curry(C.andThen(grouped(C.id[B |-> C], f), apply[B, C]))
 
   def promap1[A, B, C, D](f: A -> B, g: C -> D)(using tca: TC[C |-> A], tda: TC[D |-> A]): (D |-> A) -> (C |-> B) =
-    compose(precmp[A, B, C](f), postcmp[C, D, A](g))
+    C.compose(precmp[A, B, C](f), postcmp[C, D, A](g))
   def promap2[A, B, C, D](f: A -> B, g: C -> D)(using tac: TC[A |-> C], tbc: TC[B |-> C]): (B |-> C) -> (A |-> D) =
     promap1(g, f)
 
@@ -50,9 +48,9 @@ trait Ccc[->[_,_]] extends Subcat[->] { self =>
     exo: Exo[->, ->, |->[X, *]]
   ): Exoadjunction[->, ->, ⊙[*, X], |->[X, *]] =
     new Exoadjunction[->, ->, ⊙[*, X], |->[X, *]] {
-      val subL: Subcat.Aux[->, TC] = self
-      val subR: Subcat.Aux[->, TC] = self
-      def left: Exo[->, ->, ⊙[*, X]] = Exo.unsafe[->, ->, ⊙[*, X]]([a, b] => (ab: a -> b) => cartesian.bifunctor.leftMap(ab))
+      val subL: Subcat.Aux[->, TC] = C
+      val subR: Subcat.Aux[->, TC] = C
+      def left: Exo[->, ->, ⊙[*, X]] = Exo.unsafe[->, ->, ⊙[*, X]]([a, b] => (ab: a -> b) => bifunctor.leftMap(ab))
       def right: Exo[->, ->, [o] =>> X |-> o] = exo
       override def iso[A, B]: (A ⊙ X) -> B <=> (A -> (X |-> B)) = isoClosedAdjunction
       def unit  [A]: A -> (X |-> (A ⊙ X)) = iso[A,   A ⊙ X].to  (subL.id[A ⊙ X]  (using t1.apply[A]))
@@ -61,22 +59,16 @@ trait Ccc[->[_,_]] extends Subcat[->] { self =>
 }
 
 object Ccc {
-  type Aux[->[_,_], ->#[_], P[_,_], PI, E[_,_]] = Ccc[->] {
+  type Aux[->[_,_], P[_,_], ->#[_], PI, E[_,_]] = Ccc[->, P] {
     type |->[A, B] = E[A, B]
-    type ⊙[A, B] = P[A, B]
     type TC[x] = ->#[x]
     type Id = PI
   }
-  type Aux1[->[_,_], ->#[_], P[_,_], E[_,_]] =
-    Ccc[->] {type |->[A, B] = E[A, B]; type ⊙[A, B] = P[A, B]; type TC[x] = ->#[x]}
 
-  type Homoiconic[->[_,_]] = Ccc[->] { type |->[a,b] = ->[a,b] }
+  type Homoiconic[->[_,_], P[_,_]] = Ccc[->, P] { type |->[a,b] = ->[a,b]; type ⊙[a,b] = P[a,b] }
 
-  trait Proto[->[_,_], P[_,_], ->#[_], PI, E[_,_]] extends Ccc[->] with Subcat.Proto[->, ->#] {
-    override type TC[a] = ->#[a]
+  trait Proto[->[_,_], P[_,_], ->#[_], PI, E[_,_]] extends Ccc[->, P] with Cartesian.Proto[->, P, ->#, PI] {
     type |->[A, B] = E[A, B]
-    type ⊙[A, B] = P[A, B]
-    type Id = PI
   }
 
 }

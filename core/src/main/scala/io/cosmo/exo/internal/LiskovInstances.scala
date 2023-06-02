@@ -6,18 +6,30 @@ import io.cosmo.exo.evidence.*
 import io.cosmo.exo.functors.{Endobifunctor, *}
 
 class LiskovInstances {
-
+  given liskovCartesian: Cartesian.Aux[<~<, &, Trivial, Any] = LiskovCartesian
+  given liskovCocartesian: Cocartesian.Aux[<~<, |, Trivial, Void] =
+    Dual.leibniz.subst[[f[_,_]] =>> Cartesian.Aux[f, |, Trivial, Void]](LiskovCocartesian)
+  given liskovDistributive: Distributive.Aux[<~<, Trivial, &, Any, |, Void] = LiskovDistributive
+  given liskovInitial: Initial.Aux[<~<, Trivial, Any] = new Initial.Proto[<~<, Trivial, Any] {
+    def TC: Trivial[Any] = Trivial[Any]
+    def subcat: Subcat.Aux[<~<, Trivial] = liskovDistributive
+    def initiate[A: Trivial]: Any <~< A = Unsafe.as
+  }
+  given liskovTerminal: Terminal.Aux[<~<, Trivial, Void] = new Terminal.Proto[<~<, Trivial, Void] {
+    def TC: Trivial[Void] = Trivial[Void]
+    def subcat: Subcat.Aux[Dual[<~<,*,*], Trivial] = summon
+    def terminate[A: Trivial]: A <~< Void = Unsafe.as
+  }
 }
 
-object LiskovDistributive extends Distributive[<~<, [a,b] =>> a & b, [a,b] =>> a | b] {
+object LiskovDistributive extends Distributive[<~<, &, |] {
   type TC[a] = Trivial[a]
   type ProductId = Any
   type SumId = Void
   def id[A: TC]: A <~< A = As.refl
   def andThen[A, B, C](ab: A <~< B, bc: B <~< C): A <~< C = ab.andThen(bc)
   def cartesian: Cartesian.Aux[<~<, [a,b] =>> a & b, Trivial, Any] = LiskovCartesian
-  def cocartesian: Cocartesian.Aux[<~<, [a,b] =>> a | b, Trivial, Void] =
-    Dual.leibniz.subst[[f[_,_]] =>> Cartesian.Aux[f, [a,b] =>> a | b, Trivial, Void]](LiskovCocartesian)
+  def cocartesian: Cocartesian.Aux[<~<, |, Trivial, Void] = <~<.liskovCocartesian
   def distribute[A: TC, B: TC, C: TC]: (A & (B | C)) <~< ((A & B) | (A & C)) = summon
 }
 
@@ -43,7 +55,7 @@ object LiskovCartesian extends Cartesian[<~<, &] {
 object LiskovCocartesian extends Cartesian[Opp[<~<]#l, |] {
   type TC[a] = Trivial[a]
   type Id = Void
-  def C: Subcategory.Aux[Opp[<~<]#l, TC] = Dual.oppSubcat(LiskovDistributive)
+  def C: Subcategory.Aux[Opp[<~<]#l, TC] = Semicategory.oppSubcat(using LiskovDistributive)
   def braid[A: TC, B: TC]: (B | A) <~< (A | B) = summon
   def fst[A: TC, B: TC]: A <~< (A | B) = summon
   def snd[A: TC, B: TC]: B <~< (A | B) = summon

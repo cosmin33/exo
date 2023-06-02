@@ -11,6 +11,7 @@ val =~~= = IsK2
 
 type <~<[-A, +B] = As[A, B]
 val <~< = As
+type >~>[+B, -A] = As[A, B]
 
 type >~<[A, B] = Incomparable[A, B]
 

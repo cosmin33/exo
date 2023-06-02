@@ -2,6 +2,7 @@ package io.cosmo.exo.categories
 
 import io.cosmo.exo._
 import io.cosmo.exo.functors._
+import io.cosmo.exo.evidence._
 import io.cosmo.exo.internal._
 
 trait Associative[->[_, _], ⊙[_, _]] {
@@ -21,7 +22,7 @@ trait Associative[->[_, _], ⊙[_, _]] {
   def isoAssociator[X: TC, Y: TC, Z: TC]: ⊙[⊙[X, Y], Z] <-> ⊙[X, ⊙[Y, Z]] = Iso.unsafe(associate[X,Y,Z], diassociate[X,Y,Z])(using C)
 }
 
-object Associative extends Function1AssociativeInstances {
+object Associative extends Function1AssociativeInstances with DualAssociativeInstances {
   type Aux[->[_, _], ⊙[_, _], TC0[_]] = Associative[->, ⊙] {type TC[a] = TC0[a]}
   trait Proto[->[_, _], ⊙[_, _], TC0[_]] extends Associative[->, ⊙] { type TC[A] = TC0[A] }
 
@@ -36,11 +37,7 @@ object Associative extends Function1AssociativeInstances {
 //  }
 
   def apply[->[_,_], ⊙[_,_]](implicit assoc: Associative[->, ⊙]): Associative.Aux[->, ⊙, assoc.TC] = assoc
-
-  def dualdual[->[_,_], ⊙[_,_], T[_]](a: Associative.Aux[Dual[->,*,*], ⊙, T]): Associative.Aux[->, ⊙, T] =
-  //TODO: remove asInstanceOf and use DualModule.doubleDualIsK2 once is repaired
-    dual(a).asInstanceOf[Associative.Aux[->, ⊙, T]]
-
+  
   def dual[->[_,_], ⊙[_,_], T[_]](a: Associative.Aux[->, ⊙, T]): Associative.Aux[Dual[->,*,*], ⊙, T] =
     new Associative.Proto[Dual[->,*,*], ⊙, T] {
       def C: Subcat.Aux[Dual[->, *, *], T] = ??? //a.C.dual
