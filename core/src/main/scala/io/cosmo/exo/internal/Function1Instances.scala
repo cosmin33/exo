@@ -31,13 +31,13 @@ trait Function1SemicategoryInstances01 {
 trait Function1InitialTerminalInstances {
   given function1Terminal: Terminal.Aux[Function, Trivial, Unit] =
     new Terminal.Proto[Function, Trivial, Unit]:
-      def TC: Trivial[Unit] = trivial
+      def TC: Trivial[Unit] = Trivial[Unit]
       def subcat: Subcat.AuxT[Dual[Function,*,*]] = summon
       def terminate[A: TC]: A => Unit = _ => ()
 
   given function1Initial: Initial.Aux[Function, Trivial, Void] =
     new Initial.Proto[Function, Trivial, Void]:
-      def TC: Trivial[Void] = trivial
+      def TC: Trivial[Void] = Trivial[Unit]
       def subcat: Subcat.AuxT[Function] = summon
       def initiate[A: TC]: Void => A = identity
 }

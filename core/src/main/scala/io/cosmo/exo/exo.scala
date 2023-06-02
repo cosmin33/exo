@@ -3,18 +3,18 @@ package io.cosmo.exo
 import io.cosmo.exo.inhabitance.*
 import io.cosmo.exo.evidence.*
 
-opaque type Void <: Nothing = Nothing
+type Void <: Nothing with Void.Tag
 object Void:
+  private[exo] trait Tag extends Any
   def absurd[A](v: Void): A = v
-  given isNotAny: =!=[Void, Any] = WeakApart.witness(_.flip(()))
+  given isNotAny: (Void =!= Any) = WeakApart.witness(_.flip(()))
   given uninhabited: ¬[Void] = Uninhabited.witness(identity[Void])
 extension(v: Void)
   def absurd[A]: A = v
 
 type Trivial[A] = DummyImplicit
 object Trivial:
-  def apply[A]: Trivial[A] = DummyImplicit.dummyImplicit
-def trivial[A]: Trivial[A] = Trivial[A]
+  def apply[A]: Trivial[A] = summon
 
 type VoidK[x] = Void
 type VoidK2[x, y] = Void
@@ -67,24 +67,24 @@ object `<~~>`:
     def from: G ~~> F = [A, B] => (gab: G[A, B]) => iso[A, B]().from(gab)
     def flip: G <~~> F = [A, B] => () => iso[A, B]().flip
 
-opaque type ≈>[A[_[_]], B[_[_]]] >: [F[_]] => A[F] => B[F] = [F[_]] => A[F] => B[F]
-type <≈[A[_[_]], B[_[_]]] = [F[_]] => B[F] => A[F]
-opaque type <≈>[A[_[_]], B[_[_]]] >: [F[_]] => () => A[F] <=> B[F] = [F[_]] => () => A[F] <=> B[F]
-object `<≈>`:
-  def unsafe[A[_[_]], B[_[_]]](ab: [F[_]] => A[F] => B[F], ba: [F[_]] => B[F] => A[F]): A <≈> B =
-    [F[_]] => () => Iso.unsafe(ab[F], ba[F])
-  extension[A[_[_]], B[_[_]]](iso: A <≈> B)
-    def to:   A ≈> B = [F[_]] => (af: A[F]) => iso[F]().to(af)
-    def from: B ≈> A = [F[_]] => (bf: B[F]) => iso[F]().from(bf)
-    def flip: B <≈> A = [F[_]] => () => iso[F]().flip
-
-opaque type ≈≈>[A[_[_],_[_]], B[_[_],_[_]]] >: [F[_], G[_]] => A[F, G] => B[F, G] = [F[_], G[_]] => A[F, G] => B[F, G]
-type <≈≈[A[_[_],_[_]], B[_[_],_[_]]] = [F[_], G[_]] => B[F, G] => A[F, G]
-opaque type <≈≈>[A[_[_],_[_]], B[_[_],_[_]]] >: [F[_], G[_]] => () => A[F, G] <=> B[F, G] = [F[_], G[_]] => () => A[F, G] <=> B[F, G]
-object `<≈≈>`:
-  def unsafe[A[_[_],_[_]], B[_[_],_[_]]](ab: [F[_], G[_]] => A[F, G] => B[F, G], ba: [F[_], G[_]] => B[F, G] => A[F, G]): A <≈≈> B =
-    [F[_], G[_]] => () => Iso.unsafe(ab[F, G], ba[F, G])
-  extension[A[_[_],_[_]], B[_[_],_[_]]](iso: A <≈≈> B)
-    def to:   A ≈≈> B = [F[_], G[_]] => (af: A[F, G]) => iso[F, G]().to(af)
-    def from: B ≈≈> A = [F[_], G[_]] => (bf: B[F, G]) => iso[F, G]().from(bf)
-    def flip: B <≈≈> A = [F[_], G[_]] => () => iso[F, G]().flip
+//opaque type ≈>[A[_[_]], B[_[_]]] >: [F[_]] => A[F] => B[F] = [F[_]] => A[F] => B[F]
+//type <≈[A[_[_]], B[_[_]]] = [F[_]] => B[F] => A[F]
+//opaque type <≈>[A[_[_]], B[_[_]]] >: [F[_]] => () => A[F] <=> B[F] = [F[_]] => () => A[F] <=> B[F]
+//object `<≈>`:
+//  def unsafe[A[_[_]], B[_[_]]](ab: [F[_]] => A[F] => B[F], ba: [F[_]] => B[F] => A[F]): A <≈> B =
+//    [F[_]] => () => Iso.unsafe(ab[F], ba[F])
+//  extension[A[_[_]], B[_[_]]](iso: A <≈> B)
+//    def to:   A ≈> B = [F[_]] => (af: A[F]) => iso[F]().to(af)
+//    def from: B ≈> A = [F[_]] => (bf: B[F]) => iso[F]().from(bf)
+//    def flip: B <≈> A = [F[_]] => () => iso[F]().flip
+//
+//opaque type ≈≈>[A[_[_],_[_]], B[_[_],_[_]]] >: [F[_], G[_]] => A[F, G] => B[F, G] = [F[_], G[_]] => A[F, G] => B[F, G]
+//type <≈≈[A[_[_],_[_]], B[_[_],_[_]]] = [F[_], G[_]] => B[F, G] => A[F, G]
+//opaque type <≈≈>[A[_[_],_[_]], B[_[_],_[_]]] >: [F[_], G[_]] => () => A[F, G] <=> B[F, G] = [F[_], G[_]] => () => A[F, G] <=> B[F, G]
+//object `<≈≈>`:
+//  def unsafe[A[_[_],_[_]], B[_[_],_[_]]](ab: [F[_], G[_]] => A[F, G] => B[F, G], ba: [F[_], G[_]] => B[F, G] => A[F, G]): A <≈≈> B =
+//    [F[_], G[_]] => () => Iso.unsafe(ab[F, G], ba[F, G])
+//  extension[A[_[_],_[_]], B[_[_],_[_]]](iso: A <≈≈> B)
+//    def to:   A ≈≈> B = [F[_], G[_]] => (af: A[F, G]) => iso[F, G]().to(af)
+//    def from: B ≈≈> A = [F[_], G[_]] => (bf: B[F, G]) => iso[F, G]().from(bf)
+//    def flip: B <≈≈> A = [F[_], G[_]] => () => iso[F, G]().flip
