@@ -37,7 +37,7 @@ trait Function1InitialTerminalInstances {
 
   given function1Initial: Initial.Aux[Function, Trivial, Void] =
     new Initial.Proto[Function, Trivial, Void]:
-      def TC: Trivial[Void] = Trivial[Unit]
+      def TC: Trivial[Void] = Trivial[Void]
       def subcat: Subcat.AuxT[Function] = summon
       def initiate[A: TC]: Void => A = identity
 }

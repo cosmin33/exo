@@ -18,9 +18,9 @@ trait Exobifunctor[==>[_, _], -->[_, _], >->[_, _], ⊙[_, _]] { self =>
     Exo.unsafe[-->, >->, ⊙[X, *]]([a, b] => (fn: a --> b) => rightMap(fn))
 
   def leftForall [T[_]](implicit C: Subcat.Aux[-->, T]): T ~> ([x] =>> Exo[==>, >->, ⊙[*, x]]) =
-    [A] => (ta: T[A]) => leftFunctor(SubcatHasId.from(using C, ta))
+    ~>.from([A] => (ta: T[A]) => leftFunctor(SubcatHasId.from(using C, ta)))
   def rightForall[T[_]](implicit C: Subcat.Aux[==>, T]): T ~> ([x] =>> Exo[-->, >->, ⊙[x, *]]) =
-    [A] => (ta: T[A]) => rightFunctor(SubcatHasId.from(using C, ta))
+    ~>.from([A] => (ta: T[A]) => rightFunctor(SubcatHasId.from(using C, ta)))
 
 }
 

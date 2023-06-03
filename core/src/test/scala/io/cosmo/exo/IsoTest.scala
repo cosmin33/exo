@@ -17,6 +17,14 @@ object IsoTest extends ZIOSpecDefault {
   object Int2:
     given (Int2 <=> Int) = Iso.refl
 
+  opaque type List1[A] = List[A]
+  object List1:
+    given [A]: (List1[A] <=> List[A]) = Iso.refl
+
+  opaque type Map1[A, B] = Map[A, B]
+  object Map1:
+    given [A, B]: (Map1[A, B] <=> Map[A, B]) = Iso.refl
+
   def spec = suite("Disjunction")(
     test("toEither") {
 
@@ -26,11 +34,20 @@ object IsoTest extends ZIOSpecDefault {
 
       summon[NotGiven[HasIso[Function, Int, String]]]
 
+      summon[HasIsoK[Function, List1, List]]
+      summon[HasIsoK[Function, List, List]]
+      def xx[F[_]]: ∀[[a] =>> Trivial[F[a]]] = summon[∀[[a] =>> Trivial[F[a]]]]
+      summon[ReflImpIsoK[Function, List]]
+      summon[NotGiven[HasIsoK[Function, List1, Option]]]
+
+      summon[HasIsoK2[Function, Map1, Map]]
+      summon[HasIsoK2[Function, Map, Map]]
+      summon[NotGiven[HasIsoK2[Function, Map1, Either]]]
+
       summon[Int === Int]
 
       summon[Int =!= Long]
       summon[NotGiven[Int =!= Int]]
-//      summon[Int =!= Int]
 
 
       assertTrue(1 == 1)

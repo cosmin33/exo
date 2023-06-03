@@ -50,6 +50,14 @@ object Forall2Module:
   extension [F[_,_]](a: ∀∀[F])
     def of[A, B]: F[A, B] = Forall2.specialize(a)
     def apply[A, B]: F[A, B] = of[A, B]
+  extension[F[_, _], G[_, _]] (fg: F ~~> G)
+    def run[A, B](fab: F[A, B]): G[A, B] = fg.apply[A, B](fab)
+    def andThen[H[_, _]](gh: G ~~> H): F ~~> H = ???
+    def compose[E[_, _]](ef: E ~~> F): E ~~> G = ???
+  extension[F[_, _], G[_, _]] (iso: F <~~> G)
+    def to:   F ~~> G = ???
+    def from: G ~~> F = ???
+    def flip: G <~~> F = ???
 
 private[exo] final class MkForall2Impl[F[_,_]](val dummy: Boolean = false) extends AnyVal with Forall2Impl.MkForall2[F]:
   type T = Any

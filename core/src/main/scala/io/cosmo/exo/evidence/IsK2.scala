@@ -21,15 +21,11 @@ sealed abstract class IsK2[F[_,_], G[_,_]] private[IsK2]() { ab =>
 
   final def is[A, B]: F[A, B] === G[A, B] = subst[[f[_,_]] =>> F[A,B] === f[A,B]](Is.refl[F[A, B]])
 
-  final def toIso: F <~~> G = [A, B] => () => is[A, B].toIso
+  final def toIso: F <~~> G = <~~>.unsafe([A, B] => () => is[A, B].toIso)
 
 }
 
 object IsK2 {
-//  private[this] final class Refl[A[_,_]] extends IsK2[A, A] {
-//    def subst[F[_[_,_]]](fa: F[A]): F[A] = fa
-//  }
-//
 //  implicit def proposition[A[_,_], B[_,_]]: Proposition[A =~~= B] =
 //    (p: ¬¬[A =~~= B]) => Axioms.isK2Consistency[A, B](p.run)
 

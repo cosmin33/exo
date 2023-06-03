@@ -70,3 +70,11 @@ private[exo] final class MkForallKImpl[Alg[_[_]]](val dummy: Boolean = false) ex
 
   def from(ft: Alg[T]): ForallKImpl.∀~[Alg] = ft
 }
+
+object ForallKModule {
+  implicit final class Ops[Alg[_[_]]](val a: ∀~[Alg]) {
+    def of[F[_]]: Alg[F] = ForallK.specialize(a)
+
+    def apply[F[_]]: Alg[F] = of[F]
+  }
+}

@@ -51,7 +51,18 @@ object ForallModule extends ForallFunctions:
     def apply[A]: F[A] = ∀.specialize(f)
     def of[A]: F[A] = apply[A]
     def lift[G[_]]: ∀[[α] =>> F[G[α]]] = ∀.of[[α] =>> F[G[α]]].from(of)
-
+  extension[F[_], G[_]] (fg: F ~> G)
+    def run[A](fa: F[A]): G[A] = fg[A](fa)
+    def forall: ∀[[o] =>> F[o] => G[o]] = ∀.of[[a] =>> F[a] => G[a]].from(run)
+    def $(f: ∀[F]): ∀[G] = ∀.of[G].from(run(f.apply))
+    def andThen[H[_]](gh: G ~> H): F ~> H = ∀.mk[F ~> H].fromH([T] => () => fg[T].andThen(gh[T]))
+    def compose[E[_]](ef: E ~> F): E ~> G = ∀.mk[E ~> G].fromH([T] => () => fg[T].compose(ef[T]))
+  extension[->[_,_], F[_], G[_]](iso: IsoK[->, F, G])
+    def to  : ∀[[a] =>> F[a] -> G[a]] = ∀.of[[a] =>> F[a] -> G[a]].fromH([T] => () => iso[T].to)
+    def from: ∀[[a] =>> G[a] -> F[a]] = ∀.of[[a] =>> G[a] -> F[a]].fromH([T] => () => iso[T].from)
+    def flip: IsoK[->, G, F] = ∀.of[[a] =>> Iso[->, G[a], F[a]]].fromH([T] => () => iso[T].flip)
+    def andThenIso[H[_]](iso2: IsoK[->, G, H]): IsoK[->, F, H] =
+      ∀.mk[IsoK[->, F, H]].fromH([T] => () => iso[T].andThen(iso2[T]))
 
 private[exo] object ForallImpl extends ForallModule:
   type Forall[F[_]] = F[Any]

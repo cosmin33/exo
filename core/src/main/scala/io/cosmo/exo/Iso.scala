@@ -51,7 +51,8 @@ object Iso {
 
   /** if I can transform an arrow into another then I can also transform the corresponding isomorphisms */
   def liftFnFnToFnIso[==>[_,_], -->[_,_] :Subcat](fn: ==> ~~> -->): Iso[==>, *, *] ~~> Iso[-->, *, *] =
-    [A, B] => (i: Iso[==>, A, B]) => Iso.unsafe[-->, A, B](fn.exec(i.to), fn.exec(i.from))
+    ~~>.from([A, B] => (i: Iso[==>, A, B]) => Iso.unsafe[-->, A, B](fn.run(i.to), fn.run(i.from)))
+//    [A, B] => (i: Iso[==>, A, B]) => Iso.unsafe[-->, A, B](fn.run(i.to), fn.run(i.from))
 
   /** If two arrow are isomorphic then those arrows isomorphisms are isomorphic */
   def liftIsoFnToIso[==>[_,_] : Subcat, -->[_,_] : Subcat](iso: ==> <~~> -->): Iso[==>, *, *] <~~> Iso[-->, *, *] =

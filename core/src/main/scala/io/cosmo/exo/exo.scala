@@ -12,9 +12,14 @@ object Void:
 extension(v: Void)
   def absurd[A]: A = v
 
-type Trivial[A] = DummyImplicit
+opaque type Trivial[A] = Unit
 object Trivial:
-  def apply[A]: Trivial[A] = summon
+  def apply[A]: Trivial[A] = ()
+  given [A]: Trivial[A] = ()
+  given [F[_]]:       ∀[[a]       =>> Trivial[F[a]]]       = ∀.of[[a] =>> Trivial[F[a]]].from(apply)
+  given [F[_,_]]:    ∀∀[[a, b]    =>> Trivial[F[a, b]]]    = ∀∀.of[[a, b] =>> Trivial[F[a, b]]].from(apply)
+  given [F[_,_,_]]: ∀∀∀[[a, b, c] =>> Trivial[F[a, b, c]]] = ∀∀∀.of[[a, b, c] =>> Trivial[F[a, b, c]]].from(apply)
+  given [A[_[_]]]:   ∀~[[f[_]]    =>> Trivial[A[f]]]       = ∀~.of[[f[_]] =>> Trivial[A[f]]].from(apply)
 
 type VoidK[x] = Void
 type VoidK2[x, y] = Void
@@ -26,46 +31,40 @@ type AnyK[x] = Any
 type AnyK2[x, y] = Any
 type AnyHK[f[_]] = Any
 
-type <=>[A, B] = Iso[Function, A, B]
+type IsoK[->[_,_], F[_], G[_]] = ∀[[a] =>> Iso[->, F[a], G[a]]]
+type IsoK2[->[_,_], F[_,_], G[_,_]] = ∀∀[[a, b] =>> Iso[->, F[a, b], G[a, b]]]
+type IsoHK[->[_,_], A[_[_]], B[_[_]]] = ∀~[[f[_]] =>> Iso[->, A[f], B[f]]]
+
+infix type <=>[A, B] = Iso[Function, A, B]
 object `<=>`:
   def apply[A]: A <=> A = Iso.refl[A]
   def apply[A, B](using h: HasIso[Function, A, B]): A <=> B = h
   def unsafe[A, B](f: A => B, g: B => A): A <=> B = Iso.unsafe(f, g)
 
-opaque type ~>[F[_], G[_]] >: [A] => F[A] => G[A] = [A] => F[A] => G[A]
+infix type ~>[F[_], G[_]] = ∀[[a] =>> F[a] => G[a]]
 object `~>`:
-  extension [F[_], G[_]](fg: F ~> G)
-    def exec[A](fa: F[A]): G[A] = fg(fa)
-    def forall: ∀[[a] =>> F[a] => G[a]] = ∀.of[[a] =>> F[a] => G[a]].from(exec)
-    def $(f: ∀[F]): ∀[G] = ∀.of[G].from(exec(f.apply))
-    def andThen[H[_]](gh: G ~> H): F ~> H = [A] => (fa: F[A]) => gh(fg(fa))
-    def compose[E[_]](ef: E ~> F): E ~> G = [A] => (ea: E[A]) => fg(ef(ea))
-type <~[F[_], G[_]] = ~>[G, F]
-opaque type <~>[F[_], G[_]] >: [A] => () => F[A] <=> G[A] = [A] => () => F[A] <=> G[A]
+  def from[F[_], G[_]](fg: [A] => F[A] => G[A]): F ~> G = ∀.mk[F ~> G].fromH([A] => () => fg[A])
+infix type <~[F[_], G[_]] = ~>[G, F]
+infix type <~>[F[_], G[_]] = ∀[[α] =>> F[α] <=> G[α]]
 object `<~>`:
-  def unsafe[F[_], G[_]](f: [A] => F[A] => G[A], g: [A] => G[A] => F[A]): F <~> G = [A] => () => Iso.unsafe(f[A], g[A])
-  extension [F[_], G[_]](iso: F <~> G)
-    def to:   F ~> G = [A] => (fa: F[A]) => iso[A]().to(fa)
-    def from: G ~> F = [A] => (ga: G[A]) => iso[A]().from(ga)
-    def flip: G <~> F = [A] => () => iso[A]().flip
-    def andThen[H[_]](gh: G <~> H): F <~> H = [A] => () => iso[A]().andThen(gh[A]())
+  def apply[F[_]]: F <~> F = apply[F, F]
+  def apply[F[_], G[_]](using h: HasIsoK[_ => _, F, G]): F <~> G = h
+  def unsafe[F[_], G[_]](f: [A] => F[A] => G[A], g: [A] => G[A] => F[A]): F <~> G =
+    ∀.mk[F <~> G].from(Iso.unsafe(f.apply, g.apply))
+  def unsafe[F[_], G[_]](f: [A] => () => F[A] <=> G[A]): F <~> G = ∀.mk[F <~> G].fromH(f)
 
-opaque type ~~>[F[_,_], G[_,_]] >: [A, B] => F[A, B] => G[A, B] = [A, B] => F[A, B] => G[A, B]
+infix type ~~>[F[_,_], G[_,_]] = ∀∀[[a, b] =>> F[a, b] => G[a, b]]
 object `~~>`:
-  def from[F[_,_], G[_,_]](fg: [A, B] => F[A, B] => G[A, B]): F ~~> G = fg
-  extension[F[_,_], G[_,_] ](fg: F ~~> G)
-    def exec[A, B](fab: F[A, B]): G[A, B] = fg(fab)
-    def andThen[H[_,_]](gh: G ~~> H): F ~~> H = [A, B] => (fab: F[A, B]) => gh(fg(fab))
-    def compose[E[_,_]](ef: E ~~> F): E ~~> G = [A, B] => (eab: E[A, B]) => fg(ef(eab))
-type <~~[F[_,_], G[_,_]] = [A, B] => G[A, B] => F[A, B]
-opaque type <~~>[F[_,_], G[_,_]] >: [A, B] => () => F[A, B] <=> G[A, B] = [A, B] => () => F[A, B] <=> G[A, B]
+  def from[F[_,_], G[_,_]](fg: [A, B] => F[A, B] => G[A, B]): F ~~> G = ∀∀.mk[F ~~> G].fromH([A, B] => () => fg[A, B])
+
+infix type <~~[F[_,_], G[_,_]] = [A, B] => G[A, B] => F[A, B]
+infix type <~~>[F[_,_], G[_,_]] = ∀∀[[a, b] =>> F[a, b] <=> G[a, b]]
 object `<~~>`:
+  def apply[F[_,_]]: F <~~> F = apply[F, F]
+  def apply[F[_,_], G[_,_]](using h: HasIsoK2[Function, F, G]): F <~~> G = h
   def unsafe[F[_,_], G[_,_]](fg: F ~~> G, gf: G ~~> F): F <~~> G =
-    [A, B] => () => Iso.unsafe(fg[A, B], gf[A, B])
-  extension[F[_,_], G[_,_]](iso: F <~~> G)
-    def to:   F ~~> G = [A, B] => (fab: F[A, B]) => iso[A, B]().to(fab)
-    def from: G ~~> F = [A, B] => (gab: G[A, B]) => iso[A, B]().from(gab)
-    def flip: G <~~> F = [A, B] => () => iso[A, B]().flip
+    ∀∀.mk[F <~~> G].fromH([A, B] => () => Iso.unsafe(fg[A, B], gf[A, B]))
+  def unsafe[F[_,_], G[_,_]](fg: [A, B] => () => F[A, B] <=> G[A, B]): F <~~> G = ∀∀.mk[F <~~> G].fromH(fg)
 
 //opaque type ≈>[A[_[_]], B[_[_]]] >: [F[_]] => A[F] => B[F] = [F[_]] => A[F] => B[F]
 //type <≈[A[_[_]], B[_[_]]] = [F[_]] => B[F] => A[F]

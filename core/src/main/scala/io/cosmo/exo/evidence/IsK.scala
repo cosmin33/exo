@@ -16,12 +16,12 @@ sealed abstract class IsK[F[_], G[_]] { self =>
   /** Given `F =~= G` we can prove that for any T, T[F] === T[G] */
   def lower[T[_[_]]]: T[F] === T[G] = IsK.lower[T, F, G](self)
 
-  /** Given `F =~= G` we can prove that `T[F, *] =~= T[G, *]`. */
+  /** Given `F =~= G` we can prove that for any T, `T[F, *] =~= T[G, *]`. */
   final def lift[T[_[_], _]]: T[F, *] =~= T[G, *] = IsK.lift[T, F, G](self)
 
   final def is[A]: F[A] === G[A] = subst[[f[_]] =>> F[A] === f[A]](Is.refl[F[A]])
 
-  final def toIso: F <~> G = [A] => () => is[A].toIso
+  final def toIso: F <~> G = <~>.unsafe([A] => () => is[A].toIso)
 
 }
 
