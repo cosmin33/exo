@@ -3,9 +3,9 @@ import sbtcrossproject.CrossType
 
 inThisBuild(Seq(
   organization := "io.cosmo",
-  scalaVersion := "3.2.2",
+  scalaVersion := "3.3.0",
   version := "0.0.1-SNAPSHOT",
-  crossScalaVersions := Seq("3.2.2"),
+  crossScalaVersions := Seq("3.3.0"),
   scalacOptions ++= Seq("-unchecked", "-deprecation"),
 ))
 
