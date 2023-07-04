@@ -38,7 +38,7 @@ type ArrowHK[->[_,_], A[_[_]], B[_[_]]] = ∀~[[f[_]] =>> A[f] -> B[f]]
 
 type IsoFunK[A, B] = Iso[FunK, A, B]
 object IsoFunK:
-  def apply[F[_], G[_]](i: F <~> G): IsoFunK[TypeK[F], TypeK[G]] = FunK.impIsoFunK(using i)
+  def apply[F[_], G[_]](i: F <~> G): IsoFunK[TypeK[F], TypeK[G]] = ??? // FunK.impIsoFunK(using i)
 
 type IsoK [->[_,_], F[_],    G[_]]    =  ∀[[a]    =>> Iso[->, F[a], G[a]]]
 type IsoK2[->[_,_], F[_,_],  G[_,_]]  = ∀∀[[a, b] =>> Iso[->, F[a, b], G[a, b]]]

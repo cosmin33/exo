@@ -25,7 +25,8 @@ trait Function1SemicategoryInstances extends Function1SemicategoryInstances01 {
 
 trait Function1SemicategoryInstances01 {
   given function1Distributive2: Distributive.Aux[Function, Trivial, /\, Unit, \/, Void] =
-    IsK2.lower2[[f[_, _], g[_, _]] =>> Distributive.Aux[Function, Trivial, f, Unit, g, Void]].on(/\.unsafeLeibniz, \/.unsafeLeibniz)(Semicategory.function1Distributive1)
+    IsK2.lower2[[f[_, _], g[_, _]] =>> Distributive.Aux[Function, Trivial, f, Unit, g, Void]]
+      .on(/\.unsafeLeibniz, \/.unsafeLeibniz)(Semicategory.function1Distributive1)
 }
 
 trait Function1InitialTerminalInstances {
@@ -39,7 +40,7 @@ trait Function1InitialTerminalInstances {
     new Initial.Proto[Function, Trivial, Void]:
       def TC: Trivial[Void] = Trivial[Void]
       def subcat: Subcat.AuxT[Function] = summon
-      def initiate[A: TC]: Void => A = identity
+      def initiate[A: TC]: Void => A = Void.absurd
 }
 
 trait Function1AssociativeInstances {

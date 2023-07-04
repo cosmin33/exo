@@ -43,3 +43,31 @@ object IsKind {
     Iso.unsafe(_ => Unsafe.isK, _=> Unsafe.is)
 
 }
+
+sealed trait IsKind1[A] {
+  type Type[_]
+}
+
+final case class KindOne[F[_]](dummy: Unit) extends IsKind1[TypeK[F]] {
+  type Type[a] = F[a]
+}
+
+final case class KindProduct[F[_], G[_]](dummy: Unit) extends IsKind1[TypeK[[a] =>> (F[a], G[a])]] {
+  type Type[a] = (F[a], G[a])
+  def unpair: (IsKind1[TypeK[F]], IsKind1[TypeK[G]]) = (KindOne[F](()), KindOne[G](()))
+}
+
+final case class KindCoproduct[F[_], G[_]](dummy: Unit) extends IsKind1[TypeK[[a] =>> Either[F[a], G[a]]]] {
+  type Type[a] = Either[F[a], G[a]]
+  def unpair: (IsKind1[TypeK[F]], IsKind1[TypeK[G]]) = (KindOne[F](()), KindOne[G](()))
+}
+
+final case class KindFunction[F[_], G[_]](dummy: Unit) extends IsKind1[TypeK[[a] =>> F[a] => G[a]]] {
+  type Type[a] = F[a] => G[a]
+  def unpair: (IsKind1[TypeK[F]], IsKind1[TypeK[G]]) = (KindOne[F](()), KindOne[G](()))
+}
+
+object IsKind1 {
+  type Aux[A, T[_]] = IsKind1[A] { type Type[a] = T[a] }
+  def injectivity[A, B](a: IsKind1[A], b: IsKind1[B])(using eq: IsKind1[A] === IsKind1[B]): a.Type =~= b.Type = Unsafe.isK
+}
