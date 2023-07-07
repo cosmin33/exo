@@ -27,9 +27,9 @@ sealed abstract class As1[A, B] { ab =>
   def substCtF[F[_]: IsContravariant](fb: F[B]): F[A] = liftCtF[F].coerce(fb)
 }
 object As1 {
-  def apply[A, B](implicit ev: A As1 B): A As1 B = ev
+  def apply[A, B](using ev: A As1 B): A As1 B = ev
 
-  implicit def proposition[A, B]: Proposition[As1[A, B]] = Proposition[A <~< B].isomap(Iso.unsafe(_.fix, _.loosen))
+  given proposition[A, B]: Proposition[As1[A, B]] = Proposition[A <~< B].isomap(Iso.unsafe(_.fix, _.loosen))
 
   private[this] val _refl: As1[Any, Any] = new As1[Any, Any] {
     type Lower = Any
@@ -39,7 +39,7 @@ object As1 {
 
   def refl[A]: A As1 A = _refl.asInstanceOf
 
-  implicit def fix[A, B](implicit ab: A <~< B): A As1 B = ab.fix[A, B]
+  given fix[A, B](using ab: A <~< B): (A As1 B) = ab.fix[A, B]
 
   def proved[A, B, B1 >: A, A1 <: B with B1](a: A === A1, b: B === B1): As1[A, B] = new As1[A, B] {
     type Upper = B1

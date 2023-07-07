@@ -8,12 +8,12 @@ trait LaxSemigroupal[⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] { self =>
   def A: Associative.Aux[-->, ⊙-, TC]
   def product[A, B]: (F[A] ⊙- F[B]) --> F[A ⊙= B]
 
-  def map2[==>[_,_], A, B, C](fn: (A ⊙= B) ==> C)(implicit E: Exo[==>, -->, F]): (F[A] ⊙- F[B]) --> F[C] =
+  def map2[==>[_,_], A, B, C](fn: (A ⊙= B) ==> C)(using E: Exo[==>, -->, F]): (F[A] ⊙- F[B]) --> F[C] =
     A.C.andThen(product[A, B], E.map(fn))
-  def comap2[==>[_,_], A, B, C](fn: C ==> (A ⊙= B))(implicit E: Exo[Dual[==>,*,*], -->, F]): (F[A] ⊙- F[B]) --> F[C] =
+  def comap2[==>[_,_], A, B, C](fn: C ==> (A ⊙= B))(using E: Exo[Dual[==>,*,*], -->, F]): (F[A] ⊙- F[B]) --> F[C] =
     A.C.andThen(product[A, B], E.map(Dual(fn)))
 
-  def preserveCSemigroup[==>[_,_], M](ma: CSemigroup[==>, ⊙=, M])(implicit E: Exo[==>, -->, F]): CSemigroup[-->, ⊙-, F[M]] =
+  def preserveCSemigroup[==>[_,_], M](ma: CSemigroup[==>, ⊙=, M])(using E: Exo[==>, -->, F]): CSemigroup[-->, ⊙-, F[M]] =
     CSemigroup.unsafe(map2(ma.op))(using A)
 
   def compose[~~>[_,_], ⊙~[_,_], G[_]](G: LaxSemigroupal[⊙-, ~~>, ⊙~, G])(using F: Exo[-->, ~~>, G]

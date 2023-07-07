@@ -20,7 +20,7 @@ private[exo] sealed trait Forall3Module {
   def monotonicity[F[_,_,_], G[_,_,_]](ev: ∀∀∀[[a, b, c] =>> F[a, b, c] <~< G[a, b, c]]): ∀∀∀[F] <~< ∀∀∀[G]
   def from[F[_,_,_]](p: Prototype[F]): ∀∀∀[F]
   def of[F[_,_,_]]: MkForall3[F]
-  def mk[X](implicit u: Unapply[X]): MkForall3[u.F] = of[u.F]
+  def mk[X](using u: Unapply[X]): MkForall3[u.F] = of[u.F]
 
   sealed trait MkForall3[F[_,_,_]] extends Any:
     type A

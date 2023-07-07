@@ -39,7 +39,7 @@ sealed abstract class StrictAs[-A, +B] { ab =>
 
 }
 object StrictAs {
-  def apply[A, B](implicit ev: A </< B): A </< B = ev
+  def apply[A, B](using ev: A </< B): A </< B = ev
 
   private[this] final class Witness[A, B](val nab: A =!= B, val conformity: A <~< B) extends StrictAs[A, B] {
     def inequality[A1 <: A, B1 >: B]: A1 =!= B1 =
@@ -49,26 +49,26 @@ object StrictAs {
       }
   }
 
-  implicit def isoCanonic[A, B]: (A =!= B, A <~< B)  <=> (A </< B) =
-    Iso.unsafe({case (nb, ab) => witness(nb, ab)}, c => (c.inequality, c.conformity))
+  given isoCanonic[A, B]: ((A =!= B, A <~< B)  <=> (A </< B)) =
+    Iso.unsafe({case (nb, ab) => witness(using nb, ab)}, c => (c.inequality, c.conformity))
 
-  implicit def witness[A, B](implicit nab: A =!= B, conformity: A <~< B): StrictAs[A, B] =
+  given witness[A, B](using nab: A =!= B, conformity: A <~< B): StrictAs[A, B] =
     new Witness[A, B](nab, conformity)
 
-  def witnessNot[A, B](implicit ev: ¬¬[¬[A <~< B] Either (A === B)]): ¬[A </< B] =
+  def witnessNot[A, B](using ev: ¬¬[¬[A <~< B] Either (A === B)]): ¬[A </< B] =
     Uninhabited.witness((sab: A </< B) => ev {
       case Right(ab) => sab.inequality[A, B].run(ab)
       case Left(nab) => nab(sab.conformity)
     })
 
-  def bottomTop: Void </< Any = witness(Void.isNotAny, As.bottomTop)
+  def bottomTop: Void </< Any = witness(using Void.isNotAny, As.bottomTop)
 
   def irreflexive[A](ev: A </< A): Void =
     ev.inequality[A, A].run(Is.refl)
 
-  implicit def strictAsIsProposition[A, B]: Proposition[StrictAs[A, B]] =
+  given strictAsIsProposition[A, B]: Proposition[StrictAs[A, B]] =
     Proposition[A =!= B].zip(using Proposition[A <~< B]).isomap(Iso.unsafe(
-      p => witness(p._1, p._2),
+      p => witness(using p._1, p._2),
       p => (p.inequality[A, B], p.conformity)
     ))
 

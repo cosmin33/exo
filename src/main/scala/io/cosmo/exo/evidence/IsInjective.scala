@@ -4,19 +4,19 @@ import io.cosmo.exo.*
 import io.cosmo.exo.variance.*
 import io.cosmo.exo.inhabitance.*
 
-trait IsInjective[F[_]] { F =>
+trait IsInjective[F[_]] { self =>
 
   /**
    * The function f is said to be injective provided that for all a and b in X,
    * whenever f(a) = f(b), then a = b.
    */
-  def apply[A, B](implicit ev: F[A] === F[B]): A === B
+  def apply[A, B](using ev: F[A] === F[B]): A === B
 
   /**
    * Constant type constructors are not injective.
    */
   def notConstant(cF: IsConstant[F]): Void =
-    F(cF[Unit, Void]).coerce(())
+    self(using cF[Unit, Void]).coerce(())
 
   def incomparable[A, B](ev: A >~< B): F[A] >~< F[B] =
     Axioms.parametricity1[F, A, B, A, B](ev, contrapositive(ev.notEqual), ev.notEqual)
@@ -28,23 +28,23 @@ trait IsInjective[F[_]] { F =>
    * of types and type constructors.
    */
   def monomorphism[G[_], H[_]](p: ([x] =>> F[G[x]]) =~= ([x] =>> F[H[x]])): G =~= H =
-    Axioms.tcExtensionality[G, H].applyT([T] => () => F[G[T], H[T]](p.lower[[x[_]] =>> x[T]]))
+    Axioms.tcExtensionality[G, H].applyT([T] => () => self[G[T], H[T]](using p.lower[[x[_]] =>> x[T]]))
 
   /**
    * If A ≠ B, then F[A] ≠ F[B].
    */
   def contrapositive[A, B](ev: A =!= B): F[A] =!= F[B] =
-    WeakApart.witness[F[A], F[B]] { fab => ev.run(F(fab)) }
+    WeakApart.witness[F[A], F[B]] { fab => ev.run(self(using fab)) }
 
   /**
    * If G ∘ F is injective, then F is injective (but G need not be).
    */
   def decompose[G[_], H[_]](using p: F =~= ([x] =>> G[H[x]])): IsInjective[H] = {
-    val GH: IsInjective[[x] =>> G[H[x]]] = p.subst[IsInjective](F)
+    val GH: IsInjective[[x] =>> G[H[x]]] = p.subst[IsInjective](self)
 
     new IsInjective[H] {
-      override def apply[A, B](implicit ev: H[A] === H[B]): A === B =
-        GH(ev.lift[G])
+      override def apply[A, B](using ev: H[A] === H[B]): A === B =
+        GH(using ev.lift[G])
 
       override def monomorphism[I[_], J[_]](p: ([x] =>> H[I[x]]) =~= ([x] =>> H[J[x]])): I =~= J = {
         type f[x[_], a] = G[x[a]]
@@ -58,33 +58,33 @@ trait IsInjective[F[_]] { F =>
   /**
    * If F and G are both injective, then F ∘ G is injective.
    */
-  def compose[G[_]](implicit G: IsInjective[G]): IsInjective[[x] =>> F[G[x]]] =
-    new IsInjective.Compose[F, G](F, G)
+  def compose[G[_]](using G: IsInjective[G]): IsInjective[[x] =>> F[G[x]]] =
+    new IsInjective.Compose[F, G](self, G)
 
   /**
    * If F and G are both injective, then G ∘ F is injective.
    */
-  def andThen[G[_]](implicit G: IsInjective[G]): IsInjective[[x] =>> G[F[x]]] =
-    new IsInjective.Compose[G, F](G, F)
+  def andThen[G[_]](using G: IsInjective[G]): IsInjective[[x] =>> G[F[x]]] =
+    new IsInjective.Compose[G, F](G, self)
 
 }
 
 object IsInjective {
-  def apply[F[_]](implicit F: IsInjective[F]): IsInjective[F] = F
+  def apply[F[_]](using F: IsInjective[F]): IsInjective[F] = F
 
   type Canonic[F[_]] = [a,b] => (F[a] === F[b]) => (a === b)
 
-  implicit def isoCanonic[F[_]]: Canonic[F] <=> IsInjective[F] =
+  given isoCanonic[F[_]]: (Canonic[F] <=> IsInjective[F]) =
     <=>.unsafe[Canonic[F], IsInjective[F]](
-      can => new IsInjective[F] { def apply[A, B](implicit ev: F[A] === F[B]): A === B = can[A, B](ev) },
-      isi => [a, b] => (ev: F[a] === F[b]) => isi.apply(ev)
+      can => new IsInjective[F] { def apply[A, B](using ev: F[A] === F[B]): A === B = can[A, B](ev) },
+      isi => [a, b] => (ev: F[a] === F[b]) => isi.apply(using ev)
     )
 
-  implicit def witness[F[_]](implicit fnab: F[Void] =!= F[Any]): IsInjective[F] =
+  given witness[F[_]](using fnab: F[Void] =!= F[Any]): IsInjective[F] =
     witness1[F, Void, Any](fnab)
 
   def witness1[F[_], A, B](fnab: F[A] =!= F[B]): IsInjective[F] = new IsInjective[F] {
-    override def apply[X, Y](implicit ev: F[X] === F[Y]): X === Y =
+    override def apply[X, Y](using ev: F[X] === F[Y]): X === Y =
       Parametric[F].lowerInj[A, B, X, Y](fnab, ev)
   }
 
@@ -101,11 +101,11 @@ object IsInjective {
     }))
 
   final case class Compose[F[_], G[_]](F: IsInjective[F], G: IsInjective[G]) extends IsInjective[[x] =>> F[G[x]]] {
-    override def apply[A, B](implicit ev: F[G[A]] === F[G[B]]): A === B =
-      G[A, B](F[G[A], G[B]](ev))
+    override def apply[A, B](using ev: F[G[A]] === F[G[B]]): A === B =
+      G[A, B](using F[G[A], G[B]](using ev))
   }
 
-  implicit def proposition[F[_]]: Proposition[IsInjective[F]] =
+  given proposition[F[_]]: Proposition[IsInjective[F]] =
     Proposition.witness {
       (A: ¬¬[IsInjective[F]]) => new IsInjective[F] {
         override def apply[A, B](using ev: F[A] === F[B]): A === B =

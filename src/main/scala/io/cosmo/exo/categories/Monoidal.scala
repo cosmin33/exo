@@ -16,7 +16,7 @@ trait Monoidal[->[_, _], ⊙[_, _]] extends Associative[->, ⊙] {
 }
 
 object Monoidal extends MonoidalInstances {
-  def apply[->[_, _], ⊙[_, _]](implicit M: Monoidal[->, ⊙]): Monoidal[->, ⊙] = M
+  def apply[->[_, _], ⊙[_, _]](using M: Monoidal[->, ⊙]): Monoidal[->, ⊙] = M
   type Aux  [->[_, _], ⊙[_, _], TC0[_], I] = Monoidal[->, ⊙] { type TC[a] = TC0[a]; type Id = I }
   type AuxI [->[_, _], ⊙[_, _], I]         = Monoidal[->, ⊙] { type Id = I }
   type AuxTC[->[_, _], ⊙[_, _], TC0[_]]    = Monoidal[->, ⊙] { type TC[a] = TC0[a] }

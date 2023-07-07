@@ -28,7 +28,7 @@ object Associative extends Function1AssociativeInstances
   type Aux[->[_, _], ⊙[_, _], TC0[_]] = Associative[->, ⊙] {type TC[a] = TC0[a]}
   trait Proto[->[_, _], ⊙[_, _], TC0[_]] extends Associative[->, ⊙] { type TC[A] = TC0[A] }
 
-  def apply[->[_,_], ⊙[_,_]](implicit assoc: Associative[->, ⊙]): Associative.Aux[->, ⊙, assoc.TC] = assoc
+  def apply[->[_,_], ⊙[_,_]](using assoc: Associative[->, ⊙]): Associative.Aux[->, ⊙, assoc.TC] = assoc
 
   def fromIso[->[_,_], ⊙[_,_], Tc[_]](i: ∀∀∀[[a,b,c] =>> Iso[->, ⊙[⊙[a, b], c], ⊙[a, ⊙[b, c]]]])(
     using cat: Subcat.Aux[->, Tc], bif: Endobifunctor[->, ⊙]

@@ -46,7 +46,7 @@ object IsCovariant {
     new IsCovariant[F] {
       override def apply[X, Y](using xy: X <~< Y): F[X] <~< F[Y] =
         Is.lem[X, Y].map {
-          _.fold(neqv => Parametric[F].liftCv[A, B, X, Y](ab, fab, StrictAs.witness(neqv, xy)), eqv => eqv.lift[F].toAs)
+          _.fold(neqv => Parametric[F].liftCv[A, B, X, Y](ab, fab, StrictAs.witness(using neqv, xy)), eqv => eqv.lift[F].toAs)
         }.proved
     }
 

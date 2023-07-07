@@ -27,7 +27,7 @@ sealed abstract class IsK2[F[_,_], G[_,_]] private[IsK2]() { ab =>
 }
 
 object IsK2 {
-  implicit def proposition[A[_,_], B[_,_]]: Proposition[A =~~= B] =
+  given proposition[A[_,_], B[_,_]]: Proposition[A =~~= B] =
     Proposition.witness(p => Axioms.isK2Consistency[A, B](p: ((A =~~= B) => Void) => Void))
 
   def apply[A[_,_], B[_,_]](using ab: A =~~= B): A =~~= B = ab

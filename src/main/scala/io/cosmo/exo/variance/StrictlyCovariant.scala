@@ -16,7 +16,7 @@ trait StrictlyCovariant[F[_]] { F =>
     override def apply[A, B](using ab: A <~< B): F[A] <~< F[B] =
       Inhabited.lem[A === B].map {
         _.fold(
-          nab => F(using StrictAs.witness(WeakApart.witness(nab), ab)).conformity,
+          nab => F(using StrictAs.witness(using WeakApart.witness(nab), ab)).conformity,
           ab => ab.lift[F].toAs
         )
       }.proved
@@ -27,19 +27,19 @@ trait StrictlyCovariant[F[_]] { F =>
   def substCt[G[-_], A, B](g: G[F[B]])(using ev: A <~< B): G[F[A]] = covariant.substCt[G, A, B](g)
 
   def liftStrict[A, B](ab: StrictAs[A, B]): StrictAs[F[A], F[B]] =
-    StrictAs.witness[F[A], F[B]](
+    StrictAs.witness[F[A], F[B]](using
       injective.contrapositive(ab.inequality),
       covariant(using ab.conformity))
 
   def composeCo[G[_]](G: StrictlyCovariant[G]): StrictlyCovariant[[x] =>> F[G[x]]] =
     StrictlyCovariant.witness[[x] =>> F[G[x]]](using
-      injective.compose[G](G.injective),
+      injective.compose[G](using G.injective),
       covariant.composeCo[G](G.covariant)
     )
 
   def composeCt[G[_]](G: StrictlyContravariant[G]): StrictlyContravariant[[x] =>> F[G[x]]] =
     StrictlyContravariant.witness[[x] =>> F[G[x]]](using
-      injective.compose[G](G.injective),
+      injective.compose[G](using G.injective),
       covariant.composeCt[G](G.contravariant)
     )
 
@@ -54,8 +54,8 @@ object StrictlyCovariant {
 
   given witness[F[_]](using I: IsInjective[F], C: IsCovariant[F]): StrictlyCovariant[F] = new StrictlyCovariant[F] {
     override def apply[A, B](using ab: A </< B): F[A] </< F[B] =
-      StrictAs.witness[F[A], F[B]](
-        WeakApart.witness(fab => ab.inequality.run(I(fab))),
+      StrictAs.witness[F[A], F[B]](using
+        WeakApart.witness(fab => ab.inequality.run(I(using fab))),
         C[A, B](using ab.conformity))
   }
 

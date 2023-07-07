@@ -27,7 +27,7 @@ private[exo] sealed trait ForallKModule {
 
   def of[Alg[_[_]]]: MkForallK[Alg]
 
-  def mk[x](implicit u: Unapply[x]): MkForallK[u.A] = of[u.A]
+  def mk[x](using u: Unapply[x]): MkForallK[u.A] = of[u.A]
 
   trait MkForallK[Alg[_[_]]] extends Any {
     type T[_]
@@ -44,7 +44,7 @@ private[exo] sealed trait ForallKModule {
   }
 
   object Unapply {
-    implicit def unapply[B[_[_]]]: Unapply[∀~[B]] {type A[f[_]] = B[f]} = new Unapply[∀~[B]] {
+    given unapply[B[_[_]]]: Unapply[∀~[B]] {type A[f[_]] = B[f]} = new Unapply[∀~[B]] {
       type A[f[_]] = B[f]
     }
   }
@@ -72,7 +72,7 @@ private[exo] final class MkForallKImpl[Alg[_[_]]](val dummy: Boolean = false) ex
 }
 
 object ForallKModule {
-  implicit final class Ops[Alg[_[_]]](val a: ∀~[Alg]) {
+  extension[Alg[_[_]]](a: ∀~[Alg]) {
     def of[F[_]]: Alg[F] = ForallK.specialize(a)
 
     def apply[F[_]]: Alg[F] = of[F]

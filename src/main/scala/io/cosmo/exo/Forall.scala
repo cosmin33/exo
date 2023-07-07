@@ -24,7 +24,7 @@ sealed trait ForallModule {
   def monotonicity[F[_], G[_]](ev: ∀[[α] =>> F[α] <~< G[α]]): ∀[F] <~< ∀[G]
   def from[F[_]](p: Prototype[F]): ∀[F]
   def of[F[_]]: MkForall[F]
-  def mk[X](implicit u: Unapply[X]): MkForall[u.F] = of[u.F]
+  def mk[X](using u: Unapply[X]): MkForall[u.F] = of[u.F]
   def const[A](a: A): ∀[[α] =>> A]
 
   trait MkForall[F[_]] extends Any:
@@ -103,12 +103,12 @@ trait ForallFunctions {
   ): ∀[[x] =>> F[x] ⨂ G[x]] => (∀[F] ⨂ ∀[G]) =
     cc.&&&(f => ∀.of[F].fromH([T] => () => cc.fst.apply(f[T])), f => ∀.of[G].fromH([T] => () => cc.snd.apply(f[T])))
 
-  def fnDistribCartesianFrom[F[_], G[_], ⨂[_, _]](implicit
+  def fnDistribCartesianFrom[F[_], G[_], ⨂[_, _]](using
     cc: Cartesian[* => *, ⨂]
   ): (∀[F] ⨂ ∀[G]) => ∀[[x] =>> F[x] ⨂ G[x]] =
     fg => ∀.of[[x] =>> F[x] ⨂ G[x]].fromH([T] => () => cc.bifunctor.bimap[∀[F], F[T], ∀[G], G[T]](_[T], _[T])(fg))
 
-  def isoDistributeCartesian[F[_], G[_], ⨂[_, _]](implicit
+  def isoDistributeCartesian[F[_], G[_], ⨂[_, _]](using
     cc: Cartesian.AuxT[* => *, ⨂, Trivial]
   ): ∀[[x] =>> F[x] ⨂ G[x]] <=> (∀[F] ⨂ ∀[G]) = Iso.unsafe(fnDistribCartesianTo, fnDistribCartesianFrom)
 
@@ -125,7 +125,7 @@ trait ForallFunctions {
   //////////////////////// ⨁
 
   /** ∀ distributes over the coproduct of a Cocartesian (one way only) */
-  def fnDistributeCocartesian[F[_], G[_], ⨁[_, _]](implicit
+  def fnDistributeCocartesian[F[_], G[_], ⨁[_, _]](using
     cc: Cocartesian.AuxT[* => *, ⨁, Trivial]
   ): (∀[F] ⨁ ∀[G]) => ∀[[x] =>> F[x] ⨁ G[x]] = coproduct =>
     {

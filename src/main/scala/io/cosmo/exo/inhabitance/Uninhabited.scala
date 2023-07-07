@@ -6,7 +6,7 @@ import io.cosmo.exo.evidence.*
 opaque type Uninhabited[A] <: A => Void = A => Void
 
 object Uninhabited {
-  def apply[A](implicit ev: ¬[A]): ¬[A] = ev
+  def apply[A](using ev: ¬[A]): ¬[A] = ev
 
   def witness[A](f: A => Void): ¬[A] = eqCanonic(f)
 
@@ -39,11 +39,11 @@ object Uninhabited {
       }
     }
 
-  implicit def inhabited[A](implicit A: ¬[A]): ¬¬[¬[A]] = ¬¬.witness(f => f(A))
+  given inhabited[A](using A: ¬[A]): ¬¬[¬[A]] = ¬¬.witness(f => f(A))
 
-  implicit def uninhabited[A](implicit A: ¬¬[A]): ¬[¬[A]] = ¬.witness(nA => A.notUninhabited(nA))
+  given uninhabited[A](using A: ¬¬[A]): ¬[¬[A]] = ¬.witness(nA => A.notUninhabited(nA))
 
-  implicit def func[A, B](implicit A: ¬¬[A], B: ¬[B]): ¬[A => B] = ¬.witness(f => A.notUninhabited(B.contramap(f)))
+  given func[A, B](using A: ¬¬[A], B: ¬[B]): ¬[A => B] = ¬.witness(f => A.notUninhabited(B.contramap(f)))
 
   def proposition[A]: Proposition[¬[A]] =
     Proposition.witness((nnA: ¬¬[¬[A]]) => ¬.witness((a : A) => nnA.contradicts(A => A.contradicts(a))))

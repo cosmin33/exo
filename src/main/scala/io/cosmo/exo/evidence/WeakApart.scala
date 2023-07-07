@@ -35,7 +35,7 @@ class WeakApart[A, B](val run: (A === B) => Void) {
 
   /** Given an injective [[F]], if `A ≠ B`, then `F[A] ≠ F[B]`. */
   def lift[F[_]](using F: IsInjective[F]): F[A] =!= F[B] =
-    WeakApart.witness[F[A], F[B]](p => contradicts(F(p)))
+    WeakApart.witness[F[A], F[B]](p => contradicts(F(using p)))
 
   /** Classical proof that `¬(a ~ b) ⟺ a ≸ b ⋁ b < a ⋁ a < b` */
   def decompose: ¬¬[(B </< A) \/ (A </< B) \/ (A >~< B)] =
@@ -44,16 +44,16 @@ class WeakApart[A, B](val run: (A === B) => Void) {
         notLTE => ¬¬.lem[B <~< A].map {
           _.fold(
             notGTE => \/-(Incomparable.witness(notLTE, notGTE)),
-            gte => -\/(-\/(StrictAs.witness(flip, gte)))
+            gte => -\/(-\/(StrictAs.witness(using flip, gte)))
           )
         },
-        lte => ¬¬.value(-\/(\/-(StrictAs.witness(this, lte))))
+        lte => ¬¬.value(-\/(\/-(StrictAs.witness(using this, lte))))
       )
     }
 }
 
 object WeakApart {
-  def apply[A, B](implicit ev: WeakApart[A, B]): WeakApart[A, B] = ev
+  def apply[A, B](using ev: WeakApart[A, B]): WeakApart[A, B] = ev
 
   def witness[A, B](fn: (A === B) => Void): A =!= B = new WeakApart[A, B](fn)
 
@@ -72,7 +72,7 @@ object WeakApart {
   def irreflexive[A](ev: A =!= A): Void = ev.contradicts(Is.refl[A])
 
   private[WeakApart] final class PartialLower[F[_], A, B](val ab: =!=[A, B]) extends AnyVal {
-    def apply[X, Y](implicit A: A === F[X], B: B === F[Y]): X =!= Y =
+    def apply[X, Y](using A: A === F[X], B: B === F[Y]): X =!= Y =
       WeakApart.witness(xy => ab.run(A andThen xy.lift[F] andThen B.flip))
   }
 

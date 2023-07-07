@@ -5,7 +5,7 @@ import io.cosmo.exo.*
 opaque type Inhabited[A] <: (A => Void) => Void = (A => Void) => Void
 
 object Inhabited {
-  def apply[A](implicit A: ¬¬[A]): ¬¬[A] = A
+  def apply[A](using A: ¬¬[A]): ¬¬[A] = A
   def witness[A](f: (A => Void) => Void): ¬¬[A] = f
   def value[A](a: A): ¬¬[A] = witness[A](f => f(a))
 

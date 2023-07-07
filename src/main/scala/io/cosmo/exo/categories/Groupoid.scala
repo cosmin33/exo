@@ -8,6 +8,6 @@ trait Groupoid[->[_, _]] extends Subcat[->] {
 object Groupoid {
   type Aux[->[_, _], C[_]] = Groupoid[->] { type TC[a] = C[a] }
   type AuxT[->[_, _]] = Aux[->, Trivial]
-  def apply[->[_,_]](implicit g: Groupoid[->]): Groupoid[->] = g
+  def apply[->[_,_]](using g: Groupoid[->]): Groupoid[->] = g
 
 }

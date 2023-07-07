@@ -15,7 +15,7 @@ sealed abstract class StrictlyContravariant[F[_]] { F =>
   val contravariant: IsContravariant[F] = new IsContravariant[F] {
     override def apply[A, B](using ab: A <~< B): F[B] <~< F[A] =
       Inhabited.lem[A === B].map {
-        _.fold(nab => F(using StrictAs.witness(WeakApart.witness(nab), ab)).conformity, ab => ab.lift[F].flip.toAs)
+        _.fold(nab => F(using StrictAs.witness(using WeakApart.witness(nab), ab)).conformity, ab => ab.lift[F].flip.toAs)
       }.proved
   }
 
@@ -33,13 +33,13 @@ sealed abstract class StrictlyContravariant[F[_]] { F =>
 
   def composeCo[G[_]](G: StrictlyCovariant[G]): StrictlyContravariant[[x] =>> F[G[x]]] =
     StrictlyContravariant.witness[[x] =>> F[G[x]]](using
-      injective.compose[G](G.injective),
+      injective.compose[G](using G.injective),
       contravariant.composeCo[G](G.covariant)
     )
 
   def composeCt[G[_]](G: StrictlyContravariant[G]): StrictlyCovariant[[x] =>> F[G[x]]] =
     StrictlyCovariant.witness[[x] =>> F[G[x]]](using
-      injective.compose[G](G.injective),
+      injective.compose[G](using G.injective),
       contravariant.composeCt[G](G.contravariant)
     )
 
@@ -54,8 +54,8 @@ object StrictlyContravariant {
 
   given witness[F[_]](using I: IsInjective[F], C: IsContravariant[F]): StrictlyContravariant[F] = new StrictlyContravariant[F] {
     override def apply[A, B](using ab: A </< B): F[B] </< F[A] =
-      StrictAs.witness[F[B], F[A]](
-        WeakApart.witness(fab => ab.inequality.run(I(fab).flip)),
+      StrictAs.witness[F[B], F[A]](using
+        WeakApart.witness(fab => ab.inequality.run(I(using fab).flip)),
         C[A, B](using ab.conformity))
   }
 

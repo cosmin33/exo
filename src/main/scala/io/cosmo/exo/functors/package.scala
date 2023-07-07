@@ -10,7 +10,7 @@ object Endofunctor:
   /** This is isomorphic to cats.Functor[F] */
   type CovF[F[_]] = Endofunctor[* => *, F]
 
-  def apply[->[_,_], F[_]](implicit E: Endofunctor[->, F]): Endofunctor[->, F] = E
+  def apply[->[_,_], F[_]](using E: Endofunctor[->, F]): Endofunctor[->, F] = E
   def unsafe[->[_,_], F[_]](fn: [a, b] => (a -> b) => (F[a] -> F[b])): Endofunctor[->, F] = Exofunctor.unsafe(fn)
 
 

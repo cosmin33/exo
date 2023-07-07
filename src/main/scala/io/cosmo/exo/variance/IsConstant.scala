@@ -11,7 +11,7 @@ trait IsConstant[F[_]] { F =>
    * Constant type constructors are not injective.
    */
   def notInjective(injF: IsInjective[F]): Void =
-    injF(F[Unit, Void]).coerce(())
+    injF(using F[Unit, Void]).coerce(())
 
   def subst[G[_], A, B](g: G[F[A]]): G[F[B]] =
     F[A, B].subst[G](g)

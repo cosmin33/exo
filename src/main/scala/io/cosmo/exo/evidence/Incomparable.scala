@@ -10,7 +10,7 @@ final case class Incomparable[A, B](notLessOrEqual: ¬[A <~< B], notGreaterOrEqu
   def notLess    : ¬[A </< B] = Uninhabited.witness(ineq => notLessOrEqual(ineq.conformity))
   def notGreater : ¬[B </< A] = Uninhabited.witness(ineq => notGreaterOrEqual(ineq.conformity))
 
-  def lift[F[_]](implicit F: IsInjective[F]): F[A] >~< F[B] = F.incomparable[A, B](ab)
+  def lift[F[_]](using F: IsInjective[F]): F[A] >~< F[B] = F.incomparable[A, B](ab)
 
   def flip: B >~< A = witness(notGreaterOrEqual, notLessOrEqual)
 }
@@ -20,7 +20,7 @@ object Incomparable {
 
   type Canonic[A, B] = (¬[A <~< B], ¬[B <~< A])
 
-  implicit def isoCanonic[A, B]: Canonic[A, B]  <=> (A >~< B) =
+  given isoCanonic[A, B]: (Canonic[A, B]  <=> (A >~< B)) =
     Iso.unsafe({case (nb, na) => witness(nb, na)}, c => (c.notLessOrEqual, c.notGreaterOrEqual))
 
   /**
@@ -48,7 +48,7 @@ object Incomparable {
 
   def irreflexive[A](ev: A >~< A): Void = ev.notEqual.run(Is.refl)
 
-  implicit def proposition[A, B]: Proposition[Incomparable[A, B]] =
+  given proposition[A, B]: Proposition[Incomparable[A, B]] =
     Proposition[¬[A <~< B]].zip[¬[B <~< A]].isomap(Iso.unsafe(
       p => witness(p._1, p._2),
       p => (p.notLessOrEqual, p.notGreaterOrEqual)

@@ -6,10 +6,10 @@ import io.cosmo.exo.internal.Unsafe
 
 trait WeakProposition[A]:
   def equal[X : InhabitedSubset[*, A], Y: InhabitedSubset[*, A]]: X === Y = Unsafe.is[X, Y]
-  def contractible(implicit A: ¬¬[A]): Contractible[A] = Contractible.witness[A](using A, this)
+  def contractible(using A: ¬¬[A]): Contractible[A] = Contractible.witness[A](using A, this)
 
 object WeakProposition {
-  def apply[A](implicit A: WeakProposition[A]): WeakProposition[A] = A
+  def apply[A](using A: WeakProposition[A]): WeakProposition[A] = A
 
   given singleton[A <: Singleton]: WeakProposition[A] = new WeakProposition[A] { }
   given unit: WeakProposition[Unit] = new WeakProposition[Unit] { }

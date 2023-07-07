@@ -42,14 +42,14 @@ sealed abstract class As[-A, +B] private[As]() { ab =>
 
   final def toPredef: A <:< B = {
     type f[+a] = A <:< a
-    substCv[f](implicitly[A <:< A])
+    substCv[f](summon[A <:< A])
   }
 
   /** a ≤ b ⟷ a < b \/ a ~ b */
   def decompose[AA <: A, BB >: B]: ¬¬[(AA </< BB) Either (AA === BB)] =
     Inhabited.lem[AA === BB].map {
       _.fold(
-        notEqual => Left(StrictAs.witness[AA, BB](WeakApart.witness(notEqual), ab)),
+        notEqual => Left(StrictAs.witness[AA, BB](using WeakApart.witness(notEqual), ab)),
         equal => Right(equal)
       )
     }
@@ -57,7 +57,7 @@ sealed abstract class As[-A, +B] private[As]() { ab =>
 }
 
 object As extends LiskovInstances {
-  def apply[A, B](implicit ev: A <~< B): A <~< B = ev
+  def apply[A, B](using ev: A <~< B): A <~< B = ev
 
   private[this] val forall: ∀[[a] =>> a <~< a] = ∀.of[[a] =>> a <~< a].fromH(
     [A] => () => new (A <~< A) { def fix[A1 <: A, B1 >: A] = As1.proved(Is.refl[A1], Is.refl[B1])}

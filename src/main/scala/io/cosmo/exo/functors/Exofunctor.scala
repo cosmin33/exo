@@ -27,7 +27,7 @@ object Exofunctor extends ExofunctorInstances {
   /** This is isomorphic to cats Functor */
   type CovF[F[_]] = Exo[Function, Function, F]
   object CovF:
-    def apply[F[_]](implicit E: CovF[F]): CovF[F] = E
+    def apply[F[_]](using E: CovF[F]): CovF[F] = E
 
   type Con[->[_,_], F[_]] = Exo[Dual[->, *, *], * => *, F]
   object Con:

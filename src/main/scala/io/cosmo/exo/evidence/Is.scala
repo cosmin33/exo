@@ -94,7 +94,7 @@ object Is {
     def concretize[A, B](f: A === B): (A, TC[A]) => (B, TC[B]) = (a, _) => (f(a), Trivial[B])
 
   given isoInjectivity[F[_] : IsInjective, A, B]: ((F[A] === F[B]) <=> (A === B)) =
-    Iso.unsafe(IsInjective[F].apply(_), _.lift)
+    Iso.unsafe(IsInjective[F].apply(using _), _.lift)
 
   given functor[F[_]]: Endofunctor[===, F] = Exo.unsafe[===, ===, F]([a,b] => (f: a === b) => Is.lift(f))
 

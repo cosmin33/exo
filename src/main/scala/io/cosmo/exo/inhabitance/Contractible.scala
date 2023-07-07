@@ -5,7 +5,7 @@ import io.cosmo.exo.evidence.*
 
 final case class Contractible[A](inhabited: Inhabited[A], proposition: WeakProposition[A]):
   /** All inhabited subtypes of a contractible type are equal. */
-  def contract[B](implicit p: B <~< A, B: Inhabited[B]): B === A =
+  def contract[B](using p: B <~< A, B: Inhabited[B]): B === A =
     proposition.equal[B, A](InhabitedSubset(p, B), InhabitedSubset(As.refl[A], inhabited))
 
 object Contractible:

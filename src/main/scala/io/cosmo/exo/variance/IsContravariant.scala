@@ -45,7 +45,7 @@ object IsContravariant:
       override def apply[X, Y](using xy: X <~< Y): F[Y] <~< F[X] =
         Is.lem[X, Y].map {
           _.fold(
-            neqv => Parametric[F].liftCt[A, B, X, Y](ab, fba, StrictAs.witness(neqv, xy)),
+            neqv => Parametric[F].liftCt[A, B, X, Y](ab, fba, StrictAs.witness(using neqv, xy)),
             eqv => eqv.lift[F].flip.toAs
           )
         }.proved

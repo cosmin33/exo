@@ -140,7 +140,7 @@ trait Parametric[F[_]] {
       val v: F[A] === F[B] = liftPh[X, Y, A, B](r.inequality, xy)
       q.inequality.run(v)
     }
-    StrictAs.witness(u, s)
+    StrictAs.witness(using u, s)
   }
 
   /**
@@ -177,7 +177,7 @@ trait Parametric[F[_]] {
       val v: F[A] === F[B] = liftPh[X, Y, A, B](r.inequality, xy)
       q.inequality[F[B], F[A]].flip.run(v)
     }
-    StrictAs.witness(u.flip, s)
+    StrictAs.witness(using u.flip, s)
   }
 
   /**
@@ -231,12 +231,12 @@ trait Parametric[F[_]] {
   //    nxy => nfab(liftInc[X, Y, A, B](nxy, nfxy, nab))
 }
 object Parametric {
-  def apply[F[_]](implicit F: Parametric[F]): Parametric[F] = F
+  def apply[F[_]](using F: Parametric[F]): Parametric[F] = F
 
   /**
    * Every type constructor is parametric.
    */
-  implicit def instance[F[_]]: Parametric[F] = new Parametric[F] {
+  given instance[F[_]]: Parametric[F] = new Parametric[F] {
     def liftPh[A, B, X, Y](ab: A =!= B, fab: F[A] === F[B]): F[X] === F[Y] =
       Axioms.phParametricity[F, A, B, X, Y](fab, ab.run)
 
