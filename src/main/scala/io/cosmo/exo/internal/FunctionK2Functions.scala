@@ -32,10 +32,10 @@ trait FunctionK2Functions {
     def coidr[F[_,_]]: F ~~> ([a,b] =>> (F[a,b], UnitK2[a,b])) = ∀∀.mk[F ~~> ([a,b] =>> (F[a,b], UnitK2[a,b]))].from((_, ()))
     def braid[F[_,_], G[_,_]]: ([a,b] =>> (F[a,b], G[a,b])) ~~> ([a,b] =>> (G[a,b], F[a,b])) =
       ∀∀.mk[([a,b] =>> (F[a,b], G[a,b])) ~~> ([a,b] =>> (G[a,b], F[a,b]))].fromH([A, B] => () => fg => (fg._2, fg._1))
-    def curry[F[_,_], G[_,_], H[_,_]](fg: ([a,b] =>> (F[a,b], G[a,b])) ~~> H): F ~~> ([a,b] =>> G[a,b] => H[a,b]) =
-      ∀∀.mk[F ~~> ([a,b] =>> G[a,b] => H[a,b])].from(f => g => fg.apply((f, g)))
-    def uncurry[F[_,_], G[_,_], H[_,_]](fgh: F ~~> ([a,b] =>> G[a,b] => H[a,b])): ([a,b] =>> (F[a,b], G[a,b])) ~~> H =
-      ∀∀.mk[([a,b] =>> (F[a,b], G[a,b])) ~~> H].from(fg => fgh.apply(fg._1).apply(fg._2))
+    def curry[F[_,_], G[_,_], H[_,_]](fg: ([a,b] =>> (F[a,b], G[a,b])) ~~> H): ∀∀[[a,b] =>> F[a,b] => G[a,b] => H[a,b]] =
+      ∀∀.of[[a,b] =>> F[a,b] => G[a,b] => H[a,b]].from(f => g => fg.apply((f, g)))
+    def uncurry[F[_,_], G[_,_], H[_,_]](fgh: ∀∀[[a,b] =>> F[a,b] => G[a,b] => H[a,b]]): ∀∀[[a,b] =>> ((F[a,b], G[a,b])) => H[a,b]] =
+      ∀∀.of[[a,b] =>> ((F[a,b], G[a,b])) => H[a,b]].from(fg => fgh.apply(fg._1).apply(fg._2))
   }
   object coproduct {
     def diassociate[F[_,_], G[_,_], H[_,_]]: ([a,b] =>> Either[Either[F[a,b], G[a,b]], H[a,b]]) ~~> ([a,b] =>> Either[F[a,b], Either[G[a,b], H[a,b]]]) =
