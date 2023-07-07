@@ -64,7 +64,7 @@ object `<~>`:
   def unsafe[F[_], G[_]](i: [A] => () => F[A] <=> G[A]): F <~> G = ∀.mk[F <~> G].fromH(i)
 
 infix type ~~>[F[_,_], G[_,_]] = ∀∀[[a, b] =>> F[a, b] => G[a, b]]
-object `~~>`:
+object `~~>` extends FunctionK2Functions:
   def apply[F[_,_], G[_,_]](fg: [A, B] => F[A, B] => G[A, B]): F ~~> G = ∀∀.mk[F ~~> G].fromH([A, B] => () => fg[A, B])
 infix type <~~[F[_,_], G[_,_]] = ~~>[G, F]
 
@@ -76,17 +76,18 @@ object `<~~>`:
   def unsafe[F[_,_], G[_,_]](fg: F ~~> G, gf: G ~~> F): F <~~> G = ∀∀.mk[F <~~> G].from(Iso.unsafe(fg.apply, gf.apply))
   def unsafe[F[_,_], G[_,_]](i: [A, B] => () => F[A, B] <=> G[A, B]): F <~~> G = ∀∀.mk[F <~~> G].fromH(i)
 
-//opaque type ≈>[A[_[_]], B[_[_]]] >: [F[_]] => A[F] => B[F] = [F[_]] => A[F] => B[F]
-//type <≈[A[_[_]], B[_[_]]] = [F[_]] => B[F] => A[F]
-//opaque type <≈>[A[_[_]], B[_[_]]] >: [F[_]] => () => A[F] <=> B[F] = [F[_]] => () => A[F] <=> B[F]
-//object `<≈>`:
-//  def unsafe[A[_[_]], B[_[_]]](ab: [F[_]] => A[F] => B[F], ba: [F[_]] => B[F] => A[F]): A <≈> B =
-//    [F[_]] => () => Iso.unsafe(ab[F], ba[F])
-//  extension[A[_[_]], B[_[_]]](iso: A <≈> B)
-//    def to:   A ≈> B = [F[_]] => (af: A[F]) => iso[F]().to(af)
-//    def from: B ≈> A = [F[_]] => (bf: B[F]) => iso[F]().from(bf)
-//    def flip: B <≈> A = [F[_]] => () => iso[F]().flip
-//
+infix type ≈>[A[_[_]], B[_[_]]] = ∀~[[f[_]] =>> A[f] => B[f]]
+object `≈>` extends FunctionHKFunctions:
+  def apply[A[_[_]], B[_[_]]](ab: [F[_]] => A[F] => B[F]): A ≈> B = ∀~.mk[A ≈> B].fromH([F[_]] => () => ab[F])
+type <≈[A[_[_]], B[_[_]]] = B ≈> A
+
+infix type <≈>[A[_[_]], B[_[_]]] = ∀~[[f[_]] =>> A[f] <=> B[f]]
+object `<≈>`:
+  def unsafe[A[_[_]], B[_[_]]](ab: [F[_]] => A[F] => B[F], ba: [F[_]] => B[F] => A[F]): A <≈> B =
+    unsafe(≈>[A, B](ab), ≈>[B, A](ba))
+  def unsafe[A[_[_]], B[_[_]]](f: A ≈> B, g: B ≈> A): A <≈> B = ∀~.mk[A <≈> B].from(Iso.unsafe(f.apply, g.apply))
+  def unsafe[A[_[_]], B[_[_]]](i: [F[_]] => () => A[F] <=> B[F]): A <≈> B = ∀~.mk[A <≈> B].fromH(i)
+
 //opaque type ≈≈>[A[_[_],_[_]], B[_[_],_[_]]] >: [F[_], G[_]] => A[F, G] => B[F, G] = [F[_], G[_]] => A[F, G] => B[F, G]
 //type <≈≈[A[_[_],_[_]], B[_[_],_[_]]] = [F[_], G[_]] => B[F, G] => A[F, G]
 //opaque type <≈≈>[A[_[_],_[_]], B[_[_],_[_]]] >: [F[_], G[_]] => () => A[F, G] <=> B[F, G] = [F[_], G[_]] => () => A[F, G] <=> B[F, G]
