@@ -38,11 +38,15 @@ type ArrowHK[->[_,_], A[_[_]], B[_[_]]] = ∀~[[f[_]] =>> A[f] -> B[f]]
 
 type IsoFunK[A, B] = Iso[FunK, A, B]
 object IsoFunK:
-  def apply[F[_], G[_]](i: F <~> G): IsoFunK[TypeK[F], TypeK[G]] = ??? // FunK.impIsoFunK(using i)
+  def apply[F[_], G[_]](i: F <~> G): IsoFunK[TypeK[F], TypeK[G]] = Iso.unsafe[FunK, TypeK[F], TypeK[G]](FunK(i.to), FunK(i.from))
+  
+type IsoFunK2[A, B] = Iso[FunK2, A, B]
+object IsoFunK2:
+  def apply[F[_,_], G[_,_]](i: F <~~> G): IsoFunK2[TypeK2[F], TypeK2[G]] = Iso.unsafe[FunK2, TypeK2[F], TypeK2[G]](FunK2(i.to), FunK2(i.from))
 
 type IsoK [->[_,_], F[_],    G[_]]    =  ∀[[a]    =>> Iso[->, F[a], G[a]]]
 type IsoK2[->[_,_], F[_,_],  G[_,_]]  = ∀∀[[a, b] =>> Iso[->, F[a, b], G[a, b]]]
-type IsoHK[->[_,_], A[_[_]], B[_[_]]] = ∀~[[f[_]] =>> Iso[->, A[f], B[f]]]
+type IsoHK[->[_,_], A[_[_]], B[_[_]]] = ∀~[[F[_]] =>> Iso[->, A[F], B[F]]]
 
 infix type <=>[A, B] = Iso[Function, A, B]
 object `<=>`:

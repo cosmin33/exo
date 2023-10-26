@@ -15,10 +15,10 @@ trait FunctionK2Functions {
   def distribute[F[_,_], G[_,_], H[_,_]]: ([a,b] =>> (F[a,b], Either[G[a,b], H[a,b]])) ~~> ([a,b] =>> Either[(F[a,b], G[a,b]), (F[a,b], H[a,b])]) =
     ∀∀.mk[([a,b] =>> (F[a,b], Either[G[a,b], H[a,b]])) ~~> ([a,b] =>> Either[(F[a,b], G[a,b]), (F[a,b], H[a,b])])].from(Distributive[* => *, Tuple2, Either].distribute)
   object product {
-    def associate[F[_,_], G[_,_], H[_,_]]: ([a,b] =>> ((F[a,b], G[a,b]), G[a,b])) ~~> ([a,b] =>> (F[a,b], (G[a,b], G[a,b]))) =
-      ∀∀.mk[([a,b] =>> ((F[a,b], G[a,b]), G[a,b])) ~~> ([a,b] =>> (F[a,b], (G[a,b], G[a,b])))].from(Associative[* => *, Tuple2].associate)
-    def diassociate[F[_,_], G[_,_], H[_,_]]: ([a,b] =>> (F[a,b], (G[a,b], G[a,b]))) ~~> ([a,b] =>> ((F[a,b], G[a,b]), G[a,b])) =
-      ∀∀.mk[([a,b] =>> (F[a,b], (G[a,b], G[a,b]))) ~~> ([a,b] =>> ((F[a,b], G[a,b]), G[a,b]))].from(Associative[* => *, Tuple2].diassociate)
+    def associate[F[_,_], G[_,_], H[_,_]]: ([a,b] =>> ((F[a,b], G[a,b]), H[a,b])) ~~> ([a,b] =>> (F[a,b], (G[a,b], H[a,b]))) =
+      ∀∀.mk[([a,b] =>> ((F[a,b], G[a,b]), H[a,b])) ~~> ([a,b] =>> (F[a,b], (G[a,b], H[a,b])))].from(Associative[* => *, Tuple2].associate)
+    def diassociate[F[_,_], G[_,_], H[_,_]]: ([a,b] =>> (F[a,b], (G[a,b], H[a,b]))) ~~> ([a,b] =>> ((F[a,b], G[a,b]), H[a,b])) =
+      ∀∀.mk[([a,b] =>> (F[a,b], (G[a,b], H[a,b]))) ~~> ([a,b] =>> ((F[a,b], G[a,b]), H[a,b]))].from(Associative[* => *, Tuple2].diassociate)
     def bimap[F[_,_], G[_,_], X[_,_], Y[_,_]](fg: F ~~> G, xy: X ~~> Y): ([a,b] =>> (F[a,b], X[a,b])) ~~> ([a,b] =>> (G[a,b], Y[a,b])) =
       ∀∀.mk[([a,b] =>> (F[a,b], X[a,b])) ~~> ([a,b] =>> (G[a,b], Y[a,b]))].fromH([A, B] => () => fxa => (fg.apply(fxa._1), xy.apply(fxa._2)))
     def fst[F[_,_], G[_,_]]: ([a,b] =>> (F[a,b], G[a,b])) ~~> F = ∀∀.mk[([a,b] =>> (F[a,b], G[a,b])) ~~> F].from(_._1)

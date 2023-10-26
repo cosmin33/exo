@@ -28,8 +28,6 @@ object Exobifunctor extends ExobifunctorInstances
   with DualBifunctorInstances 
   with EvidenceCatBifunctorInstances {
 
-  type EndoPro[->[_,_], B[_,_]] = Exobifunctor[Dual[->,*,*], ->, ->, B]
-  type Endo[->[_,_], B[_,_]] = Exobifunctor[->, ->, ->, B]
   type Con[==>[_,_], -->[_,_], >->[_,_], B[_,_]] = Exobifunctor[Dual[==>,*,*], Dual[-->,*,*], >->, B]
   type ConF[B[_,_]] = Con[* => *, * => *, * => *, B]
 
@@ -38,34 +36,27 @@ object Exobifunctor extends ExobifunctorInstances
   def fromFaFunctors[==>[_,_], -->[_,_], >->[_,_]: Semicategory, Bi[_,_]](
    L: ∀[[a] =>> Exo[==>, >->, Bi[*, a]]],
    R: ∀[[a] =>> Exo[-->, >->, Bi[a, *]]]
- ): Exobifunctor[==>, -->, >->, Bi] = {
-    new Exobifunctor[==>, -->, >->, Bi] {
-      def bimap[A, X, B, Y](l: A ==> X, r: B --> Y): Bi[A, B] >-> Bi[X, Y] = ??? //L.apply[B].map(l) >>>> R.apply[X].map(r)
-      override def leftMap [A, B, Z](fn:  A ==> Z)(using C:  SubcatHasId[-->, B]) = L.apply[B].map(fn)
-      override def rightMap[A, B, Z](fn:  B --> Z)(using C:  SubcatHasId[==>, A]) = R.apply[A].map(fn)
-    }
-  }
+ ): Exobifunctor[==>, -->, >->, Bi] =
+    new Exobifunctor[==>, -->, >->, Bi]:
+      def bimap[A, X, B, Y](l: A ==> X, r: B --> Y): Bi[A, B] >-> Bi[X, Y] = L[B].map(l) >>> R[X].map(r)
+      override def leftMap [A, B, Z](fn:  A ==> Z)(using C:  SubcatHasId[-->, B]) = L[B].map(fn)
+      override def rightMap[A, B, Z](fn:  B --> Z)(using C:  SubcatHasId[==>, A]) = R[A].map(fn)
 
-  extension[==>[_,_], >->[_,_], F[_,_]](self: Exobifunctor[==>, ==>, >->, F]) {
+  extension[==>[_,_], >->[_,_], F[_,_]](self: Exobifunctor[==>, ==>, >->, F])
     def compose[G[_,_]](using G: Endobifunctor[==>, G]): Exobifunctor[==>, ==>, >->, [α, β] =>> F[G[α, β], G[α, β]]] =
-      new Exobifunctor[==>, ==>, >->, [α, β] =>> F[G[α, β], G[α, β]]] {
+      new Exobifunctor[==>, ==>, >->, [α, β] =>> F[G[α, β], G[α, β]]]:
         def bimap[A, X, B, Y](l: A ==> X, r: B ==> Y) = G.bimap(l, r) |> (i => self.bimap(i, i))
-      }
-  }
 
   given profunctor[->[_,_]: Semicategory]: Exobifunctor[Dual[->,*,*], ->, * => *, ->] =
-    new Exobifunctor[Dual[->,*,*], ->, * => *, ->] {
-      def bimap[A, X, B, Y](left: Dual[->, A, X], right: B -> Y): A -> B => (X -> Y) = f => ??? //left.toFn >>>> f >>>> right
-    }
+    new Exobifunctor[Dual[->,*,*], ->, * => *, ->]:
+      def bimap[A, X, B, Y](left: Dual[->, A, X], right: B -> Y): A -> B => (X -> Y) = f => left.toFn >>> f >>> right
 
   def dual[->[_,_], Bi[_,_]](F: Endobifunctor[->, Bi]): Endobifunctor[Dual[->,*,*], Bi] =
-    new Endobifunctor[Dual[->,*,*], Bi] {
-      def bimap[A, X, B, Y](l: Dual[->, A, X], r: Dual[->, B, Y]): Dual[->, Bi[A, B], Bi[X, Y]] =
-        Dual(F.bimap(l, r))
-    }
+    new Endobifunctor[Dual[->,*,*], Bi]:
+      def bimap[A, X, B, Y](l: Dual[->, A, X], r: Dual[->, B, Y]): Dual[->, Bi[A, B], Bi[X, Y]] = Dual(F.bimap(l, r))
 
-  def opp[->[_,_], Bi[_,_]](F: Endo[->, Bi]): Endo[Opp[->]#l, Bi] =
-    Dual.leibniz[->].flip.subst[[f[_,_]] =>> Endo[f, Bi]](dual(F))
+  def opp[->[_,_], Bi[_,_]](F: Endobifunctor[->, Bi]): Endobifunctor[Opp[->]#l, Bi] =
+    Dual.leibniz[->].flip.subst[[f[_,_]] =>> Endobifunctor[f, Bi]](dual(F))
 }
 
 object Endobifunctor {
@@ -80,22 +71,19 @@ trait ExobifunctorInstances {
    S1: Subcat.Aux[==>, TC],
    S2: Subcat.Aux[-->, TC],
  ): Exobifunctor[Iso[==>,*,*], Iso[-->,*,*], >->, Bi] =
-    new Exobifunctor[Iso[==>,*,*], Iso[-->,*,*], >->, Bi] {
+    new Exobifunctor[Iso[==>,*,*], Iso[-->,*,*], >->, Bi]:
       override def bimap[A, X, B, Y](left: Iso[==>, A, X], right: Iso[-->, B, Y]) =
         E.bimap(Dicat[==>, A, X](left.to, left.from), Dicat[-->, B, Y](right.to, right.from))
-    }
 
-  given tuple2: Endobifunctor[* => *, Tuple2] =
-    new Endobifunctor[* => *, Tuple2] {
+  given tuple2: EndobifunctorF[Tuple2] =
+    new Endobifunctor[* => *, Tuple2]:
       override def bimap[A, X, B, Y](left: A => X, right: B => Y): ((A, B)) => (X, Y) =
-      { case (a, b) => (left(a), right(b)) }
-    }
+        (a, b) => (left(a), right(b))
 
-  given either: Endobifunctor[* => *, Either] =
-    new Endobifunctor[* => *, Either] {
+  given either: EndobifunctorF[Either] =
+    new Endobifunctor[* => *, Either]:
       override def bimap[LX, LY, RX, RY](lxy: LX => LY, rxy: RX => RY): Either[LX, RX] => Either[LY, RY] =
         _.fold(x => lxy(x).asLeft, x => rxy(x).asRight)
-    }
 
   given semicatToExobifunctor[->[_,_]](using s: Semicategory[->]): Exobifunctor[Dual[->,*,*], ->, Function, ->] =
     new Exobifunctor[Dual[->,*,*], ->, * => *, ->]:

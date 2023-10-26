@@ -41,3 +41,10 @@ object syntax:
     def merge3[⊙[_, _], D, E](f1: A -> D, f2: A -> E)(using c: Cartesian[->, ⊙]): A -> ⊙[D, ⊙[E, B]] = c.&&&(f1, c.&&&(f2, self))
 
     def toFunction(using C: Concrete[->], tc: C.TC[A]): A => B = C.toFunction(self)
+
+  extension[F[_,_], A, B](self: F[A, B])
+    def bimapFn[C, D](f: A => C, g: B => D)(using F: Endobifunctor[* => *, F]): F[C, D] = F.bimap(f, g)(self)
+    
+//    def exobimap[==>[_,_], -->[_,_], C, D](f: A ==> C, g: B --> D)(using
+//      F: Exobifunctor[==>, -->, * => *, F]
+//    ): F[C, D] = F.bimap(f, g)(self)

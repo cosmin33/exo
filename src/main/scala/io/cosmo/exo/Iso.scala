@@ -4,7 +4,7 @@ import io.cosmo.exo.categories.*
 import io.cosmo.exo.evidence.*
 import io.cosmo.exo.syntax.*
 
-trait Iso[->[_,_], A, B] { ab =>
+trait Iso[->[_,_], A, B] { self =>
 
   def cat: Subcat[->]
 
@@ -12,24 +12,26 @@ trait Iso[->[_,_], A, B] { ab =>
 
   def from: B -> A
 
+  final def apply(a: A)(implicit ev: =~~=[->, * => *]): B = ev(to)(a)
+
   private type <->[a, b] = Iso[->, a, b]
 
   lazy val flip: B <-> A = new Iso[->, B, A]:
-    val (cat, to, from) = (ab.cat, ab.from, ab.to)
-    override lazy val flip = ab
+    val (cat, to, from) = (self.cat, self.from, self.to)
+    override lazy val flip = self
 
   private[this] given Subcat[->] = cat
 
-  final def andThen[C](bc: B <-> C): A <-> C =
-    Iso.unsafe(ab.to >>> bc.to, bc.from >>> ab.from)
+  final def andThen[C](that: B <-> C): A <-> C =
+    Iso.unsafe(self.to >>> that.to, that.from >>> self.from)
 
-  final def compose[Z](za: Z <-> A): Z <-> B = za.andThen(ab)
+  final def compose[Z](that: Z <-> A): Z <-> B = that.andThen(self)
 
   /** If A <-> B then having a function B -> B we can obtain A -> A */
-  def teleport(f: A -> A): B -> B = ab.from >>> f >>> ab.to
+  def teleport(f: A -> A): B -> B = self.from >>> f >>> self.to
 
   /** Having A <-> B searches implicits for B <-> C to obtain A <-> C */
-  def chain[C](using i: HasIso[->, B, C]): A <-> C = ab andThen i
+  def chain[C](using i: HasIso[->, B, C]): A <-> C = self andThen i
 
 }
 
@@ -52,7 +54,6 @@ object Iso {
   /** if I can transform an arrow into another then I can also transform the corresponding isomorphisms */
   def liftFnFnToFnIso[==>[_,_], -->[_,_] :Subcat](fn: ==> ~~> -->): Iso[==>, *, *] ~~> Iso[-->, *, *] =
     ~~>([A, B] => (i: Iso[==>, A, B]) => Iso.unsafe[-->, A, B](fn.run(i.to), fn.run(i.from)))
-//    [A, B] => (i: Iso[==>, A, B]) => Iso.unsafe[-->, A, B](fn.run(i.to), fn.run(i.from))
 
   /** If two arrow are isomorphic then those arrows isomorphisms are isomorphic */
   def liftIsoFnToIso[==>[_,_] : Subcat, -->[_,_] : Subcat](iso: ==> <~~> -->): Iso[==>, *, *] <~~> Iso[-->, *, *] =
