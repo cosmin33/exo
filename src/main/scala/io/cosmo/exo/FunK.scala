@@ -19,7 +19,7 @@ object FunK extends FunkImplicits {
   def apply[F[_], G[_], A, B](f: F ~> G)(using a: IsKind.Aux[A, F], b: IsKind.Aux[B, G]): FunK[A, B] =
     new FunK[A, B] { type TypeA[a] = F[a]; type TypeB[a] = G[a]; val (kindA, kindB, fn) = (a, b, f) }
 
-  def isoFunKUnapply[A, B, F[_], G[_]](i: IsoFunK[A, B])(using a: IsKind.Aux[A, F], b: IsKind.Aux[B, G]): F <~> G =
+  def isoFunKUnapply[A, B](i: IsoFunK[A, B])(using a: IsKind[A], b: IsKind[B]): a.Type <~> b.Type =
     <~>.unsafe(i.to.unapply, i.from.unapply)
 
   given isoFunkCanonic   [A, B](using a: IsKind[A], b: IsKind[B]): (FunK[A, B] <=> (a.Type ~> b.Type)) = Iso.unsafe(_.unapply, apply)

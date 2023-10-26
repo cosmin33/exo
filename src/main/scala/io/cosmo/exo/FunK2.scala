@@ -23,7 +23,7 @@ object FunK2 extends Funk2Implicits {
   def apply[F[_,_], G[_,_], A, B](f: F ~~> G)(using a: IsKind2.Aux[A, F], b: IsKind2.Aux[B, G]): FunK2[A, B] =
     new FunK2[A, B] { type TypeA[a,b] = F[a,b]; type TypeB[a,b] = G[a,b]; val (kindA, kindB, fn) = (a, b, f) }
 
-  def isoFunK2Unapply[A, B, F[_,_], G[_,_]](i: IsoFunK2[A, B])(using a: IsKind2.Aux[A, F], b: IsKind2.Aux[B, G]): F <~~> G =
+  def isoFunK2Unapply[A, B](i: IsoFunK2[A, B])(using a: IsKind2[A], b: IsKind2[B]): a.Type <~~> b.Type =
     <~~>.unsafe(i.to.unapply, i.from.unapply)
 }
 
@@ -76,18 +76,18 @@ object FunK2Helpers:
       FunK2(~~>.distribute[ia.Type, ib.Type, ic.Type])(using IsKind2.givenTuple[A, Either[B, C]], IsKind2.givenEither[(A, B), (A, C)])
 
   trait Funk2Initial extends Initial.Proto[FunK2, IsKind2, TypeK2[VoidK2]]:
-    def subcat: Subcategory.Aux[FunK2, IsKind2] = summon
-    def TC: IsKind2[TypeK2[VoidK2]] = summon
+    lazy val subcat: Subcategory.Aux[FunK2, IsKind2] = summon
+    lazy val TC: IsKind2[TypeK2[VoidK2]] = summon
     def initiate[A](using A: IsKind2[A]): FunK2[TypeK2[VoidK2], A] = FunK2(~~>.initiate[A.Type])
 
   class FunK2Terminal extends Terminal.Proto[FunK2, IsKind2, TypeK2[UnitK2]]:
-    def TC: IsKind2[TypeK2[UnitK2]] = summon
-    def subcat: Subcategory.Aux[Dual[FunK2,*,*], IsKind2] = Semicategory.dualSubcat[FunK2, IsKind2]
+    lazy val TC: IsKind2[TypeK2[UnitK2]] = summon
+    lazy val subcat: Subcategory.Aux[Dual[FunK2,*,*], IsKind2] = Semicategory.dualSubcat[FunK2, IsKind2]
     def terminate[A](using A: IsKind2[A]): FunK2[A, TypeK2[UnitK2]] = FunK2(~~>.terminate[A.Type])
 
   trait Funk2CccTuple extends Ccc.Proto[FunK2, Tuple2, IsKind2, TypeK2[UnitK2], FunK2]:
-    def C: Subcat.Aux[FunK2, IsKind2] = summon
-    def bifunctor: Endobifunctor[FunK2, Tuple2] = summon
+    lazy val C: Subcat.Aux[FunK2, IsKind2] = summon
+    lazy val bifunctor: Endobifunctor[FunK2, Tuple2] = summon
     def associate  [X, Y, Z](using ix: IsKind2[X], iy: IsKind2[Y], iz: IsKind2[Z]): FunK2[((X, Y), Z), (X, (Y, Z))] =
       FunK2(~~>.product.associate[ix.Type, iy.Type, iz.Type])(using
         IsKind2.givenTuple[(X, Y), Z],
@@ -132,8 +132,8 @@ object FunK2Helpers:
     }
 
   trait Funk2CocartesianEither extends Cartesian.Proto[Opp[FunK2]#l, Either, IsKind2, TypeK2[VoidK2]]:
-    def bifunctor = Exobifunctor.oppEndobifunctor[FunK2, Either]
-    def C = Semicategory.oppSubcat[FunK2, IsKind2]
+    lazy val bifunctor = Exobifunctor.oppEndobifunctor[FunK2, Either]
+    lazy val C = Semicategory.oppSubcat[FunK2, IsKind2]
     def associate  [X, Y, Z](using ix: IsKind2[X], iy: IsKind2[Y], iz: IsKind2[Z]): FunK2[Either[X, Either[Y, Z]], Either[Either[X, Y], Z]] =
       FunK2(~~>.coproduct.associate[ix.Type, iy.Type, iz.Type])(using
         IsKind2.givenEither[X, Either[Y, Z]],
