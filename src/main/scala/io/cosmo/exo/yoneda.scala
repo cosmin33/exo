@@ -68,14 +68,7 @@ object yoneda {
 
   // applied yoneda examples
   private def lemmaYoUnrestricted  [A, F[_]]: (===[A,*] ~> F) <=> F[A] = lemmaYoIso  [===, A, F]
-  private def lemmaCoyoUnrestricted[A, F[_]]: (===[*,A] ~> F) <=> F[A] = {
-    summon[Exo[===, ===, F]]
-    summon[Exo[===, <~<, F]]
-    summon[Exo[===, * => *, F]]
-    summon[Exo.Cov[===, F]]
-    summon[Exo.Con[===, F]]
-    lemmaCoyoIso[===, A, F]
-  }
+  private def lemmaCoyoUnrestricted[A, F[_]]: (===[*,A] ~> F) <=> F[A] = lemmaCoyoIso[===, A, F]
 
 //  private def isoIndirectLiskov [A, B]: ((A <~< *)  ~> (B <~< *)) <=> (B <~< A) = yoEmbedding
 //  private def isoIndirectLeibniz[A, B]: ((A === *)  ~> (B === *)) <=> (A === B) = yoEmbedding[===, A, B] andThen Iso.isoGroupoidFlip

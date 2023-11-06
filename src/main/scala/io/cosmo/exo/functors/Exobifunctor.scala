@@ -26,7 +26,8 @@ trait Exobifunctor[==>[_, _], -->[_, _], >->[_, _], ⊙[_, _]] { self =>
 
 object Exobifunctor extends ExobifunctorInstances 
   with DualBifunctorInstances 
-  with EvidenceCatBifunctorInstances {
+  with EvidenceCatBifunctorInstances
+  with ProdcatBifunctorInstances {
 
   type Con[==>[_,_], -->[_,_], >->[_,_], B[_,_]] = Exobifunctor[Dual[==>,*,*], Dual[-->,*,*], >->, B]
   type ConF[B[_,_]] = Con[* => *, * => *, * => *, B]

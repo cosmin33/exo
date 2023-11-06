@@ -1,9 +1,9 @@
 package io.cosmo.exo.categories
 
-import io.cosmo.exo._
-import io.cosmo.exo.functors._
-import io.cosmo.exo.evidence._
-import io.cosmo.exo.internal._
+import io.cosmo.exo.*
+import io.cosmo.exo.functors.*
+import io.cosmo.exo.evidence.*
+import io.cosmo.exo.internal.*
 
 trait Associative[->[_, _], ⊙[_, _]] {
   type TC[_]
@@ -24,7 +24,9 @@ trait Associative[->[_, _], ⊙[_, _]] {
 
 object Associative extends Function1AssociativeInstances 
   with DualAssociativeInstances 
-  with EvidenceCatAssocInstances {
+  with EvidenceCatAssocInstances
+  with ProdcatAssociativeInstances {
+
   type Aux[->[_, _], ⊙[_, _], TC0[_]] = Associative[->, ⊙] {type TC[a] = TC0[a]}
   trait Proto[->[_, _], ⊙[_, _], TC0[_]] extends Associative[->, ⊙] { type TC[A] = TC0[A] }
 

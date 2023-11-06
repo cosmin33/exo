@@ -10,6 +10,7 @@ trait Symmetric[->[_, _], ⊙[_, _]] extends Braided[->, ⊙]:
 end Symmetric
 
 object Symmetric:
+  def apply[->[_, _], ⊙[_, _]](using ev: Symmetric[->, ⊙]): Symmetric[->, ⊙] = ev
   type Aux[->[_, _], ⊙[_, _], TC0[_]] = Symmetric[->, ⊙] {type TC[a] = TC0[a]}
   type AuxT[->[_, _], ⊙[_, _]] = Aux[->, ⊙, Trivial]
   trait Proto[->[_, _], ⊙[_, _], TC0[_]] extends Symmetric[->, ⊙] { type TC[a] = TC0[a] }

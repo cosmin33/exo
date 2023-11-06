@@ -49,3 +49,8 @@ private[exo] object ForallK2Impl extends ForallK2Module:
 private[exo] final class MkForallK2Impl[Alg[_[_,_]]](val dummy: Boolean = false) extends AnyVal with ForallK2Impl.MkForallK2[Alg]:
   type T[α, β] = Any
   def from(ft: Alg[T]): ForallK2Impl.∀~~[Alg] = ft
+
+object ForallK2Module:
+  extension[Alg[_[_,_]]](a: ∀~~[Alg])
+    def of[F[_,_]]: Alg[F] = ForallK2.specialize(a)
+    def apply[F[_,_]]: Alg[F] = of[F]

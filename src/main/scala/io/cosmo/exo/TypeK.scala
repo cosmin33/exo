@@ -22,12 +22,12 @@ object TypeK {
 sealed abstract class TypeK2[F[_, _]]
 
 object TypeK2 {
-//  def apply[F[_, _]]: TypeK2[F] = forall.apply[F]
+//  def apply[F[_,_]]: TypeK2[F] = forall.apply[F]
+
+//  private[this] val forall: ∀~~[TypeK2] = ForallK.of[TypeK2].fromH([T[_,_]] => () => new TypeK2[T] {})
 //
-//  private[this] val forall: ∀~~[TypeK2] = ForallK.of[TypeK2].fromH([T[_, _]] => () => new TypeK2[T] {})
-//
-//  given impl: ∀~[TypeK2] = forall
-//
+//  given impl: ∀~~[TypeK2] = forall
+
 //  /** TypeF is injective, so if two TypeF's are equal then the types contained are equal. */
 //  def injectivity[F[_, _], G[_, _]](using TypeK2[F] === TypeK2[G]): F =~= G = Unsafe.isK2[F, G]
 //

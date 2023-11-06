@@ -61,6 +61,8 @@ object Ccc {
     type TC[x] = ->#[x]
     type Id = PI
   }
+  type Aux1[->[_, _], ->#[_], P[_, _], E[_, _]] =
+    Ccc[->, P] {type |->[A, B] = E[A, B]; type TC[x] = ->#[x]}
 
   type Homoiconic[->[_,_], P[_,_]] = Ccc[->, P] { type |->[a,b] = ->[a,b]; type ⊙[a,b] = P[a,b] }
 

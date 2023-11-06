@@ -3,6 +3,7 @@ package io.cosmo.exo.evidence
 import io.cosmo.exo.*
 import io.cosmo.exo.inhabitance.*
 import io.cosmo.exo.categories.*
+import io.cosmo.exo.categories.Subcategory.Aux
 import io.cosmo.exo.functors.*
 
 sealed abstract class Is[A, B] { self =>
@@ -93,9 +94,34 @@ object Is {
     def flip[A, B](ab: A === B): B === A = ab.flip
     def concretize[A, B](f: A === B): (A, TC[A]) => (B, TC[B]) = (a, _) => (f(a), Trivial[B])
 
+  given monoidalIntersect: Monoidal.Proto[===, &, Trivial, Any] with Symmetric.Proto[===, &, Trivial] with
+    def C: Subcat.Aux[===, Trivial] = summon
+    def bifunctor: Endobifunctor[===, &] = summon
+    def associate  [X: TC, Y: TC, Z: TC]: ((X & Y) & Z) === (X & (Y & Z)) = summon
+    def diassociate[X: TC, Y: TC, Z: TC]: (X & (Y & Z)) === ((X & Y) & Z) = summon
+    def idl  [A: TC]: (Any & A) === A = summon
+    def idr  [A: TC]: (A & Any) === A = summon
+    def coidl[A: TC]: A === (Any & A) = summon
+    def coidr[A: TC]: A === (A & Any) = summon
+    def braid[A: TC, B: TC]: (A & B) === (B & A) = summon
+
+  given monoidalUnion: Monoidal.Proto[===, |, Trivial, Nothing] with Symmetric.Proto[===, |, Trivial] with
+    def C: Subcat.Aux[===, Trivial] = summon
+    def bifunctor: Endobifunctor[===, |] = summon
+    def associate  [X: TC, Y: TC, Z: TC]: ((X | Y) | Z) === (X | (Y | Z)) = summon
+    def diassociate[X: TC, Y: TC, Z: TC]: (X | (Y | Z)) === ((X | Y) | Z) = summon
+    def idl  [A: TC]: (Nothing | A) === A = summon
+    def idr  [A: TC]: (A | Nothing) === A = summon
+    def coidl[A: TC]: A === (Nothing | A) = summon
+    def coidr[A: TC]: A === (A | Nothing) = summon
+    def braid[A: TC, B: TC]: (A | B) === (B | A) = summon
+
   given isoInjectivity[F[_] : IsInjective, A, B]: ((F[A] === F[B]) <=> (A === B)) =
     Iso.unsafe(IsInjective[F].apply(using _), _.lift)
 
-  given functor[F[_]]: Endofunctor[===, F] = Exo.unsafe[===, ===, F]([a,b] => (f: a === b) => Is.lift(f))
+  given universalFunctor[F[_]]: Endofunctor[===, F] = Exo.unsafe[===, ===, F]([a,b] => (f: a === b) => Is.lift(f))
+
+  given universalBifunctor[F[_,_]]: Endobifunctor[===, F] = new Exobifunctor[===, ===, ===, F]:
+    def bimap[A, B, C, D](ab: A === B, cd: C === D): F[A, C] === F[B, D] = Is.lift2(ab, cd)
 
 }

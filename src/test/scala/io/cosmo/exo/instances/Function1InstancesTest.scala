@@ -5,6 +5,9 @@ import io.cosmo.exo.categories.*
 
 object Function1InstancesTest {
   /////////////////// Subcategory Hierarchy ///////////////////
+  summon[Semicategory[Function]]
+  summon[Semicategory[Dual[Function,*,*]]]
+  summon[Semicategory[Opp[Function]#l]]
   summon[Subcat.Aux[Function, Trivial]]
   summon[Subcat.Aux[Dual[Function,*,*], Trivial]]
   summon[Subcat.Aux[Opp[Function]#l, Trivial]]

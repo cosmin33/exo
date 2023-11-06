@@ -1,6 +1,15 @@
 package io.cosmo.exo.categories
 
+import io.cosmo.exo.evidence.=~~=
+import io.cosmo.exo.internal.any.*
+
 type Prodcat[==>[_,_], -->[_,_], A, B] = (A ==> B, A --> B)
+object Prodcat:
+  /** Product category of duals is the same as dual of product category */
+  def traverseDualEq[==>[_, _], -->[_, _]]: Prodcat[Dual[==>, *, *], Dual[-->, *, *], *, *] =~~= Dual[Prodcat[==>, -->, *, *], *, *] =
+    Dual.leibniz[==>].subst[[f[_,_]] =>> Prodcat[f, Opp[-->]#l, *, *] =~~= Opp[Prodcat[==>, -->, *, *]]#l](=~~=.refl) |>
+      Dual.leibniz[-->].subst[[f[_,_]] =>> Prodcat[Dual[==>, *, *], f, *, *] =~~= Opp[Prodcat[==>, -->, *, *]]#l] |>
+      Dual.leibniz[Prodcat[==>, -->, *, *]].subst
 
 type Opp[->[_,_]] = {type l[A, B] = B -> A}
 

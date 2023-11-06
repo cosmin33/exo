@@ -32,13 +32,13 @@ trait Exoadjunction[==>[_,_], -->[_,_], F[_], G[_]]:
       def andThen[A, B, C](ab: A --> G[F[B]], bc: B --> G[F[C]]): A --> G[F[C]] = subR.andThen(ab, flatmap(bc))
 
   def subcatFG_(using trans: [a] => subR.TC[a] => subR.TC[G[a]]): Subcat.Aux[[a, b] =>> F[G[a]] ==> b, subR.TC] =
-    new Subcat[[a, b] =>> F[G[a]] ==> b]:
+    new Subcat[[a,b] =>> F[G[a]] ==> b]:
       type TC[a] = subR.TC[a]
       def id[A: TC]: F[G[A]] ==> A = counit[A](using trans[A](summon))
       def andThen[A, B, C](ab: F[G[A]] ==> B, bc: F[G[B]] ==> C): F[G[A]] ==> C = subL.andThen(coflatmap(ab), bc)
 
   def subcatGF_(using trans: [a] => subL.TC[a] => subL.TC[F[a]]): Subcat.Aux[[a, b] =>> a --> G[F[b]], subL.TC] =
-    new Subcat[[a, b] =>> a --> G[F[b]]]:
+    new Subcat[[a,b] =>> a --> G[F[b]]]:
       type TC[a] = subL.TC[a]
       def id[A: TC]: A --> G[F[A]] = unit[A](using trans[A](summon))
       def andThen[A, B, C](ab: A --> G[F[B]], bc: B --> G[F[C]]): A --> G[F[C]] = subR.andThen(ab, flatmap(bc))
@@ -49,6 +49,6 @@ object Exoadjunction:
       new Exoadjunction[->, ->, [a] =>> P[F[a]], [a] =>> G[Q[a]]]:
         val subL: Subcat[->] = self.subL
         val subR: Subcat[->] = self.subR
-        def left: Exo[->, ->, [a] =>> P[F[a]]] = that.left.compose(self.left)
+        def left:  Exo[->, ->, [a] =>> P[F[a]]] = that.left.compose(self.left)
         def right: Exo[->, ->, [a] =>> G[Q[a]]] = self.right.compose(that.right)
         def iso[A, B]: (P[F[A]] -> B) <=> (A -> G[Q[B]]) = that.iso[F[A], B] andThen self.iso[A, Q[B]]

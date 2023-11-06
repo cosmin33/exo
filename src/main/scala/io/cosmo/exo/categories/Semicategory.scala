@@ -10,7 +10,8 @@ trait Semicategory[->[_,_]]:
 object Semicategory
   extends Function1SemicategoryInstances
   with DualSemicategoryInstances
-  with EvidenceCatSubcatInstances:
+  with EvidenceCatSubcatInstances
+  with ProdcatSemicategoryInstances:
   
   def apply[->[_,_]](using ev: Semicategory[->]): Semicategory[->] = ev
 
