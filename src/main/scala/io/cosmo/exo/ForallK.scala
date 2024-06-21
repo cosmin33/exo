@@ -53,3 +53,14 @@ object ForallKModule:
   extension[Alg[_[_]]](a: ∀~[Alg])
     def of[F[_]]: Alg[F] = ForallK.specialize(a)
     def apply[F[_]]: Alg[F] = of[F]
+  extension[F[_[_]], G[_[_]]](fg: F ≈> G)
+    def run[A[_]](fa: F[A]): G[A] = fg[A](fa)
+    def $(f: ∀~[F]): ∀~[G] = ∀~.of[G].from(run(f.apply))
+    def andThen[H[_[_]]](gh: G ≈> H): F ≈> H = ≈>[F, H]([T[_]] => (ft: F[T]) => gh.run(fg.run(ft)))
+    def compose[E[_[_]]](ef: E ≈> F): E ≈> G = ef andThen fg
+  extension[->[_,_], F[_[_]], G[_[_]]](iso: IsoHK[->, F, G])
+    def to:   ∀~[[a[_]] =>> F[a] -> G[a]] = ∀~.of[[a[_]] =>> F[a] -> G[a]].fromH([T[_]] => () => iso[T].to)
+    def from: ∀~[[a[_]] =>> G[a] -> F[a]] = ∀~.of[[a[_]] =>> G[a] -> F[a]].fromH([T[_]] => () => iso[T].from)
+    def flip: IsoHK[->, G, F] = ∀~.mk[IsoHK[->, G, F]].fromH([T[_]] => () => iso[T].flip)
+    def andThen[H[_[_]]](iso2: IsoHK[->, G, H])(using DummyImplicit): IsoHK[->, F, H] =
+      ∀~.mk[IsoHK[->, F, H]].fromH([T[_]] => () => iso[T].andThen(iso2[T]))

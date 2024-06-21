@@ -44,6 +44,10 @@ type IsoFunK2[A, B] = Iso[FunK2, A, B]
 object IsoFunK2:
   def apply[F[_,_], G[_,_]](i: F <~~> G): IsoFunK2[TypeK2[F], TypeK2[G]] = Iso.unsafe[FunK2, TypeK2[F], TypeK2[G]](FunK2(i.to), FunK2(i.from))
 
+type IsoFunH[A, B] = Iso[FunH, A, B]
+object IsoFunH:
+  def apply[A[_[_]], B[_[_]]](i: A <≈> B): IsoFunH[TypeHK[A], TypeHK[B]] = Iso.unsafe[FunH, TypeHK[A], TypeHK[B]](FunH(i.to), FunH(i.from))
+
 type IsoK [->[_,_], F[_],    G[_]]    =  ∀[[a]    =>> Iso[->, F[a], G[a]]]
 type IsoK2[->[_,_], F[_,_],  G[_,_]]  = ∀∀[[a, b] =>> Iso[->, F[a, b], G[a, b]]]
 type IsoHK[->[_,_], A[_[_]], B[_[_]]] = ∀~[[F[_]] =>> Iso[->, A[F], B[F]]]

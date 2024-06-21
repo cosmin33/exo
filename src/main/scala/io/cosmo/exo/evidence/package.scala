@@ -9,6 +9,9 @@ val =~= = IsK
 infix type =~~=[A[_,_], B[_,_]] = IsK2[A, B]
 val =~~= = IsK2
 
+infix type =≈=[A[_[_]], B[_[_]]] = IsHK[A, B]
+val =≈= = IsHK
+
 infix type <~<[-A, +B] = As[A, B]
 val <~< = As
 infix type >~>[+B, -A] = As[A, B]

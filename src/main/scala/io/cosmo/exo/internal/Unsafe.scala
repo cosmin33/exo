@@ -14,6 +14,8 @@ object Unsafe {
 //  @inline def apart[A, B](A: TypeId[A], B: TypeId[B]): Apart[A, B] = Apart.witness(weakApart[A, B], A, B)
 
   @inline def isK[A[_], B[_]]: A =~= B = IsK.refl[A].asInstanceOf[A =~= B]
+  
+  @inline def isHK[A[_[_]], B[_[_]]]: A =≈= B = IsHK.refl[A].asInstanceOf[A =≈= B]
 
   @inline def isK2[A[_,_], B[_,_]]: A =~~= B = IsK2.refl[A].asInstanceOf[A =~~= B]
 

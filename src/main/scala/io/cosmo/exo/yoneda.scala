@@ -31,7 +31,7 @@ object yoneda {
   ): (A -> B) <=> ∀~[[f[_]] =>> Endofunctor[->, f] => f[A] -> f[B]] =
     Iso.unsafe(
       ab => ∀~.of[[f[_]] =>> Endofunctor[->, f] => f[A] -> f[B]].from(_.map(ab)),
-      fa => fa.apply[λ[a => a]](Exo.idEndofunctor)
+      fa => fa.apply[[a] =>> a](Exo.idEndofunctor)
     )
 
   def yoCorollary[->[_,_], A, B](using

@@ -32,10 +32,8 @@ object IsK2 {
 
   def apply[A[_,_], B[_,_]](using ab: A =~~= B): A =~~= B = ab
 
-  private[this] val forall: IsK2[AnyK2, AnyK2] = new IsK2[AnyK2, AnyK2]:
-    def subst[Alg[_[_,_]]](fa: Alg[AnyK2]): Alg[AnyK2] = fa
-
-  given refl[A[_,_]]: (A =~~= A) = forall.asInstanceOf
+  given refl[A[_,_]]: IsK2[A, A] with
+    def subst[Alg[_[_,_]]](fa: Alg[A]): Alg[A] = fa
 
   given isoExtensionality[F[_, _], G[_, _]]: (∀∀[[a, b] =>> F[a, b] === G[a, b]] <=> (F =~~= G)) =
     Iso.unsafe(

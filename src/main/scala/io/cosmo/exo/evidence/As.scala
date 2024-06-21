@@ -13,7 +13,6 @@ sealed abstract class As[-A, +B] private[As]() { ab =>
   def fix[A1 <: A, B1 >: B]: As1[A1, B1]
 
   def substCv[F[+_]](fa: F[A]): F[B] = fix[A, B].substCo[F](fa)
-//  def substCv[F[+_]](fa: F[A]): F[B] = fix[A, B].substCo[F](fa)
 
   def substCt[F[-_]](fb: F[B]): F[A] = fix[A, B].substCt[F](fb)
 

@@ -47,7 +47,7 @@ object Is {
 
   def lift[F[_], A, B](ab: A === B): F[A] === F[B] = ab.subst[[a] =>> F[A] === F[a]](refl)
   
-  def lift2[F[_, _]] = new LiftHelper[F]; final class LiftHelper[F[_, _]] {
+  def lift2[F[_,_]] = new LiftHelper[F]; final class LiftHelper[F[_,_]] {
     def apply[A, B, I, J](ab: A === B, ij: I === J): F[A, I] === F[B, J] = {
       type f1[α] = F[A, I] === F[α, I]
       type f2[α] = F[A, I] === F[B, α]
@@ -55,7 +55,7 @@ object Is {
     }
   }
 
-  def lift3[F[_, _, _], A, B, I, J, M, N]
+  def lift3[F[_,_,_], A, B, I, J, M, N]
   (ab: A === B, ij: I === J, mn: M === N): F[A, I, M] === F[B, J, N] = {
     type f1[α] = F[A, I, M] === F[α, I, M]
     type f2[α] = F[A, I, M] === F[B, α, M]
@@ -63,7 +63,7 @@ object Is {
     mn.subst[f3](ij.subst[f2](ab.subst[f1](refl)))
   }
 
-  def lift4[F[_, _, _, _], A, X, B, Y, C, Z, D, T]
+  def lift4[F[_,_,_,_], A, X, B, Y, C, Z, D, T]
   (ax: A === X, by: B === Y, cz: C === Z, dt: D === T): F[A, B, C, D] === F[X, Y, Z, T] = {
     type f1[α] = F[A, B, C, D] === F[α, B, C, D]
     type f2[α] = F[A, B, C, D] === F[X, α, C, D]
@@ -92,7 +92,7 @@ object Is {
     def id[A: TC]: A === A = refl
     def andThen[A, B, C](ab: A === B, bc: B === C): A === C = ab.andThen(bc)
     def flip[A, B](ab: A === B): B === A = ab.flip
-    def concretize[A, B](f: A === B): (A, TC[A]) => (B, TC[B]) = (a, _) => (f(a), Trivial[B])
+    def concretize[A, B](f: A === B): (A, TC[A]) => (B, TC[B]) = (a,_) => (f(a), Trivial[B])
 
   given monoidalIntersect: Monoidal.Proto[===, &, Trivial, Any] with Symmetric.Proto[===, &, Trivial] with
     def C: Subcat.Aux[===, Trivial] = summon
@@ -116,8 +116,8 @@ object Is {
     def coidr[A: TC]: A === (A | Nothing) = summon
     def braid[A: TC, B: TC]: (A | B) === (B | A) = summon
 
-  given isoInjectivity[F[_] : IsInjective, A, B]: ((F[A] === F[B]) <=> (A === B)) =
-    Iso.unsafe(IsInjective[F].apply(using _), _.lift)
+  given isoInjectivity[F[_]: IsInjective, A, B]: ((F[A] === F[B]) <=> (A === B)) =
+    Iso.unsafe(IsInjective[F].apply(using _),_.lift)
 
   given universalFunctor[F[_]]: Endofunctor[===, F] = Exo.unsafe[===, ===, F]([a,b] => (f: a === b) => Is.lift(f))
 

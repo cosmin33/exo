@@ -11,8 +11,8 @@ trait FunctionHKFunctions {
   def andThen[A[_[_]], B[_[_]], H[_[_]]](fg: A ≈> B, gh: B ≈> H): A ≈> H = ∀~.mk[A ≈> H].from(fg.apply andThen gh.apply)
   def initiate[A[_[_]]]: VoidHK ≈> A = ∀~.mk[VoidHK ≈> A].from(identity)
   def terminate[A[_[_]]]: A ≈> UnitHK = ∀~.mk[A ≈> UnitHK].from(_ => ())
-  def distribute[A[_[_]], B[_[_]], H[_[_]]](fg: A ≈> B, fh: A ≈> H): A ≈> ([f[_]] =>> (B[f], H[f])) =
-    ∀~.mk[A ≈> ([f[_]] =>> (B[f], H[f]))].from(fa => (fg.apply(fa), fh.apply(fa)))
+  def distribute[A[_[_]], B[_[_]], C[_[_]]]: ([f[_]] =>> (A[f], Either[B[f], C[f]])) ≈> ([f[_]] =>> Either[(A[f], B[f]), (A[f], C[f])]) =
+    ∀~.mk[([f[_]] =>> (A[f], Either[B[f], C[f]])) ≈> ([f[_]] =>> Either[(A[f], B[f]), (A[f], C[f])])].from(Distributive[* => *, Tuple2, Either].distribute)
   object product {
     def associate[A[_[_]], B[_[_]], H[_[_]]]: ([f[_]] =>> ((A[f], B[f]), H[f])) ≈> ([f[_]] =>> (A[f], (B[f], H[f]))) =
       ∀~.mk[([f[_]] =>> ((A[f], B[f]), H[f])) ≈> ([f[_]] =>> (A[f], (B[f], H[f])))].from(Associative[* => *, (*, *)].associate)
@@ -31,6 +31,10 @@ trait FunctionHKFunctions {
     def coidr[A[_[_]]]: A ≈> ([f[_]] =>> (A[f], UnitHK[f])) = ∀~.mk[A ≈> ([f[_]] =>> (A[f], UnitHK[f]))].from(fa => (fa, ()))
     def braid[A[_[_]], B[_[_]]]: ([f[_]] =>> (A[f], B[f])) ≈> ([f[_]] =>> (B[f], A[f])) =
       ∀~.mk[([f[_]] =>> (A[f], B[f])) ≈> ([f[_]] =>> (B[f], A[f]))].from(_.swap)
+    def curry[A[_[_]], B[_[_]], C[_[_]]](f: ∀~[[f[_]] =>> (A[f], B[f]) => C[f]]): ∀~[[f[_]] =>> A[f] => B[f] => C[f]] =
+      ∀~.of[[f[_]] =>> A[f] => B[f] => C[f]].from(a => b => f.apply(a, b))
+    def uncurry[A[_[_]], B[_[_]], C[_[_]]](f: ∀~[[f[_]] =>> A[f] => B[f] => C[f]]): ∀~[[f[_]] =>> ((A[f], B[f])) => C[f]] =
+      ∀~.of[[f[_]] =>> ((A[f], B[f])) => C[f]].from(ab => f.apply(ab._1).apply(ab._2))
   }
   object coproduct {
     def diassociate[A[_[_]], B[_[_]], H[_[_]]]: ([f[_]] =>> Either[Either[A[f], B[f]], H[f]]) ≈> ([f[_]] =>> Either[A[f], Either[B[f], H[f]]]) =
@@ -44,8 +48,8 @@ trait FunctionHKFunctions {
     def codiag[A[_[_]]]: ([f[_]] =>> Either[A[f], A[f]]) ≈> A = ∀~.mk[([f[_]] =>> Either[A[f], A[f]]) ≈> A].from(_.fold(identity, identity))
     def split[A[_[_]], B[_[_]], H[_[_]]](f: A ≈> H, g: B ≈> H): ([f[_]] =>> Either[A[f], B[f]]) ≈> H =
       ∀~.mk[([f[_]] =>> Either[A[f], B[f]]) ≈> H].from(_.fold(f.apply, g.apply))
-    def coidl[A[_[_]], B[_[_]]]: ([f[_]] =>> Either[VoidHK[f], A[f]]) ≈> A = ∀~.mk[([f[_]] =>> Either[VoidHK[f], A[f]]) ≈> A].from(_.fold(identity, identity))
-    def coidr[A[_[_]], B[_[_]]]: ([f[_]] =>> Either[A[f], VoidHK[f]]) ≈> A = ∀~.mk[([f[_]] =>> Either[A[f], VoidHK[f]]) ≈> A].from(_.fold(identity, identity))
+    def coidl[A[_[_]]]: ([f[_]] =>> Either[VoidHK[f], A[f]]) ≈> A = ∀~.mk[([f[_]] =>> Either[VoidHK[f], A[f]]) ≈> A].from(_.fold(identity, identity))
+    def coidr[A[_[_]]]: ([f[_]] =>> Either[A[f], VoidHK[f]]) ≈> A = ∀~.mk[([f[_]] =>> Either[A[f], VoidHK[f]]) ≈> A].from(_.fold(identity, identity))
     def idl[A[_[_]]]: A ≈> ([f[_]] =>> Either[VoidHK[f], A[f]]) = ∀~.mk[A ≈> ([f[_]] =>> Either[VoidHK[f], A[f]])].from(_.asRight)
     def idr[A[_[_]]]: A ≈> ([f[_]] =>> Either[A[f], VoidHK[f]]) = ∀~.mk[A ≈> ([f[_]] =>> Either[A[f], VoidHK[f]])].from(_.asLeft)
     def braid[A[_[_]], B[_[_]]]: ([f[_]] =>> Either[A[f], B[f]]) ≈> ([f[_]] =>> Either[B[f], A[f]]) =

@@ -26,23 +26,17 @@ sealed abstract class IsK[F[_], G[_]] { self =>
 }
 
 object IsK {
-  // TODO: finish
   def apply[F[_], G[_]](using ev: F =~= G): F =~= G = ev
 
-  // TODO: replace with Forall
-  private[this] val forall: IsK[AnyK, AnyK] = new IsK[AnyK, AnyK]:
-    def subst[A[_[_]]](fa: A[AnyK]): A[AnyK] = fa
-
-  given refl[F[_]]: =~=[F, F] = forall.asInstanceOf
+  given refl[F[_]]: IsK[F, F] with
+    def subst[A[_[_]]](fa: A[F]): A[F] = fa
 
   def isoCanonic[F[_], G[_]]: ([A[_[_]]] => A[F] => A[G]) <=> (F =~= G) =
     Iso.unsafe[Function, [A[_[_]]] => A[F] => A[G], F =~= G](
       fa => new IsK[F, G] { def subst[A[_[_]]](a: A[F]): A[G] = fa[A](a) },
       ev => [A[_[_]]] => (a: A[F]) => ev.subst[A](a)
     )
-
-  // TODO: extensionality (continue)  
-
+  
   /** Given `F =~= G` we can prove that `A[F] === A[G]`. */
   def lower[A[_[_]], F[_], G[_]](eq: F =~= G): A[F] === A[G] = eq.subst[[x[_]] =>> A[F] === A[x]](Is.refl)
 
@@ -95,3 +89,4 @@ object IsK {
   }
 
 }
+

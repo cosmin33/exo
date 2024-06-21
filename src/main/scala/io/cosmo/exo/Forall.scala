@@ -42,15 +42,15 @@ sealed trait ForallModule {
 }
 
 object ForallModule extends ForallFunctions:
+  extension[F[_]] (f: ∀[F])
+    def apply[A]: F[A] = ∀.specialize(f)
+    def of[A]: F[A] = apply[A]
+    def lift[G[_]]: ∀[[α] =>> F[G[α]]] = ∀.of[[α] =>> F[G[α]]].from(of)
   def isoCanonic[F[_]]: ∀[F] <=> ([A] => () => F[A]) =
     Iso.unsafe[Function, ∀[F], [A] => () => F[A]](
       faf => [A] => () => faf[A],
       f => ∀.of[F].fromH([T] => () => f[T]())
     )
-  extension[F[_]] (f: ∀[F])
-    def apply[A]: F[A] = ∀.specialize(f)
-    def of[A]: F[A] = apply[A]
-    def lift[G[_]]: ∀[[α] =>> F[G[α]]] = ∀.of[[α] =>> F[G[α]]].from(of)
 
 private[exo] object ForallImpl extends ForallModule:
   type Forall[F[_]] = F[Any]

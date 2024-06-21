@@ -9,8 +9,8 @@ trait Exofunctor[==>[_,_], -->[_,_], F[_]] { self =>
 
   def map[A, B](f: A ==> B): F[A] --> F[B]
 
-  final def compose[>->[_,_], G[_]](G: Exo[>->, ==>, G]): Exofunctor[>->, -->, [α] =>> F[G[α]]] =
-    Exo.unsafe([a, b] => (f: a >-> b) => self.map(G.map(f)))
+  final def compose[>->[_,_], G[_]](G: Exo[-->, >->, G]): Exofunctor[==>, >->, [α] =>> G[F[α]]] =
+    Exo.unsafe([a, b] => (f: a ==> b) => G.map(self.map(f)))
 }
 
 object Exofunctor extends ExofunctorInstances {
@@ -64,13 +64,19 @@ trait ExofunctorInstances extends ExofunctorInstances01 {
   given semiFunctorCon[->[_,_] : Semicategory, X]: Exo.Con[->, ->[*,X]] =
     Exo.unsafe[Dual[->,*,*], * => *, [o] =>> o -> X]([a, b] => (f: Dual[->, a, b]) => (fn: a -> X) => f.toFn >>> fn)
 
-  given mapLeibnizLiskov [->[_,_], F[_]](using F: Exo[->, ===, F]): Exo[->, <~<, F] = ???
-  given mapLeibnizIso    [->[_,_], F[_]](using F: Exo[->, ===, F]): Exo[->, <=>, F] = ???
-  given mapLiskovFunction[->[_,_], F[_]](using F: Exo[->, <~<, F]): Exo[->, * => *, F] = ???
+  given mapLeibnizLiskov [->[_,_], F[_]](using F: Exo[->, ===, F]): Exo[->, <~<, F] =
+    Exo.unsafe[->, <~<, F]([a, b] => (f: a -> b) => F.map(f).toAs)
+  given mapLeibnizLiskov1[->[_,_], F[_]](using F: Exo[->, ===, F]): Exo[->, >~>, F] =
+    Exo.unsafe[->, >~>, F]([a, b] => (f: a -> b) => F.map(f).flip.toAs)
+  given mapLeibnizIso    [->[_,_], F[_]](using F: Exo[->, ===, F]): Exo[->, <=>, F] =
+    Exo.unsafe[->, <=>, F]([a, b] => (f: a -> b) => F.map(f).toIso)
+  given mapLiskovFunction[->[_,_], F[_]](using F: Exo[->, <~<, F]): Exo[->, * => *, F] =
+    Exo.unsafe[->, * => *, F]([a, b] => (f: a -> b) => F.map(f).apply(_))
 }
 
 trait ExofunctorInstances01 extends ExofunctorInstances02 {
-  given mapIsoFunction[->[_,_], F[_]](using F: Exo[->, <=>, F]): Exo[->, * => *, F] = ???
+  given mapIsoTo[-->[_,_], ==>[_,_], F[_]](using F: Exo[-->, Iso[==>,*,*], F]): Exo[-->, ==>, F] =
+    Exo.unsafe[-->, ==>, F]([a, b] => (f: a --> b) => F.map(f).to)
 }
 
 trait ExofunctorInstances02 {

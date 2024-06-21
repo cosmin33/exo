@@ -49,6 +49,6 @@ object Exoadjunction:
       new Exoadjunction[->, ->, [a] =>> P[F[a]], [a] =>> G[Q[a]]]:
         val subL: Subcat[->] = self.subL
         val subR: Subcat[->] = self.subR
-        def left:  Exo[->, ->, [a] =>> P[F[a]]] = that.left.compose(self.left)
-        def right: Exo[->, ->, [a] =>> G[Q[a]]] = self.right.compose(that.right)
+        def left:  Exo[->, ->, [a] =>> P[F[a]]] = self.left.compose(that.left)
+        def right: Exo[->, ->, [a] =>> G[Q[a]]] = that.right.compose(self.right)
         def iso[A, B]: (P[F[A]] -> B) <=> (A -> G[Q[B]]) = that.iso[F[A], B] andThen self.iso[A, Q[B]]
