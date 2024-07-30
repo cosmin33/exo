@@ -102,7 +102,7 @@ object As extends LiskovInstances {
   given liskovCovFunctor[F[_]](using ec: IsCovariant[F] \/ IsConstant[F]): Exo[<~<, <~<, F] =
     Exo.unsafe[<~<, <~<, F]([A, B] => (f: A <~< B) => ec.fold(cv => cv(using f), const => const[A, B].toAs))
 
-  given liskovConFunctor[F[_]](using ec: IsContravariant[F] \/ IsConstant[F]): Exofunctor[Opp[<~<]#l, <~<, F] =
-    Exo.unsafe[Opp[<~<]#l, <~<, F]([A, B] => (f: B <~< A) => ec.fold(cn => cn(using f), const => const[A, B].toAs))
+  given liskovConFunctor[F[_]](using ec: IsContravariant[F] \/ IsConstant[F]): Exofunctor[Opp[<~<], <~<, F] =
+    Exo.unsafe[Opp[<~<], <~<, F]([A, B] => (f: B <~< A) => ec.fold(cn => cn(using f), const => const[A, B].toAs))
 
 }

@@ -52,10 +52,10 @@ object LiskovCartesian extends Cartesian[<~<, &] {
   def diassociate[X: TC, Y: TC, Z: TC]: (X & (Y & Z)) <~< ((X & Y) & Z) = summon
 }
 
-object LiskovCocartesian extends Cartesian[Opp[<~<]#l, |] {
+object LiskovCocartesian extends Cartesian[Opp[<~<], |] {
   type TC[a] = Trivial[a]
   type Id = Void
-  def C: Subcategory.Aux[Opp[<~<]#l, TC] = Semicategory.oppSubcat(using LiskovDistributive)
+  def C: Subcategory.Aux[Opp[<~<], TC] = Semicategory.oppSubcat(using LiskovDistributive)
   def braid[A: TC, B: TC]: (B | A) <~< (A | B) = summon
   def fst[A: TC, B: TC]: A <~< (A | B) = summon
   def snd[A: TC, B: TC]: B <~< (A | B) = summon
@@ -65,7 +65,7 @@ object LiskovCocartesian extends Cartesian[Opp[<~<]#l, |] {
   def coidl[A: TC]: (Void | A) <~< A = summon
   def idr[A: TC]: A <~< (A | Void) = summon
   def coidr[A: TC]: (A | Void) <~< A = summon
-  def bifunctor: Endobifunctor[Opp[<~<]#l, [a, b] =>> a | b] = new Endobifunctor[Opp[<~<]#l, [a, b] =>> a | b]:
+  def bifunctor: Endobifunctor[Opp[<~<], [a, b] =>> a | b] = new Endobifunctor[Opp[<~<], [a, b] =>> a | b]:
     def bimap[A, B, C, D](f: B <~< A, g: D <~< C): (B | D) <~< (A | C) = Unsafe.as
   def associate  [X: TC, Y: TC, Z: TC]: (X | (Y | Z)) <~< ((X | Y) | Z) = summon
   def diassociate[X: TC, Y: TC, Z: TC]: ((X | Y) | Z) <~< (X | (Y | Z)) = summon

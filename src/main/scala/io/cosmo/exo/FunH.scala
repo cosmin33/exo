@@ -42,7 +42,7 @@ trait FunhImplicits extends FunhImplicits01 {
   given cccTuple: Ccc.Aux[FunH, Tuple2, IsHKind, TypeHK[UnitHK], FunH] = new FunhCccTuple {}
   given cccConjunction: Ccc.Aux[FunH, /\, IsHKind, TypeHK[UnitHK], FunH] =
     /\.unsafeLeibniz.subst[[f[_,_]] =>> Ccc.Aux[FunH, f, IsHKind, TypeHK[UnitHK], FunH]](cccTuple)
-  given cocartesianOppEither: Cartesian.Aux[Opp[FunH]#l, Either, IsHKind, TypeHK[VoidHK]] = new FunhCocartesianEither {}
+  given cocartesianOppEither: Cartesian.Aux[Opp[FunH], Either, IsHKind, TypeHK[VoidHK]] = new FunhCocartesianEither {}
   given cocartesianEither: Cartesian.Aux[Dual[FunH,*,*], Either, IsHKind, TypeHK[VoidHK]] =
     Dual.leibniz[FunH].subst[[f[_,_]] =>> Cartesian.Aux[f[_,_], Either, IsHKind, TypeHK[VoidHK]]](cocartesianOppEither)
   given cocartesianDisjunction: Cocartesian.Aux[FunH, \/, IsHKind, TypeHK[VoidHK]] =
@@ -133,7 +133,7 @@ object FunHHelpers:
       FunH[[o[_]] =>> (a.Type[o], ib.Type[o]), ic.Type, (A, B), C](≈>.product.uncurry(fun))(using IsHKind.givenTuple[A, B](using a, ib), ic)
     }
 
-  trait FunhCocartesianEither extends Cartesian.Proto[Opp[FunH]#l, Either, IsHKind, TypeHK[VoidHK]]:
+  trait FunhCocartesianEither extends Cartesian.Proto[Opp[FunH], Either, IsHKind, TypeHK[VoidHK]]:
     def bifunctor = Exobifunctor.oppEndobifunctor[FunH, Either]
     def C = Semicategory.oppSubcat[FunH, IsHKind]
     def associate  [X, Y, Z](using ix: IsHKind[X], iy: IsHKind[Y], iz: IsHKind[Z]): FunH[Either[X, Either[Y, Z]], Either[Either[X, Y], Z]] =

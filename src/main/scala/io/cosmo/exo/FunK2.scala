@@ -41,7 +41,7 @@ trait Funk2Implicits extends FunkImplicits01 {
   given cccTuple: Ccc.Aux[FunK2, Tuple2, IsKind2, TypeK2[UnitK2], FunK2] = new Funk2CccTuple {}
   given cccConjunction: Ccc.Aux[FunK2, /\, IsKind2, TypeK2[UnitK2], FunK2] =
     /\.unsafeLeibniz.subst[[f[_,_]] =>> Ccc.Aux[FunK2, f, IsKind2, TypeK2[UnitK2], FunK2]](cccTuple)
-  given cocartesianOppEither: Cartesian.Aux[Opp[FunK2]#l, Either, IsKind2, TypeK2[VoidK2]] = new Funk2CocartesianEither {}
+  given cocartesianOppEither: Cartesian.Aux[Opp[FunK2], Either, IsKind2, TypeK2[VoidK2]] = new Funk2CocartesianEither {}
   given cocartesianEither: Cartesian.Aux[Dual[FunK2,*,*], Either, IsKind2, TypeK2[VoidK2]] =
     Dual.leibniz[FunK2].subst[[f[_,_]] =>> Cartesian.Aux[f[_,_], Either, IsKind2, TypeK2[VoidK2]]](cocartesianOppEither)
   given cocartesianDisjunction: Cocartesian.Aux[FunK2, \/, IsKind2, TypeK2[VoidK2]] =
@@ -131,7 +131,7 @@ object FunK2Helpers:
       FunK2[[o,p] =>> (a.Type[o,p], ib.Type[o,p]), ic.Type, (A, B), C](~~>.product.uncurry(fun))(using IsKind2.givenTuple[A, B](using a, ib), ic)
     }
 
-  trait Funk2CocartesianEither extends Cartesian.Proto[Opp[FunK2]#l, Either, IsKind2, TypeK2[VoidK2]]:
+  trait Funk2CocartesianEither extends Cartesian.Proto[Opp[FunK2], Either, IsKind2, TypeK2[VoidK2]]:
     lazy val bifunctor = Exobifunctor.oppEndobifunctor[FunK2, Either]
     lazy val C = Semicategory.oppSubcat[FunK2, IsKind2]
     def associate  [X, Y, Z](using ix: IsKind2[X], iy: IsKind2[Y], iz: IsKind2[Z]): FunK2[Either[X, Either[Y, Z]], Either[Either[X, Y], Z]] =

@@ -68,9 +68,9 @@ trait Function1AssociativeInstances {
   given cartesianFn1Conj: Ccc.Aux[Function, /\, Trivial, Unit, Function] =
     /\.unsafeLeibniz.subst[[f[_,_]] =>> Ccc.Aux[Function, f, Trivial, Unit, Function]](cccFn1Tuple)
 
-  given cocartesianFn1Disj: Cartesian.Aux[Opp[Function]#l, \/, Trivial, Void] =
-    new Cartesian.Proto[Opp[* => *]#l, \/, Trivial, Void] {
-      def C: Subcat.AuxT[Opp[* => *]#l] = Semicategory.oppSubcat(using summon)
+  given cocartesianFn1Disj: Cartesian.Aux[Opp[Function], \/, Trivial, Void] =
+    new Cartesian.Proto[Opp[* => *], \/, Trivial, Void] {
+      def C: Subcat.AuxT[Opp[* => *]] = Semicategory.oppSubcat(using summon)
       def bifunctor = Exobifunctor.oppEndobifunctor(using \/.bifunctor)
       def associate  [X: TC, Y: TC, Z: TC]: (X \/ (Y \/ Z)) => (X \/ Y \/ Z) = _.fold(_.left[Y].left[Z], _.fold(_.right[X].left[Z], _.right[X \/ Y]))
       def diassociate[X: TC, Y: TC, Z: TC]: (X \/ Y \/ Z) => (X \/ (Y \/ Z)) = _.fold(_.fold(_.left[Y \/ Z], _.left[Z].right[X]), _.right[Y].right[X])
@@ -85,8 +85,8 @@ trait Function1AssociativeInstances {
       def &&&[X, A, B](f: A => X, g: B => X): (A \/ B) => X = _.fold(f, g)
     }
 
-  given cocartesianFn1Either: Cartesian.Aux[Opp[Function]#l, Either, Trivial, Void] =
-    \/.unsafeLeibniz.flip.subst[[f[_,_]] =>> Cartesian.Aux[Opp[Function]#l, f, Trivial, Void]](cocartesianFn1Disj)
+  given cocartesianFn1Either: Cartesian.Aux[Opp[Function], Either, Trivial, Void] =
+    \/.unsafeLeibniz.flip.subst[[f[_,_]] =>> Cartesian.Aux[Opp[Function], f, Trivial, Void]](cocartesianFn1Disj)
 
   given cocartesianFn1DisjDual: Cartesian.Aux[Dual[Function,*,*], \/, Trivial, Void] =
     Dual.leibniz[Function].subst[[f[_,_]] =>> Cartesian.Aux[f, \/, Trivial, Void]](cocartesianFn1Disj)

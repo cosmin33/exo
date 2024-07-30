@@ -10,7 +10,7 @@ trait DualInstances extends DualAssociativeInstances
   
 import DualHelpers._
 trait DualSemicategoryInstances extends DualSemicategoryInstances01 {
-  given oppSubcat[->[_,_], C[_]](using s: Subcat.Aux[->, C]): Subcat.Aux[Opp[->]#l, C] =
+  given oppSubcat[->[_,_], C[_]](using s: Subcat.Aux[->, C]): Subcat.Aux[Opp[->], C] =
     new OppSubcat[->, C] { val underlying = s }
 
   given dualSubcat[->[_,_], C[_]](using s: Subcat.Aux[->, C]): Subcat.Aux[Dual[->, *, *], C] =
@@ -21,7 +21,7 @@ trait DualSemicategoryInstances extends DualSemicategoryInstances01 {
 }
 
 trait DualSemicategoryInstances01 {
-  given oppSemicat[->[_,_]](using s: Semicategory[->]): Semicategory[Opp[->]#l] =
+  given oppSemicat[->[_,_]](using s: Semicategory[->]): Semicategory[Opp[->]] =
     new OppSemicategory[->] { val underlying = s }
 
   given dualSemicat[->[_,_]](using s: Semicategory[->]): Semicategory[Dual[->, *, *]] =
@@ -32,7 +32,7 @@ trait DualSemicategoryInstances01 {
 }
 
 trait DualAssociativeInstances extends DualAssociativeInstances01 {
-  given oppMonoidal[->[_,_], P[_,_], C[_], I](using m: Monoidal.Aux[->, P, C, I]): Monoidal.Aux[Opp[->]#l, P, C, I] =
+  given oppMonoidal[->[_,_], P[_,_], C[_], I](using m: Monoidal.Aux[->, P, C, I]): Monoidal.Aux[Opp[->], P, C, I] =
     new OppMonoidal[->, P, C, I] { val underlying = m }
 
   given dualMonoidal[->[_,_], P[_,_], C[_], I](using m: Monoidal.Aux[->, P, C, I]): Monoidal.Aux[Dual[->, *, *], P, C, I] =
@@ -43,8 +43,8 @@ trait DualAssociativeInstances extends DualAssociativeInstances01 {
 }
 
 trait DualAssociativeInstances01 extends DualAssociativeInstances02 {
-  given oppSymmetric[->[_,_], P[_,_], C[_]](using s: Symmetric.Aux[->, P, C]): Symmetric.Aux[Opp[->]#l, P, C] =
-    new Symmetric[Opp[->]#l, P] with OppBraided[->, P, C] { val underlying = s }
+  given oppSymmetric[->[_,_], P[_,_], C[_]](using s: Symmetric.Aux[->, P, C]): Symmetric.Aux[Opp[->], P, C] =
+    new Symmetric[Opp[->], P] with OppBraided[->, P, C] { val underlying = s }
 
   given dualSymmetric[->[_,_], P[_,_], C[_]](using s: Symmetric.Aux[->, P, C]): Symmetric.Aux[Dual[->, *, *], P, C] =
     Dual.leibniz[->].subst[[f[_,_]] =>> Symmetric.Aux[f, P, C]](oppSymmetric(using s))
@@ -54,7 +54,7 @@ trait DualAssociativeInstances01 extends DualAssociativeInstances02 {
 }
 
 trait DualAssociativeInstances02 extends DualAssociativeInstances03 {
-  given oppBraided[->[_,_], P[_,_], C[_]](using b: Braided.Aux[->, P, C]): Braided.Aux[Opp[->]#l, P, C] =
+  given oppBraided[->[_,_], P[_,_], C[_]](using b: Braided.Aux[->, P, C]): Braided.Aux[Opp[->], P, C] =
     new OppBraided[->, P, C] { val underlying = b }
 
   given dualBraided[->[_,_], P[_,_], C[_]](using b: Braided.Aux[->, P, C]): Braided.Aux[Dual[->, *, *], P, C] =
@@ -65,7 +65,7 @@ trait DualAssociativeInstances02 extends DualAssociativeInstances03 {
 }
 
 trait DualAssociativeInstances03 {
-  given oppAssociative[->[_,_], P[_,_], C[_]](using a: Associative.Aux[->, P, C]): Associative.Aux[Opp[->]#l, P, C] =
+  given oppAssociative[->[_,_], P[_,_], C[_]](using a: Associative.Aux[->, P, C]): Associative.Aux[Opp[->], P, C] =
     new OppAssociative[->, P, C] { val underlying = a }
 
   given dualAssociative[->[_,_], P[_,_], C[_]](using a: Associative.Aux[->, P, C]): Associative.Aux[Dual[->, *, *], P, C] =
@@ -76,7 +76,7 @@ trait DualAssociativeInstances03 {
 }
 
 trait DualBifunctorInstances {
-  given oppEndobifunctor[->[_,_], P[_,_]](using e: Endobifunctor[->, P]): Endobifunctor[Opp[->]#l, P] =
+  given oppEndobifunctor[->[_,_], P[_,_]](using e: Endobifunctor[->, P]): Endobifunctor[Opp[->], P] =
     new OppBifunctor[->, P] {val underlying = e}
 
   given dualEndobifunctor[->[_,_], P[_,_]](using e: Endobifunctor[->, P]): Endobifunctor[Dual[->,*,*], P] =
@@ -87,20 +87,20 @@ trait DualBifunctorInstances {
 }
 
 object DualHelpers {
-  trait OppSemicategory[->[_,_]] extends Semicategory[Opp[->]#l]:
+  trait OppSemicategory[->[_,_]] extends Semicategory[Opp[->]]:
     protected def underlying: Semicategory[->]
     override def andThen[X, Y, Z](ab: Y -> X, bc: Z -> Y): Z -> X = underlying.andThen(bc, ab)
 
-  trait OppSubcat[->[_,_], C[_]] extends OppSemicategory[->] with Subcat[Opp[->]#l]:
+  trait OppSubcat[->[_,_], C[_]] extends OppSemicategory[->] with Subcat[Opp[->]]:
     type TC[a] = C[a]
     protected def underlying: Subcat.Aux[->, C]
     override def id[A](using A: TC[A]): A -> A = underlying.id[A]
 
-  trait OppBifunctor[->[_,_], ⊙[_,_]] extends Endobifunctor[Opp[->]#l, ⊙]:
+  trait OppBifunctor[->[_,_], ⊙[_,_]] extends Endobifunctor[Opp[->], ⊙]:
     protected def underlying: Endobifunctor[->, ⊙]
     override def bimap[A, X, B, Y](left: X -> A, right: Y -> B): ⊙[X, Y] -> ⊙[A, B] = underlying.bimap(left, right)
 
-  trait OppAssociative[->[_,_], ⊙[_,_], C[_]] extends Associative[Opp[->]#l, ⊙]:
+  trait OppAssociative[->[_,_], ⊙[_,_], C[_]] extends Associative[Opp[->], ⊙]:
     protected def underlying: Associative.Aux[->, ⊙, C]
     type TC[a] = C[a]
     def C = Semicategory.oppSubcat(using underlying.C)
@@ -108,11 +108,11 @@ object DualHelpers {
     def associate  [X: TC, Y: TC, Z: TC]: (X ⊙ (Y ⊙ Z)) -> (X ⊙ Y ⊙ Z) = underlying.diassociate
     def diassociate[X: TC, Y: TC, Z: TC]: (X ⊙ Y ⊙ Z) -> (X ⊙ (Y ⊙ Z)) = underlying.associate
 
-  trait OppBraided[->[_,_], ⊙[_,_], C[_]] extends OppAssociative[->, ⊙, C] with Braided[Opp[->]#l, ⊙]:
+  trait OppBraided[->[_,_], ⊙[_,_], C[_]] extends OppAssociative[->, ⊙, C] with Braided[Opp[->], ⊙]:
     protected def underlying: Braided.Aux[->, ⊙, C]
     def braid[A: C, B: C]: (B ⊙ A) -> (A ⊙ B) = underlying.braid
 
-  trait OppMonoidal[->[_,_], ⊙[_,_], C[_], I] extends OppAssociative[->, ⊙, C] with Monoidal[Opp[->]#l, ⊙]:
+  trait OppMonoidal[->[_,_], ⊙[_,_], C[_], I] extends OppAssociative[->, ⊙, C] with Monoidal[Opp[->], ⊙]:
     type Id = I
     protected def underlying: Monoidal.Aux[->, ⊙, C, I]
     def idl  [A: C]: A -> ⊙[I, A] = underlying.coidl

@@ -8,11 +8,11 @@ type Prodcat[==>[_,_], -->[_,_], A, B] = (A ==> B, A --> B)
 object Prodcat:
   /** Product category of duals is the same as dual of product category */
   def traverseDualEq[==>[_, _], -->[_, _]]: Prodcat[Dual[==>, *, *], Dual[-->, *, *], *, *] =~~= Dual[Prodcat[==>, -->, *, *], *, *] =
-    Dual.leibniz[==>].subst[[f[_,_]] =>> Prodcat[f, Opp[-->]#l, *, *] =~~= Opp[Prodcat[==>, -->, *, *]]#l](=~~=.refl) |>
-      Dual.leibniz[-->].subst[[f[_,_]] =>> Prodcat[Dual[==>, *, *], f, *, *] =~~= Opp[Prodcat[==>, -->, *, *]]#l] |>
+    Dual.leibniz[==>].subst[[f[_,_]] =>> Prodcat[f, Opp[-->], *, *] =~~= Opp[Prodcat[==>, -->, *, *]]](=~~=.refl) |>
+      Dual.leibniz[-->].subst[[f[_,_]] =>> Prodcat[Dual[==>, *, *], f, *, *] =~~= Opp[Prodcat[==>, -->, *, *]]] |>
       Dual.leibniz[Prodcat[==>, -->, *, *]].subst
 
-type Opp[->[_,_]] = {type l[A, B] = B -> A}
+type Opp[->[_,_]] = [a,b] =>> b -> a
 
 type Dicat[->[_,_], A, B] = (A -> B, Dual[->, A, B])
 object Dicat {

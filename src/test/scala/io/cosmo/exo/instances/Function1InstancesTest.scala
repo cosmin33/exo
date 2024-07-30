@@ -7,10 +7,10 @@ object Function1InstancesTest {
   /////////////////// Subcategory Hierarchy ///////////////////
   summon[Semicategory[Function]]
   summon[Semicategory[Dual[Function,*,*]]]
-  summon[Semicategory[Opp[Function]#l]]
+  summon[Semicategory[Opp[Function]]]
   summon[Subcat.Aux[Function, Trivial]]
   summon[Subcat.Aux[Dual[Function,*,*], Trivial]]
-  summon[Subcat.Aux[Opp[Function]#l, Trivial]]
+  summon[Subcat.Aux[Opp[Function], Trivial]]
   summon[Distributive.Aux[Function, Trivial, Tuple2, Unit, Either, Void]]
   summon[Distributive.Aux[Function, Trivial, /\, Unit, \/, Void]]
   
@@ -27,10 +27,10 @@ object Function1InstancesTest {
   summon[Symmetric.Aux[Dual[Function,*,*], Tuple2, Trivial]]
   summon[Monoidal.Aux[Dual[Function,*,*], Tuple2, Trivial, Unit]]
 
-  summon[Associative.Aux[Opp[Function]#l, Tuple2, Trivial]]
-  summon[Braided.Aux[Opp[Function]#l, Tuple2, Trivial]]
-  summon[Symmetric.Aux[Opp[Function]#l, Tuple2, Trivial]]
-  summon[Monoidal.Aux[Opp[Function]#l, Tuple2, Trivial, Unit]]
+  summon[Associative.Aux[Opp[Function], Tuple2, Trivial]]
+  summon[Braided.Aux[Opp[Function], Tuple2, Trivial]]
+  summon[Symmetric.Aux[Opp[Function], Tuple2, Trivial]]
+  summon[Monoidal.Aux[Opp[Function], Tuple2, Trivial, Unit]]
 
   summon[Associative.Aux[Function, /\, Trivial]]
   summon[Braided.Aux[Function, /\, Trivial]]
@@ -44,10 +44,10 @@ object Function1InstancesTest {
   summon[Symmetric.Aux[Dual[Function,*,*], /\, Trivial]]
   summon[Monoidal.Aux[Dual[Function,*,*], /\, Trivial, Unit]]
 
-  summon[Associative.Aux[Opp[Function]#l, /\, Trivial]]
-  summon[Braided.Aux[Opp[Function]#l, /\, Trivial]]
-  summon[Symmetric.Aux[Opp[Function]#l, /\, Trivial]]
-  summon[Monoidal.Aux[Opp[Function]#l, /\, Trivial, Unit]]
+  summon[Associative.Aux[Opp[Function], /\, Trivial]]
+  summon[Braided.Aux[Opp[Function], /\, Trivial]]
+  summon[Symmetric.Aux[Opp[Function], /\, Trivial]]
+  summon[Monoidal.Aux[Opp[Function], /\, Trivial, Unit]]
 
   summon[Associative.Aux[Dual[Function,*,*], Either, Trivial]]
   summon[Braided.Aux[Dual[Function,*,*], Either, Trivial]]
@@ -55,11 +55,11 @@ object Function1InstancesTest {
   summon[Monoidal.Aux[Dual[Function,*,*], Either, Trivial, Void]]
   summon[Cocartesian.Aux[Function, Either, Trivial, Void]]
 
-  summon[Associative.Aux[Opp[Function]#l, Either, Trivial]]
-  summon[Braided.Aux[Opp[Function]#l, Either, Trivial]]
-  summon[Symmetric.Aux[Opp[Function]#l, Either, Trivial]]
-  summon[Monoidal.Aux[Opp[Function]#l, Either, Trivial, Void]]
-  summon[Cartesian.Aux[Opp[Function]#l, Either, Trivial, Void]]
+  summon[Associative.Aux[Opp[Function], Either, Trivial]]
+  summon[Braided.Aux[Opp[Function], Either, Trivial]]
+  summon[Symmetric.Aux[Opp[Function], Either, Trivial]]
+  summon[Monoidal.Aux[Opp[Function], Either, Trivial, Void]]
+  summon[Cartesian.Aux[Opp[Function], Either, Trivial, Void]]
 
   summon[Associative.Aux[Function, Either, Trivial]]
   summon[Braided.Aux[Function, Either, Trivial]]
@@ -72,11 +72,11 @@ object Function1InstancesTest {
   summon[Monoidal.Aux[Dual[Function,*,*], \/, Trivial, Void]]
   summon[Cocartesian.Aux[Function, \/, Trivial, Void]]
 
-  summon[Associative.Aux[Opp[Function]#l, \/, Trivial]]
-  summon[Braided.Aux[Opp[Function]#l, \/, Trivial]]
-  summon[Symmetric.Aux[Opp[Function]#l, \/, Trivial]]
-  summon[Monoidal.Aux[Opp[Function]#l, \/, Trivial, Void]]
-  summon[Cartesian.Aux[Opp[Function]#l, \/, Trivial, Void]]
+  summon[Associative.Aux[Opp[Function], \/, Trivial]]
+  summon[Braided.Aux[Opp[Function], \/, Trivial]]
+  summon[Symmetric.Aux[Opp[Function], \/, Trivial]]
+  summon[Monoidal.Aux[Opp[Function], \/, Trivial, Void]]
+  summon[Cartesian.Aux[Opp[Function], \/, Trivial, Void]]
 
   summon[Associative.Aux[Function, \/, Trivial]]
   summon[Braided.Aux[Function, \/, Trivial]]

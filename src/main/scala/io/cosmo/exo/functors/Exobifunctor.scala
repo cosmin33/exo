@@ -56,7 +56,7 @@ object Exobifunctor extends ExobifunctorInstances
     new Endobifunctor[Dual[->,*,*], Bi]:
       def bimap[A, X, B, Y](l: Dual[->, A, X], r: Dual[->, B, Y]): Dual[->, Bi[A, B], Bi[X, Y]] = Dual(F.bimap(l, r))
 
-  def opp[->[_,_], Bi[_,_]](F: Endobifunctor[->, Bi]): Endobifunctor[Opp[->]#l, Bi] =
+  def opp[->[_,_], Bi[_,_]](F: Endobifunctor[->, Bi]): Endobifunctor[Opp[->], Bi] =
     Dual.leibniz[->].flip.subst[[f[_,_]] =>> Endobifunctor[f, Bi]](dual(F))
 }
 
