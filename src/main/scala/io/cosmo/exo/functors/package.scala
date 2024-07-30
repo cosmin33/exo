@@ -100,7 +100,7 @@ object IsoFunctorK2:
 
 end IsoFunctorK2
 
-//type FunctorHK[H[_[_[_]]]] = Exo[FunHK, * => *, HasTcHK[H, *]]
+//type FunctorHK[H[_[_[_]]]] = Exo[FunH, * => *, HasTcHK[H, *]]
 //object FunctorHK:
 //  def apply[H[_[_[_]]]](implicit F: FunctorHK[H]): FunctorHK[H] = F
 //

@@ -32,10 +32,6 @@ type AnyK[x] = Any
 type AnyK2[x, y] = Any
 type AnyHK[f[_]] = Any
 
-type ArrowK [->[_,_], F[_],    G[_]]    = ∀[[a] =>> F[a] -> G[a]]
-type ArrowK2[->[_,_], F[_,_],  G[_,_]]  = ∀∀[[a, b] =>> F[a, b] -> G[a, b]]
-type ArrowHK[->[_,_], A[_[_]], B[_[_]]] = ∀~[[f[_]] =>> A[f] -> B[f]]
-
 type IsoFunK[A, B] = Iso[FunK, A, B]
 object IsoFunK:
   def apply[F[_], G[_]](i: F <~> G): IsoFunK[TypeK[F], TypeK[G]] = Iso.unsafe[FunK, TypeK[F], TypeK[G]](FunK(i.to), FunK(i.from))

@@ -31,7 +31,7 @@ trait FunctionHKFunctions {
     def coidr[A[_[_]]]: A ≈> ([f[_]] =>> (A[f], UnitHK[f])) = ∀~.mk[A ≈> ([f[_]] =>> (A[f], UnitHK[f]))].from(fa => (fa, ()))
     def braid[A[_[_]], B[_[_]]]: ([f[_]] =>> (A[f], B[f])) ≈> ([f[_]] =>> (B[f], A[f])) =
       ∀~.mk[([f[_]] =>> (A[f], B[f])) ≈> ([f[_]] =>> (B[f], A[f]))].from(_.swap)
-    def curry[A[_[_]], B[_[_]], C[_[_]]](f: ∀~[[f[_]] =>> (A[f], B[f]) => C[f]]): ∀~[[f[_]] =>> A[f] => B[f] => C[f]] =
+    def curry[A[_[_]], B[_[_]], C[_[_]]](f: ∀~[[f[_]] =>> ((A[f], B[f])) => C[f]]): ∀~[[f[_]] =>> A[f] => B[f] => C[f]] =
       ∀~.of[[f[_]] =>> A[f] => B[f] => C[f]].from(a => b => f.apply(a, b))
     def uncurry[A[_[_]], B[_[_]], C[_[_]]](f: ∀~[[f[_]] =>> A[f] => B[f] => C[f]]): ∀~[[f[_]] =>> ((A[f], B[f])) => C[f]] =
       ∀~.of[[f[_]] =>> ((A[f], B[f])) => C[f]].from(ab => f.apply(ab._1).apply(ab._2))

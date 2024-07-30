@@ -1,7 +1,8 @@
 package io.cosmo.exo.categories
 
-import io.cosmo.exo.evidence.=~~=
+import io.cosmo.exo.evidence.*
 import io.cosmo.exo.internal.any.*
+import io.cosmo.exo.*
 
 type Prodcat[==>[_,_], -->[_,_], A, B] = (A ==> B, A --> B)
 object Prodcat:
