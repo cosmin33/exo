@@ -22,6 +22,8 @@ object ArrowKTest {
   summon[Monoidal.Aux[Dual[ArrowK[Function1,*,*],*,*], Either, IsKind, TypeK[[a] =>> Void]]]
   summon[Cartesian.Aux[ArrowK[Function,*,*], Tuple2, IsKind, TypeK[[a] =>> Unit]]]
   summon[Cocartesian.Aux[ArrowK[Function,*,*], Either, IsKind, TypeK[[a] =>> Void]]]
+  summon[Ccc.Aux[ArrowK[Function,*,*], Tuple2, Function, IsKind, TypeK[[a] =>> Unit]]]
+  summon[Ccc.Aux[ArrowK[Function,*,*], Tuple2, ArrowK[Function,*,*], IsKind, TypeK[[a] =>> Unit]]]
 
   /////////////////// Initial, Terminal ///////////////////
   summon[Initial.Aux[ArrowK[Function,*,*], IsKind, TypeK[[a] =>> Void]]]

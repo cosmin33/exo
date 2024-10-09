@@ -69,6 +69,9 @@ trait ArrowKImplicits extends ArrowKImplicits01 {
   given ccc[->[_,_], ⊙[_,_], I, E[_,_]](using c: Ccc.Aux[->, ⊙, E, Trivial, I], ip: IsInjective2[⊙], ie: IsInjective2[E])
   : Ccc.Aux[ArrowK[->,*,*], ⊙, E, IsKind, TypeK[[a] =>> I]] =
     new CccArrowK[->, ⊙, I, E] { val (assoc, inj, injE) = (c, ip, ie) }
+  given ccc1[->[_,_], ⊙[_,_], I](using c: Ccc.Aux[->, ⊙, ->, Trivial, I], i: IsInjective2[⊙], ie: IsInjective2[->])
+  : Ccc.Aux[ArrowK[->,*,*], ⊙, ArrowK[->,*,*], IsKind, TypeK[[a] =>> I]] =
+    new Ccc1ArrowK[->, ⊙, I] { val (assoc, inj, injE) = (c, i, ie) }
   given initial[->[_,_], I](using i: Initial.Aux[->, Trivial, I]): Initial.Aux[ArrowK[->,*,*], IsKind, TypeK[[a] =>> I]] =
     new InitialArrowK[->, I] { val ini = i }
   given terminal[->[_,_], T](using t: Terminal.Aux[->, Trivial, T]): Terminal.Aux[ArrowK[->,*,*], IsKind, TypeK[[a] =>> T]] =
