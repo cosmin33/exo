@@ -9,6 +9,8 @@ sealed trait IsKind[A]:
   def tuple[X, Y](using ev: A === (X, Y)): (IsKind[X], IsKind[Y]) = throw UninitializedFieldError("IsKind.tuple")
   def funk[X, Y](using ev: A === FunK[X, Y]): (IsKind[X], IsKind[Y]) = throw UninitializedFieldError("IsKind.funk")
   def either[X, Y](using ev: A === Either[X, Y]): (IsKind[X], IsKind[Y]) = throw UninitializedFieldError("IsKind.either")
+  def pairInjectivity[P[_,_], X, Y](using ev: A === P[X, Y])(using i: IsInjective2[P]): (IsKind[X], IsKind[Y]) =
+    throw UninitializedFieldError("IsKind.pairInjectivity")
 
 object IsKind extends IsKindImplicits:
   type Aux[A, T[_]] = IsKind[A] { type Type[a] = T[a] }
@@ -49,8 +51,25 @@ trait IsKindImplicits extends IsKindImplicits01 {
     \/.unsafeLeibniz.subst[[f[_,_]] =>> IsKind.Aux[f[A, B], [o] =>> f[a.Type[o], b.Type[o]]]](givenEither[A, B])
 }
 
-trait IsKindImplicits01 {
-  given givenInjPair[F[_,_], A, B](using a: IsKind[A], b: IsKind[B])(using i: IsInjective2[F])
+trait IsKindImplicits01 extends IsKindImplicits02 {
+  given arrowK[->[_,_], A, B](using a: IsKind[A], b: IsKind[B])
+  : IsKind.Aux[ArrowK[->, A, B], [α] =>> a.Type[α] -> b.Type[α]] =
+    new IsKind[ArrowK[->, A, B]]:
+      type Type[α] = a.Type[α] -> b.Type[α]
+      override def pairInjectivity[P[_, _], X, Y](using ev: ArrowK[->, A, B] === P[X, Y])(using i: IsInjective2[P]): (IsKind[X], IsKind[Y]) =
+        val eq: P =~~= ArrowK[->,*,*] = Unsafe.isK2
+        val (ax, by) = i.apply[A, B, X, Y](using eq.is[A, B] andThen ev)
+        (ax.subst(a), by.subst(b))
+
+}
+
+trait IsKindImplicits02 {
+  given givenInjPair[F[_,_], A, B](using a: IsKind[A], b: IsKind[B])(using ii: IsInjective2[F])
   : IsKind.Aux[F[A, B], [α] =>> F[a.Type[α], b.Type[α]]] =
-    new IsKind[F[A, B]] { type Type[α] = F[a.Type[α], b.Type[α]] }
+    new IsKind[F[A, B]]:
+      type Type[α] = F[a.Type[α], b.Type[α]]
+      override def pairInjectivity[P[_, _], X, Y](using ev: F[A, B] === P[X, Y])(using i: IsInjective2[P]): (IsKind[X], IsKind[Y]) =
+        val eq: P =~~= F = Unsafe.isK2
+        val (ax, by) = i.apply[A, B, X, Y](using eq.is[A, B] andThen ev)
+        (ax.subst(a), by.subst(b))
 }

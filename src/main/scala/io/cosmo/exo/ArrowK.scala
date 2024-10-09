@@ -26,14 +26,15 @@ object ArrowK extends ArrowKImplicits {
 
   def from[->[_,_], A, B](using ia: IsKind[A], ib: IsKind[B]): MkArrowK[->, A, B, ia.Type, ib.Type] =
     new MkArrowK[->, A, B, ia.Type, ib.Type](ia, ib)
-  case class MkArrowK[->[_,_], A, B, F[_], G[_]](ia: IsKind.Aux[A, F], ib: IsKind.Aux[B, G]) {
+  case class MkArrowK[->[_,_], A, B, F[_], G[_]](ia: IsKind.Aux[A, F], ib: IsKind.Aux[B, G]):
     def apply(f: ∀[[a] =>> F[a] -> G[a]]): ArrowK.Aux[->, A, B, F, G] = ArrowK.apply[->, A, B, F, G](f)(using ia, ib)
-  }
 
   def isoFunKUnapply[->[_,_], A, B](i: Iso[ArrowK[->,*,*], A, B])(
     using a: IsKind[A], b: IsKind[B])(
     using s: Subcat[->]
   ): IsoK[->, a.Type, b.Type] = IsoK.unsafe(i.to.unapply, i.from.unapply)
+
+  def isInjective[->[_,_]]: IsInjective2[ArrowK[->,*,*]] = IsInjective2.witness1[ArrowK[->,*,*], 1, 2, 3]
 
   given invertDual[->[_,_]]: (ArrowK[Dual[->,*,*],*,*] <~~> Dual[ArrowK[->,*,*],*,*]) =
     <~~>.unsafe([A, B] => () =>
@@ -65,14 +66,9 @@ trait ArrowKImplicits extends ArrowKImplicits01 {
     injSum: IsInjective2[⨁]
   ): Distributive.Aux[ArrowK[->,*,*], IsKind, ⨂, TypeK[[a] =>> ProductId], ⨁, TypeK[[a] =>> SumId]] =
     new DistributiveArrowK[->, ⨂, ProductId, ⨁, SumId] { val (cat, injP, injS) = (s, injProduct, injSum) }
-  given cartesian[->[_,_], ⊙[_,_], I](using c: Cartesian.Aux[->, ⊙, Trivial, I], i: IsInjective2[⊙])
-  : Cartesian.Aux[ArrowK[->,*,*], ⊙, IsKind, TypeK[[a] =>> I]] =
-    new CartesianArrowK[->, ⊙, I] { val (assoc, inj) = (c, i) }
-  given coCartesian[->[_,_], ⊙[_,_], I](using c: Cartesian.Aux[Dual[->,*,*], ⊙, Trivial, I], i: IsInjective2[⊙])
-  : Cartesian.Aux[Dual[ArrowK[->,*,*],*,*], ⊙, IsKind, TypeK[[a] =>> I]] =
-    new CoCartesianArrowK[->, ⊙, I] { val (assoc, inj) = (c, i) }
-  given coAssociative[->[_,_], ⊙[_,_]](using a: Associative.Aux[Dual[->,*,*], ⊙, Trivial], i: IsInjective2[⊙]): Associative[Dual[ArrowK[->,*,*],*,*], ⊙] =
-    new CoAssociativeArrowK[->, ⊙] { val (assoc, inj) = (a, i) }
+  given ccc[->[_,_], ⊙[_,_], I, E[_,_]](using c: Ccc.Aux[->, ⊙, Trivial, I, E], ip: IsInjective2[⊙], ie: IsInjective2[E])
+  : Ccc.Aux[ArrowK[->,*,*], ⊙, IsKind, TypeK[[a] =>> I], E] =
+    new CccArrowK[->, ⊙, I, E] { val (assoc, inj, injE) = (c, ip, ie) }
   given initial[->[_,_], I](using i: Initial.Aux[->, Trivial, I]): Initial.Aux[ArrowK[->,*,*], IsKind, TypeK[[a] =>> I]] =
     new InitialArrowK[->, I] { val ini = i }
   given terminal[->[_,_], T](using t: Terminal.Aux[->, Trivial, T]): Terminal.Aux[ArrowK[->,*,*], IsKind, TypeK[[a] =>> T]] =
@@ -82,6 +78,17 @@ trait ArrowKImplicits extends ArrowKImplicits01 {
 trait ArrowKImplicits01 extends ArrowKImplicits02 {
   given subcat[->[_,_]](using s: Subcat.Aux[->, Trivial]): Subcat.Aux[ArrowK[->,*,*], IsKind] =
     new SubcatArrowK[->] { val cat = s }
+  given cartesian[->[_,_], ⊙[_,_], I](using c: Cartesian.Aux[->, ⊙, Trivial, I], i: IsInjective2[⊙])
+  : Cartesian.Aux[ArrowK[->,*,*], ⊙, IsKind, TypeK[[a] =>> I]] =
+    new CartesianArrowK[->, ⊙, I] { val (assoc, inj) = (c, i) }
+  given coCartesian[->[_,_], ⊙[_,_], I](using c: Cartesian.Aux[Dual[->,*,*], ⊙, Trivial, I], i: IsInjective2[⊙])
+  : Cartesian.Aux[Dual[ArrowK[->,*,*],*,*], ⊙, IsKind, TypeK[[a] =>> I]] =
+    new CoCartesianArrowK[->, ⊙, I] { val (assoc, inj) = (c, i) }
+}
+
+trait ArrowKImplicits02 extends ArrowKImplicits03 {
+  given semicat[->[_,_]](using s: Semicategory[->]): Semicategory[ArrowK[->,*,*]] =
+    new SemicategoryArrowK[->] { val cat = s }
   given monoidal[->[_,_], ⊙[_,_], I](using m: Monoidal.Aux[->, ⊙, Trivial, I], i: IsInjective2[⊙])
   : Monoidal.Aux[ArrowK[->,*,*], ⊙, IsKind, TypeK[[a] =>> I]] =
     new MonoidalArrowK[->, ⊙, I] { val (assoc, inj) = (m, i) }
@@ -90,9 +97,7 @@ trait ArrowKImplicits01 extends ArrowKImplicits02 {
     new CoMonoidalArrowK[->, ⊙, I] { val (assoc, inj) = (m, i) }
 }
 
-trait ArrowKImplicits02 extends ArrowKImplicits03 {
-  given semicat[->[_,_]](using s: Semicategory[->]): Semicategory[ArrowK[->,*,*]] =
-    new SemicategoryArrowK[->] { val cat = s }
+trait ArrowKImplicits03 extends ArrowKImplicits04 {
   given symmetric[->[_,_], ⊙[_,_]](using a: Symmetric.Aux[->, ⊙, Trivial], i: IsInjective2[⊙])
   : Symmetric.Aux[ArrowK[->,*,*], ⊙, IsKind] =
     new BraidedArrowK[->, ⊙] with Symmetric[ArrowK[->,*,*], ⊙] { val (assoc, inj) = (a, i) }
@@ -101,16 +106,18 @@ trait ArrowKImplicits02 extends ArrowKImplicits03 {
     new CoBraidedArrowK[->, ⊙] with Symmetric[Dual[ArrowK[->,*,*],*,*], ⊙] { val (assoc, inj)  = (a, i) }
 }
 
-trait ArrowKImplicits03 extends ArrowKImplicits04 {
+trait ArrowKImplicits04 extends ArrowKImplicits05 {
   given braided[->[_,_], ⊙[_,_]](using a: Braided.Aux[->, ⊙, Trivial], i: IsInjective2[⊙]): Braided.Aux[ArrowK[->,*,*], ⊙, IsKind] =
     new BraidedArrowK[->, ⊙] { val (assoc, inj) = (a, i) }
   given coBraided[->[_,_], ⊙[_,_]](using a: Braided.Aux[Dual[->,*,*], ⊙, Trivial], i: IsInjective2[⊙]): Braided.Aux[Dual[ArrowK[->,*,*],*,*], ⊙, IsKind] =
     new CoBraidedArrowK[->, ⊙] { val (assoc, inj) = (a, i) }
 }
 
-trait ArrowKImplicits04 {
+trait ArrowKImplicits05 {
   given associative[->[_,_], ⊙[_,_]](using a: Associative.Aux[->, ⊙, Trivial], i: IsInjective2[⊙]): Associative[ArrowK[->,*,*], ⊙] =
     new AssociativeArrowK[->, ⊙] { val (assoc, inj) = (a, i) }
+  given coAssociative[->[_,_], ⊙[_,_]](using a: Associative.Aux[Dual[->,*,*], ⊙, Trivial], i: IsInjective2[⊙]): Associative[Dual[ArrowK[->,*,*],*,*], ⊙] =
+    new CoAssociativeArrowK[->, ⊙] { val (assoc, inj) = (a, i) }
 }
 
 object ArrowKHelpers:
@@ -263,14 +270,6 @@ object ArrowKHelpers:
       Dual(ArrowK.from[->, B ⊙ C, A](
         ∀.of.fromH([a] => () => assoc.&&&[ia.Type[a], ib.Type[a], ic.Type[a]](Dual(f.toFn.unapply[a]), Dual(g.toFn.unapply[a])))
       ))
-//      val ff: ArrowK[->, B, A] = f.toFn
-//      val gg: ArrowK[->, C, A] = g.toFn
-//      given ia: IsKind.Aux[A, ff.TypeB] = ff.kindB
-//      given ib: IsKind.Aux[B, ff.TypeA] = ff.kindA
-//      given ic: IsKind.Aux[C, gg.TypeA] = gg.kindA
-//      Dual(ArrowK.from[->, B ⊙ C, A](
-//        ∀.of.fromH([a] => () => assoc.&&&[ia.Type[a], ib.Type[a], ic.Type[a]](Dual(ff.unapply[a]), Dual(gg.unapply[a])))
-//      ))
 
   trait InitialArrowK[->[_,_], I0] extends Initial[ArrowK[->,*,*]]:
     type TC[a] = IsKind[a]
@@ -292,5 +291,46 @@ object ArrowKHelpers:
     def initiate[A](using A: IsKind[A]): Dual[ArrowK[->,*,*], TypeK[[a] =>> T], A] =
       Dual(ArrowK.from[->, A, TypeK[[a] =>> T]](∀.of.fromH([a] => () => term.terminate[A.Type[a]])))
   }
+
+  trait CccArrowK[->[_,_], ⊙[_,_], PI, E[_,_]]
+    extends CartesianArrowK[->, ⊙, PI]
+      with Ccc.Proto[ArrowK[->,*,*], ⊙, IsKind, TypeK[[a] =>> PI], E]:
+    protected def assoc: Ccc.Aux[->, ⊙, Trivial, PI, E]
+    protected given injE: IsInjective2[E]
+    def curry[A, B, C](f: ArrowK[->, A ⊙ B, C]): ArrowK[->, A, E[B, C]] =
+      val (ta: IsKind[A], tb: IsKind[B]) = f.kindA.pairInjectivity[⊙, A, B]
+      given IsKind.Aux[A, ta.Type] = ta
+      given IsKind.Aux[B, tb.Type] = tb
+      given IsKind.Aux[C, f.TypeB] = f.kindB
+      ArrowK.from[->, A, E[B, C]](∀.of.fromH([a] => () => assoc.curry[ta.Type[a], tb.Type[a], f.TypeB[a]](f.unapply[a])))
+    def uncurry[A, B, C](f: ArrowK[->, A, E[B, C]]): ArrowK[->, A ⊙ B, C] =
+      val (tb: IsKind[B], tc: IsKind[C]) = f.kindB.pairInjectivity[E, B, C]
+      given IsKind.Aux[A, f.TypeA] = f.kindA
+      given IsKind.Aux[B, tb.Type] = tb
+      given IsKind.Aux[C, tc.Type] = tc
+      ArrowK.from[->, A ⊙ B, C](∀.of.fromH([a] => () => assoc.uncurry[f.TypeA[a], tb.Type[a], tc.Type[a]](f.unapply[a])))
+
+  trait Ccc1ArrowK[->[_,_], ⊙[_,_], PI]
+    extends CartesianArrowK[->, ⊙, PI]
+      with Ccc.Proto[ArrowK[->,*,*], ⊙, IsKind, TypeK[[a] =>> PI], ArrowK[->,*,*]]:
+    protected def assoc: Ccc.Aux[->, ⊙, Trivial, PI, ->]
+    protected given injE: IsInjective2[->]
+    def curry[A, B, C](f: ArrowK[->, A ⊙ B, C]): ArrowK[->, A, ArrowK[->, B, C]] =
+      val (ta: IsKind[A], tb: IsKind[B]) = f.kindA.pairInjectivity[⊙, A, B]
+      given IsKind.Aux[A, ta.Type] = ta
+      given IsKind.Aux[B, tb.Type] = tb
+      given IsKind.Aux[C, f.TypeB] = f.kindB
+      ArrowK.from[->, A, ArrowK[->, B, C]](
+        ∀.of.fromH([a] => () => assoc.curry[ta.Type[a], tb.Type[a], f.TypeB[a]](f.unapply[a]))
+      )
+    def uncurry[A, B, C](f: ArrowK[->, A, ArrowK[->, B, C]]): ArrowK[->, A ⊙ B, C] =
+      given IsInjective2[ArrowK[->,*,*]] = ArrowK.isInjective[->]
+      val (tb: IsKind[B], tc: IsKind[C]) = f.kindB.pairInjectivity[ArrowK[->,*,*], B, C]
+      given IsKind.Aux[A, f.TypeA] = f.kindA
+      given IsKind.Aux[B, tb.Type] = tb
+      given IsKind.Aux[C, tc.Type] = tc
+      ArrowK.from[->, A ⊙ B, C](
+        ∀.of.fromH([a] => () => assoc.uncurry[f.TypeA[a], tb.Type[a], tc.Type[a]](f.unapply[a]))
+      )
 
 end ArrowKHelpers
