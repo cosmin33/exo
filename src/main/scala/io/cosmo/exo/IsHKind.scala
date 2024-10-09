@@ -31,7 +31,6 @@ object IsHKind:
       override def function[X, Y](using ev: FunH[A, B] === FunH[X, Y]): (IsHKind[X], IsHKind[Y]) =
         IsInjective2[FunH].apply.bimapFn(_.subst(a), _.subst(b))
 
-
   given givenEither[A, B](using a: IsHKind[A], b: IsHKind[B]): IsHKind.Aux[Either[A, B], [f[_]] =>> Either[a.Type[f], b.Type[f]]] =
     new IsHKind[Either[A, B]]:
       type Type[f[_]] = Either[a.Type[f], b.Type[f]]
@@ -40,10 +39,6 @@ object IsHKind:
 
   given givenDisjunction[A, B](using a: IsHKind[A], b: IsHKind[B]): IsHKind.Aux[A \/ B, [f[_]] =>> a.Type[f] \/ b.Type[f]] =
     \/.unsafeLeibniz.subst[[f[_,_]] =>> IsHKind.Aux[f[A, B], [o[_]] =>> f[a.Type[o], b.Type[o]]]](givenEither[A, B])
-
-  def tupleHKind[A, B](ab: IsHKind[(A, B)]): (IsHKind[A], IsHKind[B]) = ab.tuple[A, B]
-  def functionHKind[A, B](ab: IsHKind[FunH[A, B]]): (IsHKind[A], IsHKind[B]) = ab.function[A, B]
-  def eitherHKind[A, B](ab: IsHKind[Either[A, B]]): (IsHKind[A], IsHKind[B]) = ab.either[A, B]
 
   def injectivity[A, B](a: IsHKind[A], b: IsHKind[B])(using eq: IsHKind[A] === IsHKind[B]): a.Type =≈= b.Type = Unsafe.isHK
 

@@ -52,6 +52,24 @@ object Exofunctor extends ExofunctorInstances {
   object IsoFun:
     def apply[->[_,_], F[_]](using E: IsoFun[->, F]): IsoFun[->, F] = E
 
+  // extension methods for higher kinded functors
+  extension [H[_[_]]](self: FunctorK[H])
+    def mapK[F[_], G[_]](f: F ~> G): H[F] => H[G] = self.map(FunK(f)).isoTo
+
+  extension[H[_[_]]](self: CofunctorK[H])
+    def comapK[F[_], G[_]](f: G ~> F): H[F] => H[G] = self.map(Dual(FunK(f))).isoTo
+
+  extension[H[_[_]]](self: IsoFunctorK[H])
+    def isoMapK[F[_], G[_]](f: F <~> G): H[F] <=> H[G] = self.map(IsoFunK(f)).isoTo
+
+  extension[H[_[_,_]]](self: FunctorK2[H])
+    def mapK2[F[_,_], G[_,_]](f: F ~~> G): H[F] => H[G] = self.map(FunK2(f)).isoTo
+
+  extension[H[_[_,_]]](self: CofunctorK2[H])
+    def comapK2[F[_,_], G[_,_]](f: G ~~> F): H[F] => H[G] = self.map(Dual(FunK2(f))).isoTo
+
+  extension[H[_[_,_]]](self: IsoFunctorK2[H])
+    def isoMapK2[F[_,_], G[_,_]](f: F <~~> G): H[F] <=> H[G] = self.map(IsoFunK2(f)).isoTo
 }
 
 trait ExofunctorInstances extends ExofunctorInstances01 {

@@ -84,6 +84,6 @@ object Function1InstancesTest {
   summon[Monoidal.Aux[Function, \/, Trivial, Void]]
 
   /////////////////// Initial, Terminal ///////////////////
-  summon[Initial[Function]]
-  summon[Terminal[Function]]
+  summon[Initial.Aux[Function, Trivial, Void]]
+  summon[Terminal.Aux[Function, Trivial, Unit]]
 }

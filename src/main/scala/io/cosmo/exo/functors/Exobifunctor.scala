@@ -58,6 +58,15 @@ object Exobifunctor extends ExobifunctorInstances
 
   def opp[->[_,_], Bi[_,_]](F: Endobifunctor[->, Bi]): Endobifunctor[Opp[->], Bi] =
     Dual.leibniz[->].flip.subst[[f[_,_]] =>> Endobifunctor[f, Bi]](dual(F))
+
+  given arrowEndofunctor[->[_,_], P[_,_]]: IsoFunctorK2[[f[_,_]] =>> Endobifunctor[f, P]] =
+    new IsoFunctorK2.Proto[[f[_,_]] =>> Endobifunctor[f, P]]:
+      protected def mapK[F[_,_], G[_,_]](iso: F <~~> G): Endobifunctor[F, P] => Endobifunctor[G, P] = ef =>
+        new Endobifunctor[G, P]:
+          def bimap[A, X, B, Y](l: G[A, X], r: G[B, Y]): G[P[A, B], P[X, Y]] =
+            iso.to(ef.bimap(iso.from(l), iso.from(r)))
+
+
 }
 
 object Endobifunctor {

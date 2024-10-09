@@ -1,6 +1,6 @@
 package io.cosmo.exo.categories
 
-import io.cosmo.exo._
+import io.cosmo.exo.*
 
 type Subcat[->[_,_]] = Subcategory[->]
 val Subcat: Subcategory.type = Subcategory

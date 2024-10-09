@@ -14,6 +14,8 @@ object HasTc:
     new HasTc[TC, A] { type F[a] = F0[a]; val isk = i; val instance = tc }
 
   def apply[TC[_[_]], F[_]](tc: TC[F]): HasTc.Aux[TC, TypeK[F], F] = from(tc, IsKind.impl[F])
+  
+  def unapply[TC[_[_]], F[_]](ht: HasTc[TC, TypeK[F]]): TC[F] = ht.instanceFor(IsKind.impl[F])
 
   given instance[TC[_[_]], F[_]](using tc: TC[F]): HasTc.Aux[TC, TypeK[F], F] = apply(tc)
 

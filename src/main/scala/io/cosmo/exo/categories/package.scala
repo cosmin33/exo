@@ -15,6 +15,7 @@ object Prodcat:
 type Opp[->[_,_]] = [a,b] =>> b -> a
 
 type Dicat[->[_,_], A, B] = (A -> B, Dual[->, A, B])
-object Dicat {
+object Dicat:
   def apply[->[_,_], A, B](to: A -> B, from: B -> A): Dicat[->, A, B] = (to, Dual(from))
-}
+
+//type AssociativeK[->[_[_],_[_]], ⊙[_[_],_[_]]] = Associative[FunK[TypeK[]]]

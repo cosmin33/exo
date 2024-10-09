@@ -40,10 +40,6 @@ object IsKind2:
   given givenDisjunction[A, B](using a: IsKind2[A], b: IsKind2[B]): IsKind2.Aux[A \/ B, [α, β] =>> a.Type[α, β] \/ b.Type[α, β]] =
     \/.unsafeLeibniz.subst[[f[_,_]] =>> IsKind2.Aux[f[A, B], [o, p] =>> f[a.Type[o, p], b.Type[o, p]]]](givenEither[A, B])
 
-  def tupleKind[A, B](ab: IsKind2[(A, B)]): (IsKind2[A], IsKind2[B]) = ab.tuple[A, B]
-  def functionKind[A, B](ab: IsKind2[FunK2[A, B]]): (IsKind2[A], IsKind2[B]) = ab.funk[A, B]
-  def eitherKind[A, B](ab: IsKind2[Either[A, B]]): (IsKind2[A], IsKind2[B]) = ab.either[A, B]
-
   def injectivity[A, B](a: IsKind2[A], b: IsKind2[B])(using eq: IsKind2[A] === IsKind2[B]): a.Type =~~= b.Type = Unsafe.isK2
 
   def isoInjectivity[A, B](using ia: IsKind2[A], ib: IsKind2[B]): (IsKind2[A] === IsKind2[B]) <=> (ia.Type =~~= ib.Type) =

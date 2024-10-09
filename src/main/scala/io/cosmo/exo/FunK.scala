@@ -16,7 +16,7 @@ trait FunK[A, B]:
 
 object FunK extends FunkImplicits {
   type Aux[A, B, F[_], G[_]] = FunK[A, B] { type TypeA[a] = F[a]; type TypeB[a] = G[a] }
-  def apply[F[_], G[_], A, B](f: F ~> G)(using a: IsKind.Aux[A, F], b: IsKind.Aux[B, G]): FunK[A, B] =
+  def apply[F[_], G[_], A, B](f: F ~> G)(using a: IsKind.Aux[A, F], b: IsKind.Aux[B, G]): FunK.Aux[A, B, F, G] =
     new FunK[A, B] { type TypeA[a] = F[a]; type TypeB[a] = G[a]; val (kindA, kindB, fn) = (a, b, f) }
 
   def isoFunKUnapply[A, B](i: IsoFunK[A, B])(using a: IsKind[A], b: IsKind[B]): a.Type <~> b.Type =
@@ -121,13 +121,13 @@ object FunKHelpers:
     def braid[A, B](using ia: IsKind[A], ib: IsKind[B]): FunK[(A, B), (B, A)] =
       FunK(~>.product.braid[ia.Type, ib.Type])(using IsKind.givenTuple[A, B], IsKind.givenTuple[B, A])
     def curry[A, B, C](f: FunK[(A, B), C]): FunK[A, FunK[B, C]] = {
-      given c: IsKind.Aux[C, f.TypeB] = f.kindB
+      val c: IsKind.Aux[C, f.TypeB] = f.kindB
       val (ia, ib) = f.kindA.tuple[A, B]
       val fun = IsKind.injectivity(f.kindA, IsKind.givenTuple[A, B](using ia, ib)).subst[[f[_]] =>> f ~> f.TypeB](f.fn)
       FunK[ia.Type, [o] =>> ib.Type[o] => c.Type[o], A, FunK[B, C]](~>.product.curry(fun))(using ia, IsKind.givenFunction[B, C](using ib, c))
     }
     def uncurry[A, B, C](f: FunK[A, FunK[B, C]]): FunK[(A, B), C] = {
-      given a: IsKind.Aux[A, f.TypeA] = f.kindA
+      val a: IsKind.Aux[A, f.TypeA] = f.kindA
       val (ib, ic) = f.kindB.funk[B, C]
       val fun = IsKind.injectivity(f.kindB, IsKind.givenFunction[B, C](using ib, ic)).subst[[f[_]] =>> f.TypeA ~> f](f.fn)
       FunK[[o] =>> (a.Type[o], ib.Type[o]), ic.Type, (A, B), C](~>.product.uncurry(fun))(using IsKind.givenTuple[A, B](using a, ib), ic)

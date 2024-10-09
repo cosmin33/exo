@@ -10,10 +10,18 @@ sealed trait IsKind[A]:
   def funk[X, Y](using ev: A === FunK[X, Y]): (IsKind[X], IsKind[Y]) = throw UninitializedFieldError("IsKind.funk")
   def either[X, Y](using ev: A === Either[X, Y]): (IsKind[X], IsKind[Y]) = throw UninitializedFieldError("IsKind.either")
 
-object IsKind:
+object IsKind extends IsKindImplicits:
   type Aux[A, T[_]] = IsKind[A] { type Type[a] = T[a] }
   def apply[A](using a: IsKind[A]): IsKind.Aux[A, a.Type] = a
 
+  def injectivity[A, B](a: IsKind[A], b: IsKind[B])(using eq: IsKind[A] === IsKind[B]): a.Type =~= b.Type = Unsafe.isK
+
+  def isoInjectivity[A, B](using ia: IsKind[A], ib: IsKind[B]): (IsKind[A] === IsKind[B]) <=> (ia.Type =~= ib.Type) =
+    Iso.unsafe(_ => Unsafe.isK, _ => Unsafe.is)
+  
+end IsKind
+
+trait IsKindImplicits extends IsKindImplicits01 {
   given impl[F[_]]: IsKind.Aux[TypeK[F], F] = new IsKind[TypeK[F]] { type Type[a] = F[a] }
 
   given givenTuple[A, B](using l: IsKind[A], r: IsKind[B]): IsKind.Aux[(A, B), [α] =>> (l.Type[α], r.Type[α])] =
@@ -39,14 +47,10 @@ object IsKind:
 
   given givenDisjunction[A, B](using a: IsKind[A], b: IsKind[B]): IsKind.Aux[A \/ B, [α] =>> a.Type[α] \/ b.Type[α]] =
     \/.unsafeLeibniz.subst[[f[_,_]] =>> IsKind.Aux[f[A, B], [o] =>> f[a.Type[o], b.Type[o]]]](givenEither[A, B])
+}
 
-  def tupleKind[A, B](ab: IsKind[(A, B)]): (IsKind[A], IsKind[B]) = ab.tuple[A, B]
-  def functionKind[A, B](ab: IsKind[FunK[A, B]]): (IsKind[A], IsKind[B]) = ab.funk[A, B]
-  def eitherKind[A, B](ab: IsKind[Either[A, B]]): (IsKind[A], IsKind[B]) = ab.either[A, B]
-
-  def injectivity[A, B](a: IsKind[A], b: IsKind[B])(using eq: IsKind[A] === IsKind[B]): a.Type =~= b.Type = Unsafe.isK
-
-  def isoInjectivity[A, B](using ia: IsKind[A], ib: IsKind[B]): (IsKind[A] === IsKind[B]) <=> (ia.Type =~= ib.Type) =
-    Iso.unsafe(_ => Unsafe.isK, _ => Unsafe.is)
-
-end IsKind
+trait IsKindImplicits01 {
+  given givenInjPair[F[_,_], A, B](using a: IsKind[A], b: IsKind[B])(using i: IsInjective2[F])
+  : IsKind.Aux[F[A, B], [α] =>> F[a.Type[α], b.Type[α]]] =
+    new IsKind[F[A, B]] { type Type[α] = F[a.Type[α], b.Type[α]] }
+}

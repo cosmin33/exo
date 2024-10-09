@@ -75,15 +75,19 @@ trait DualAssociativeInstances03 {
     Dual.nestedDualCancelsItself.subst[[f[_, _]] =>> Associative.Aux[f, ⊙, T]](dualAssociative)
 }
 
-trait DualBifunctorInstances {
+trait DualBifunctorInstances extends DualBifunctorInstances01 {
   given oppEndobifunctor[->[_,_], P[_,_]](using e: Endobifunctor[->, P]): Endobifunctor[Opp[->], P] =
     new OppBifunctor[->, P] {val underlying = e}
 
   given dualEndobifunctor[->[_,_], P[_,_]](using e: Endobifunctor[->, P]): Endobifunctor[Dual[->,*,*], P] =
     Dual.leibniz[->].subst[[f[_,_]] =>> Endobifunctor[f, P]](oppEndobifunctor(using e))
 
-  given dualdualEndobifunctor[->[_, _], ⊙[_, _]](using Endobifunctor[Dual[->, *, *], ⊙]): Endobifunctor[->, ⊙] =
-    Dual.nestedDualCancelsItself.subst[[f[_, _]] =>> Endobifunctor[f, ⊙]](dualEndobifunctor)
+  // if this is a "given" then I have strange errors about implicits found in more than one place
+  def dualdualEndobifunctor[->[_, _], ⊙[_, _]](using Endobifunctor[Dual[->, *, *], ⊙]): Endobifunctor[->, ⊙] =
+    Dual.nestedDualCancelsItself.subst[[f[_, _]] =>> Endobifunctor[f, ⊙]](Exobifunctor.dualEndobifunctor)
+}
+
+trait DualBifunctorInstances01 {
 }
 
 object DualHelpers {

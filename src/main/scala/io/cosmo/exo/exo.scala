@@ -1,5 +1,6 @@
 package io.cosmo.exo
 
+import io.cosmo.exo.categories.*
 import io.cosmo.exo.inhabitance.*
 import io.cosmo.exo.evidence.*
 import io.cosmo.exo.internal.*
@@ -47,6 +48,18 @@ object IsoFunH:
 type IsoK [->[_,_], F[_],    G[_]]    =  ∀[[a]    =>> Iso[->, F[a], G[a]]]
 type IsoK2[->[_,_], F[_,_],  G[_,_]]  = ∀∀[[a, b] =>> Iso[->, F[a, b], G[a, b]]]
 type IsoHK[->[_,_], A[_[_]], B[_[_]]] = ∀~[[F[_]] =>> Iso[->, A[F], B[F]]]
+
+object IsoK:
+  def unsafe[->[_,_], F[_], G[_]](f: ∀[[a] =>> F[a] -> G[a]], g: ∀[[a] =>> G[a] -> F[a]])(using s: Subcat[->]): IsoK[->, F, G] =
+    ∀.mk[IsoK[->, F, G]].fromH([a] => () => Iso.unsafe(f[a], g[a]))
+
+object IsoK2:
+  def unsafe[->[_,_], F[_,_], G[_,_]](f: ∀∀[[a, b] =>> F[a, b] -> G[a, b]], g: ∀∀[[a, b] =>> G[a, b] -> F[a, b]])(using s: Subcat[->]): IsoK2[->, F, G] =
+    ∀∀.mk[IsoK2[->, F, G]].fromH([a, b] => () => Iso.unsafe(f[a, b], g[a, b]))
+
+object IsoHK:
+  def unsafe[->[_,_], A[_[_]], B[_[_]]](f: ∀~[[F[_]] =>> A[F] -> B[F]], g: ∀~[[F[_]] =>> B[F] -> A[F]])(using s: Subcat[->]): IsoHK[->, A, B] =
+    ∀~.mk[IsoHK[->, A, B]].fromH([F[_]] => () => Iso.unsafe(f[F], g[F]))
 
 infix type <=>[A, B] = Iso[Function, A, B]
 object `<=>`:
