@@ -44,9 +44,9 @@ trait ProdcatBifunctorInstances {
 
 trait ProdcatAssociativeInstances extends ProdcatAssociativeInstances01 {
   given prodcatCcc[==>[_,_], -->[_,_], TC[_], P[_,_], PI, E[_,_]](using
-    cc1: Ccc.Aux[==>, P, TC, PI, E],
-    cc2: Ccc.Aux[-->, P, TC, PI, E],
-  ): Ccc.Aux[Prodcat[==>, -->, *, *], P, TC, PI, E] = ProdcatCcc[==>, -->, TC, P, PI, E]
+    cc1: Ccc.Aux[==>, P, E, TC, PI],
+    cc2: Ccc.Aux[-->, P, E, TC, PI],
+  ): Ccc.Aux[Prodcat[==>, -->, *, *], P, E, TC, PI] = ProdcatCcc[==>, -->, TC, P, PI, E]
 }
 trait ProdcatAssociativeInstances01 extends ProdcatAssociativeInstances02 {
   given prodcatCartesian[==>[_,_], -->[_,_], P[_,_], TC[_], I](using
@@ -229,19 +229,19 @@ object ProdcatInstances {
 
   trait ProdcatCcc[==>[_,_], -->[_,_], TC0[_], P[_,_], PI, E[_,_]]
     extends ProdcatCartesian[==>, -->, P, TC0, PI]
-    with Ccc[Prodcat[==>, -->, *, *], P]
+    with Ccc[Prodcat[==>, -->, *, *], P, E]
   {
-    protected def a1: Ccc.Aux[==>, P, TC0, PI, E]
-    protected def a2: Ccc.Aux[-->, P, TC0, PI, E]
+    protected def a1: Ccc.Aux[==>, P, E, TC0, PI]
+    protected def a2: Ccc.Aux[-->, P, E, TC0, PI]
     type |->[a, b] = E[a, b]
     def uncurry[A, B, C](f: (A ==> (B |-> C), A --> (B |-> C))) = (a1.uncurry[A, B, C](f._1), a2.uncurry[A, B, C](f._2))
     def curry[A, B, C](f: (P[A, B] ==> C, P[A, B] --> C)) = (a1.curry(f._1), a2.curry(f._2))
   }
   object ProdcatCcc:
     def apply[==>[_,_], -->[_,_], TC0[_], P[_,_], PI, E[_,_]](using
-      c1: Ccc.Aux[==>, P, TC0, PI, E],
-      c2: Ccc.Aux[-->, P, TC0, PI, E],
-    ): Ccc.Aux[Prodcat[==>, -->, *, *], P, TC0, PI, E] =
+      c1: Ccc.Aux[==>, P, E, TC0, PI],
+      c2: Ccc.Aux[-->, P, E, TC0, PI],
+    ): Ccc.Aux[Prodcat[==>, -->, *, *], P, E, TC0, PI] =
       new ProdcatCcc[==>, -->, TC0, P, PI, E] {val a1 = c1; val a2 = c2}
 
   trait ProdcatGroupoid[==>[_,_], -->[_,_], TC0[_]]

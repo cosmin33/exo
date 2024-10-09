@@ -38,9 +38,9 @@ trait Funk2Implicits extends FunkImplicits01 {
   given initial: Initial.Aux[FunK2, IsKind2, TypeK2[VoidK2]] = new Funk2Initial {}
   given terminal: Terminal.Aux[FunK2, IsKind2, TypeK2[UnitK2]] = new FunK2Terminal {}
 
-  given cccTuple: Ccc.Aux[FunK2, Tuple2, IsKind2, TypeK2[UnitK2], FunK2] = new Funk2CccTuple {}
-  given cccConjunction: Ccc.Aux[FunK2, /\, IsKind2, TypeK2[UnitK2], FunK2] =
-    /\.unsafeLeibniz.subst[[f[_,_]] =>> Ccc.Aux[FunK2, f, IsKind2, TypeK2[UnitK2], FunK2]](cccTuple)
+  given cccTuple: Ccc.Aux[FunK2, Tuple2, FunK2, IsKind2, TypeK2[UnitK2]] = new Funk2CccTuple {}
+  given cccConjunction: Ccc.Aux[FunK2, /\, FunK2, IsKind2, TypeK2[UnitK2]] =
+    /\.unsafeLeibniz.subst[[f[_,_]] =>> Ccc.Aux[FunK2, f, FunK2, IsKind2, TypeK2[UnitK2]]](cccTuple)
   given cocartesianOppEither: Cartesian.Aux[Opp[FunK2], Either, IsKind2, TypeK2[VoidK2]] = new Funk2CocartesianEither {}
   given cocartesianEither: Cartesian.Aux[Dual[FunK2,*,*], Either, IsKind2, TypeK2[VoidK2]] =
     Dual.leibniz[FunK2].subst[[f[_,_]] =>> Cartesian.Aux[f[_,_], Either, IsKind2, TypeK2[VoidK2]]](cocartesianOppEither)

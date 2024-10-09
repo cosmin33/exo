@@ -13,7 +13,7 @@ object ProdcatInstancesTest {
 
   summon[Endobifunctor[Prodcat[===, ===, *, *], &]]
 
-  summon[Ccc.Aux[Prodcat[Function1, Function1, *, *], Tuple2, Trivial, Unit, Function1]]
+  summon[Ccc.Aux[Prodcat[Function1, Function1, *, *], Tuple2, Function1, Trivial, Unit]]
   summon[Cartesian.Aux[Prodcat[Function1, Function1, *, *], Tuple2, Trivial, Unit]]
   summon[Monoidal.Aux[Prodcat[Function1, Function1, *, *], Tuple2, Trivial, Unit]]
   summon[Symmetric.Aux[Prodcat[===, ===, *, *], &, Trivial]]

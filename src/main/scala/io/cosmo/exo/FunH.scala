@@ -39,9 +39,9 @@ trait FunhImplicits extends FunhImplicits01 {
   given initial: Initial.Aux[FunH, IsHKind, TypeHK[VoidHK]] = new FunhInitial {}
   given terminal: Terminal.Aux[FunH, IsHKind, TypeHK[UnitHK]] = new FunhTerminal {}
 
-  given cccTuple: Ccc.Aux[FunH, Tuple2, IsHKind, TypeHK[UnitHK], FunH] = new FunhCccTuple {}
-  given cccConjunction: Ccc.Aux[FunH, /\, IsHKind, TypeHK[UnitHK], FunH] =
-    /\.unsafeLeibniz.subst[[f[_,_]] =>> Ccc.Aux[FunH, f, IsHKind, TypeHK[UnitHK], FunH]](cccTuple)
+  given cccTuple: Ccc.Aux[FunH, Tuple2, FunH, IsHKind, TypeHK[UnitHK]] = new FunhCccTuple {}
+  given cccConjunction: Ccc.Aux[FunH, /\, FunH, IsHKind, TypeHK[UnitHK]] =
+    /\.unsafeLeibniz.subst[[f[_,_]] =>> Ccc.Aux[FunH, f, FunH, IsHKind, TypeHK[UnitHK]]](cccTuple)
   given cocartesianOppEither: Cartesian.Aux[Opp[FunH], Either, IsHKind, TypeHK[VoidHK]] = new FunhCocartesianEither {}
   given cocartesianEither: Cartesian.Aux[Dual[FunH,*,*], Either, IsHKind, TypeHK[VoidHK]] =
     Dual.leibniz[FunH].subst[[f[_,_]] =>> Cartesian.Aux[f[_,_], Either, IsHKind, TypeHK[VoidHK]]](cocartesianOppEither)

@@ -4,9 +4,7 @@ import io.cosmo.exo._
 import io.cosmo.exo.functors._
 import io.cosmo.exo.syntax._
 
-trait Ccc[->[_,_], ⊙[_,_]] extends Cartesian[->, ⊙] { self =>
-  type |->[_,_] // Hom objects representation
-
+trait Ccc[->[_,_], ⊙[_,_], |->[_,_]] extends Cartesian[->, ⊙] { self =>
   def curry  [A, B, C](f: (A ⊙ B) -> C): A -> (B |-> C)
   def uncurry[A, B, C](f: A -> (B |-> C)): (A ⊙ B) -> C
 
@@ -56,18 +54,16 @@ trait Ccc[->[_,_], ⊙[_,_]] extends Cartesian[->, ⊙] { self =>
 }
 
 object Ccc {
-  type Aux[->[_,_], P[_,_], ->#[_], PI, E[_,_]] = Ccc[->, P] {
-    type |->[A, B] = E[A, B]
+  type Aux[->[_,_], P[_,_], E[_,_], ->#[_], PI] = Ccc[->, P, E] {
     type TC[x] = ->#[x]
     type Id = PI
   }
   type Aux1[->[_, _], ->#[_], P[_, _], E[_, _]] =
-    Ccc[->, P] {type |->[A, B] = E[A, B]; type TC[x] = ->#[x]}
+    Ccc[->, P, E] {type TC[x] = ->#[x]}
 
-  type Homoiconic[->[_,_], P[_,_]] = Ccc[->, P] { type |->[a,b] = ->[a,b]; type ⊙[a,b] = P[a,b] }
+  type Homoiconic[->[_,_], P[_,_], E[_,_]] = Ccc[->, P, E] { type ⊙[a,b] = P[a,b] }
 
-  trait Proto[->[_,_], P[_,_], ->#[_], PI, E[_,_]] extends Ccc[->, P] with Cartesian.Proto[->, P, ->#, PI] {
-    type |->[A, B] = E[A, B]
+  trait Proto[->[_,_], P[_,_], ->#[_], PI, E[_,_]] extends Ccc[->, P, E] with Cartesian.Proto[->, P, ->#, PI] {
   }
 
 }

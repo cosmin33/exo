@@ -66,8 +66,8 @@ trait ArrowKImplicits extends ArrowKImplicits01 {
     injSum: IsInjective2[⨁]
   ): Distributive.Aux[ArrowK[->,*,*], IsKind, ⨂, TypeK[[a] =>> ProductId], ⨁, TypeK[[a] =>> SumId]] =
     new DistributiveArrowK[->, ⨂, ProductId, ⨁, SumId] { val (cat, injP, injS) = (s, injProduct, injSum) }
-  given ccc[->[_,_], ⊙[_,_], I, E[_,_]](using c: Ccc.Aux[->, ⊙, Trivial, I, E], ip: IsInjective2[⊙], ie: IsInjective2[E])
-  : Ccc.Aux[ArrowK[->,*,*], ⊙, IsKind, TypeK[[a] =>> I], E] =
+  given ccc[->[_,_], ⊙[_,_], I, E[_,_]](using c: Ccc.Aux[->, ⊙, E, Trivial, I], ip: IsInjective2[⊙], ie: IsInjective2[E])
+  : Ccc.Aux[ArrowK[->,*,*], ⊙, E, IsKind, TypeK[[a] =>> I]] =
     new CccArrowK[->, ⊙, I, E] { val (assoc, inj, injE) = (c, ip, ie) }
   given initial[->[_,_], I](using i: Initial.Aux[->, Trivial, I]): Initial.Aux[ArrowK[->,*,*], IsKind, TypeK[[a] =>> I]] =
     new InitialArrowK[->, I] { val ini = i }
@@ -295,7 +295,7 @@ object ArrowKHelpers:
   trait CccArrowK[->[_,_], ⊙[_,_], PI, E[_,_]]
     extends CartesianArrowK[->, ⊙, PI]
       with Ccc.Proto[ArrowK[->,*,*], ⊙, IsKind, TypeK[[a] =>> PI], E]:
-    protected def assoc: Ccc.Aux[->, ⊙, Trivial, PI, E]
+    protected def assoc: Ccc.Aux[->, ⊙, E, Trivial, PI]
     protected given injE: IsInjective2[E]
     def curry[A, B, C](f: ArrowK[->, A ⊙ B, C]): ArrowK[->, A, E[B, C]] =
       val (ta: IsKind[A], tb: IsKind[B]) = f.kindA.pairInjectivity[⊙, A, B]
@@ -313,7 +313,7 @@ object ArrowKHelpers:
   trait Ccc1ArrowK[->[_,_], ⊙[_,_], PI]
     extends CartesianArrowK[->, ⊙, PI]
       with Ccc.Proto[ArrowK[->,*,*], ⊙, IsKind, TypeK[[a] =>> PI], ArrowK[->,*,*]]:
-    protected def assoc: Ccc.Aux[->, ⊙, Trivial, PI, ->]
+    protected def assoc: Ccc.Aux[->, ⊙, ->, Trivial, PI]
     protected given injE: IsInjective2[->]
     def curry[A, B, C](f: ArrowK[->, A ⊙ B, C]): ArrowK[->, A, ArrowK[->, B, C]] =
       val (ta: IsKind[A], tb: IsKind[B]) = f.kindA.pairInjectivity[⊙, A, B]

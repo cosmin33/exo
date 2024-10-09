@@ -39,9 +39,9 @@ trait FunkImplicits extends FunkImplicits01 {
   given initial: Initial.Aux[FunK, IsKind, TypeK[VoidK]] = new FunkInitial {}
   given terminal: Terminal.Aux[FunK, IsKind, TypeK[UnitK]] = new FunKTerminal {}
 
-  given cccTuple: Ccc.Aux[FunK, Tuple2, IsKind, TypeK[UnitK], FunK] = new FunkCccTuple {}
-  given cccConjunction: Ccc.Aux[FunK, /\, IsKind, TypeK[UnitK], FunK] =
-    /\.unsafeLeibniz.subst[[f[_,_]] =>> Ccc.Aux[FunK, f, IsKind, TypeK[UnitK], FunK]](cccTuple)
+  given cccTuple: Ccc.Aux[FunK, Tuple2, FunK, IsKind, TypeK[UnitK]] = new FunkCccTuple {}
+  given cccConjunction: Ccc.Aux[FunK, /\, FunK, IsKind, TypeK[UnitK]] =
+    /\.unsafeLeibniz.subst[[f[_,_]] =>> Ccc.Aux[FunK, f, FunK, IsKind, TypeK[UnitK]]](cccTuple)
   given cocartesianOppEither: Cartesian.Aux[Opp[FunK], Either, IsKind, TypeK[VoidK]] = new FunkCocartesianEither {}
   given cocartesianEither: Cartesian.Aux[Dual[FunK,*,*], Either, IsKind, TypeK[VoidK]] =
     Dual.leibniz[FunK].subst[[f[_,_]] =>> Cartesian.Aux[f[_,_], Either, IsKind, TypeK[VoidK]]](cocartesianOppEither)

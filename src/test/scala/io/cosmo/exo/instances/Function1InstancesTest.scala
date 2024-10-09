@@ -20,7 +20,7 @@ object Function1InstancesTest {
   summon[Symmetric.Aux[Function, Tuple2, Trivial]]
   summon[Monoidal.Aux[Function, Tuple2, Trivial, Unit]]
   summon[Cartesian.Aux[Function, Tuple2, Trivial, Unit]]
-  summon[Ccc.Aux[Function, Tuple2, Trivial, Unit, Function]]
+  summon[Ccc.Aux[Function, Tuple2, Function, Trivial, Unit]]
 
   summon[Associative.Aux[Dual[Function,*,*], Tuple2, Trivial]]
   summon[Braided.Aux[Dual[Function,*,*], Tuple2, Trivial]]
@@ -37,7 +37,7 @@ object Function1InstancesTest {
   summon[Symmetric.Aux[Function, /\, Trivial]]
   summon[Monoidal.Aux[Function, /\, Trivial, Unit]]
   summon[Cartesian.Aux[Function, /\, Trivial, Unit]]
-  summon[Ccc.Aux[Function, /\, Trivial, Unit, Function]]
+  summon[Ccc.Aux[Function, /\, Function, Trivial, Unit]]
 
   summon[Associative.Aux[Dual[Function,*,*], /\, Trivial]]
   summon[Braided.Aux[Dual[Function,*,*], /\, Trivial]]

@@ -44,7 +44,7 @@ trait Function1InitialTerminalInstances {
 }
 
 trait Function1AssociativeInstances {
-  given cccFn1Tuple: Ccc.Aux[Function, Tuple2, Trivial, Unit, Function] =
+  given cccFn1Tuple: Ccc.Aux[Function, Tuple2, Function, Trivial, Unit] =
     new Ccc.Proto[Function, Tuple2, Trivial, Unit, Function] {
       private type ->[a, b] = a => b
       def C: Subcat.AuxT[Function] = summon
@@ -62,11 +62,11 @@ trait Function1AssociativeInstances {
       def diag[A: TC]: A -> (A, A) = a => (a, a)
       def curry[X, Y, Z](f: ((X, Y)) => Z): X => (Y => Z) = x => y => f((x, y))
       def uncurry[X, Y, Z](f: X => (Y => Z)): ((X, Y)) => Z = (x, y) => f(x)(y)
-      override def apply[A, B](using TC[A |-> B]): ((A => B, A)) => B = (ab, a) => ab(a)
+      override def apply[A, B](using TC[A => B]): ((A => B, A)) => B = (ab, a) => ab(a)
     }
 
-  given cartesianFn1Conj: Ccc.Aux[Function, /\, Trivial, Unit, Function] =
-    /\.unsafeLeibniz.subst[[f[_,_]] =>> Ccc.Aux[Function, f, Trivial, Unit, Function]](cccFn1Tuple)
+  given cartesianFn1Conj: Ccc.Aux[Function, /\, Function, Trivial, Unit] =
+    /\.unsafeLeibniz.subst[[f[_,_]] =>> Ccc.Aux[Function, f, Function, Trivial, Unit]](cccFn1Tuple)
 
   given cocartesianFn1Disj: Cartesian.Aux[Opp[Function], \/, Trivial, Void] =
     new Cartesian.Proto[Opp[* => *], \/, Trivial, Void] {
