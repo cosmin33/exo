@@ -58,21 +58,21 @@ import ArrowKHelpers.*
 trait ArrowKImplicits extends ArrowKImplicits01 {
   given bifunctor[==>[_,_], -->[_,_], >->[_,_], ⊙[_,_]](using b: Exobifunctor[==>, -->, >->, ⊙], i: IsInjective2[⊙])
   : Exobifunctor[ArrowK[==>,*,*], ArrowK[-->,*,*], ArrowK[>->,*,*], ⊙] =
-    new BifunctorArrowK[==>, -->, >->, ⊙] { val bif = b; val inj = i }
+    new BifunctorArrowK[==>, -->, >->, ⊙] { val (bif, inj) = (b, i) }
   given distributive[->[_,_], ⨂[_, _], ProductId, ⨁[_, _], SumId](using
     s: Distributive.Aux[->, Trivial, ⨂, ProductId, ⨁, SumId],
     injProduct: IsInjective2[⨂],
-    InjSum: IsInjective2[⨁]
+    injSum: IsInjective2[⨁]
   ): Distributive.Aux[ArrowK[->,*,*], IsKind, ⨂, TypeK[[a] =>> ProductId], ⨁, TypeK[[a] =>> SumId]] =
-    new DistributiveArrowK[->, ⨂, ProductId, ⨁, SumId] { val cat = s; val injP = injProduct; val injS = InjSum }
+    new DistributiveArrowK[->, ⨂, ProductId, ⨁, SumId] { val (cat, injP, injS) = (s, injProduct, injSum) }
   given cartesian[->[_,_], ⊙[_,_], I](using c: Cartesian.Aux[->, ⊙, Trivial, I], i: IsInjective2[⊙])
   : Cartesian.Aux[ArrowK[->,*,*], ⊙, IsKind, TypeK[[a] =>> I]] =
-    new CartesianArrowK[->, ⊙, I] { val assoc = c; val inj = i }
+    new CartesianArrowK[->, ⊙, I] { val (assoc, inj) = (c, i) }
   given coCartesian[->[_,_], ⊙[_,_], I](using c: Cartesian.Aux[Dual[->,*,*], ⊙, Trivial, I], i: IsInjective2[⊙])
   : Cartesian.Aux[Dual[ArrowK[->,*,*],*,*], ⊙, IsKind, TypeK[[a] =>> I]] =
-    new CoCartesianArrowK[->, ⊙, I] { val assoc = c; val inj = i }
+    new CoCartesianArrowK[->, ⊙, I] { val (assoc, inj) = (c, i) }
   given coAssociative[->[_,_], ⊙[_,_]](using a: Associative.Aux[Dual[->,*,*], ⊙, Trivial], i: IsInjective2[⊙]): Associative[Dual[ArrowK[->,*,*],*,*], ⊙] =
-    new CoAssociativeArrowK[->, ⊙] { val assoc = a; val inj = i }
+    new CoAssociativeArrowK[->, ⊙] { val (assoc, inj) = (a, i) }
   given initial[->[_,_], I](using i: Initial.Aux[->, Trivial, I]): Initial.Aux[ArrowK[->,*,*], IsKind, TypeK[[a] =>> I]] =
     new InitialArrowK[->, I] { val ini = i }
   given terminal[->[_,_], T](using t: Terminal.Aux[->, Trivial, T]): Terminal.Aux[ArrowK[->,*,*], IsKind, TypeK[[a] =>> T]] =
@@ -84,10 +84,10 @@ trait ArrowKImplicits01 extends ArrowKImplicits02 {
     new SubcatArrowK[->] { val cat = s }
   given monoidal[->[_,_], ⊙[_,_], I](using m: Monoidal.Aux[->, ⊙, Trivial, I], i: IsInjective2[⊙])
   : Monoidal.Aux[ArrowK[->,*,*], ⊙, IsKind, TypeK[[a] =>> I]] =
-    new MonoidalArrowK[->, ⊙, I] { val assoc = m; val inj = i }
+    new MonoidalArrowK[->, ⊙, I] { val (assoc, inj) = (m, i) }
   given coMonoidal[->[_,_], ⊙[_,_], I](using m: Monoidal.Aux[Dual[->,*,*], ⊙, Trivial, I], i: IsInjective2[⊙])
   : Monoidal.Aux[Dual[ArrowK[->,*,*],*,*], ⊙, IsKind, TypeK[[a] =>> I]] =
-    new CoMonoidalArrowK[->, ⊙, I] { val assoc = m; val inj = i }
+    new CoMonoidalArrowK[->, ⊙, I] { val (assoc, inj) = (m, i) }
 }
 
 trait ArrowKImplicits02 extends ArrowKImplicits03 {
@@ -95,22 +95,22 @@ trait ArrowKImplicits02 extends ArrowKImplicits03 {
     new SemicategoryArrowK[->] { val cat = s }
   given symmetric[->[_,_], ⊙[_,_]](using a: Symmetric.Aux[->, ⊙, Trivial], i: IsInjective2[⊙])
   : Symmetric.Aux[ArrowK[->,*,*], ⊙, IsKind] =
-    new BraidedArrowK[->, ⊙] with Symmetric[ArrowK[->,*,*], ⊙] { val assoc = a; val inj = i }
+    new BraidedArrowK[->, ⊙] with Symmetric[ArrowK[->,*,*], ⊙] { val (assoc, inj) = (a, i) }
   given coSymmetric[->[_,_], ⊙[_,_]](using a: Symmetric.Aux[Dual[->,*,*], ⊙, Trivial], i: IsInjective2[⊙])
   : Symmetric.Aux[Dual[ArrowK[->,*,*],*,*], ⊙, IsKind] =
-    new CoBraidedArrowK[->, ⊙] with Symmetric[Dual[ArrowK[->,*,*],*,*], ⊙] { val assoc = a; val inj = i }
+    new CoBraidedArrowK[->, ⊙] with Symmetric[Dual[ArrowK[->,*,*],*,*], ⊙] { val (assoc, inj)  = (a, i) }
 }
 
 trait ArrowKImplicits03 extends ArrowKImplicits04 {
   given braided[->[_,_], ⊙[_,_]](using a: Braided.Aux[->, ⊙, Trivial], i: IsInjective2[⊙]): Braided.Aux[ArrowK[->,*,*], ⊙, IsKind] =
-    new BraidedArrowK[->, ⊙] { val assoc = a; val inj = i }
+    new BraidedArrowK[->, ⊙] { val (assoc, inj) = (a, i) }
   given coBraided[->[_,_], ⊙[_,_]](using a: Braided.Aux[Dual[->,*,*], ⊙, Trivial], i: IsInjective2[⊙]): Braided.Aux[Dual[ArrowK[->,*,*],*,*], ⊙, IsKind] =
-    new CoBraidedArrowK[->, ⊙] { val assoc = a; val inj = i }
+    new CoBraidedArrowK[->, ⊙] { val (assoc, inj) = (a, i) }
 }
 
 trait ArrowKImplicits04 {
   given associative[->[_,_], ⊙[_,_]](using a: Associative.Aux[->, ⊙, Trivial], i: IsInjective2[⊙]): Associative[ArrowK[->,*,*], ⊙] =
-    new AssociativeArrowK[->, ⊙] { val assoc = a; val inj = i }
+    new AssociativeArrowK[->, ⊙] { val (assoc, inj) = (a, i) }
 }
 
 object ArrowKHelpers:
