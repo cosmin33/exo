@@ -111,8 +111,6 @@ object EvidenceCatHelpers:
     given LD: LaxSemigroupal[\/, Function, /\, T]
     given TP: T[Unit]
     given TS: T[Void]
-    def C: Subcat.Aux[First[T,*,*], T] = summon
-    def bifunctor: Endobifunctor[First[T,*,*], \/] = summon
     def cartesian: Cartesian.Aux[First[T,*,*], /\, T, Unit] = summon
     def cocartesian: Cocartesian.Aux[First[T,*,*], \/, T, Void] = summon
     def distribute[A: T, B: T, C: T]: T[A /\ (B \/ C)] = summon
@@ -122,8 +120,6 @@ object EvidenceCatHelpers:
     given LD: LaxSemigroupal[\/, Function, /\, T]
     given TP: T[Unit]
     given TS: T[Void]
-    def C: Subcat.Aux[Second[T,*,*], T] = summon
-    def bifunctor: Endobifunctor[Second[T,*,*], \/] = summon
     def cartesian: Cartesian.Aux[Second[T,*,*], /\, T, Unit] = summon
     def cocartesian: Cocartesian.Aux[Second[T,*,*], \/, T, Void] = summon
     def distribute[A: T, B: T, C: T]: T[(A /\ B) \/ (A /\ C)] = summon
