@@ -15,7 +15,7 @@ object Dual:
   extension [->[_,_], A, B](self: Dual[->, A, B])
     def toFn: B -> A = self
   
-  given nestedDualCancelsItself[->[_,_]]: (Dual[[a, b] =>> Dual[->, a, b],*,*] =~~= ->) =
+  given nestedDualCancelsItself[->[_,_]]: (Dual[Dual[->,*,*],*,*] =~~= ->) =
     Dual.leibniz[->].subst[[f[_,_]] =>> Opp[Opp[->]] =~~= Dual[f, *, *]](Dual.leibniz[Opp[->]]).flip
-
+  
 end Dual

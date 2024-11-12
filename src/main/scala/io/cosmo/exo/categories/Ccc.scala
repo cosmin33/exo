@@ -1,8 +1,9 @@
 package io.cosmo.exo.categories
 
-import io.cosmo.exo._
-import io.cosmo.exo.functors._
-import io.cosmo.exo.syntax._
+import io.cosmo.exo.*
+import io.cosmo.exo.evidence.*
+import io.cosmo.exo.functors.*
+import io.cosmo.exo.syntax.*
 
 trait Ccc[->[_,_], ⊙[_,_], |->[_,_]] extends Cartesian[->, ⊙] { self =>
   def curry  [A, B, C](f: (A ⊙ B) -> C): A -> (B |-> C)
@@ -54,16 +55,22 @@ trait Ccc[->[_,_], ⊙[_,_], |->[_,_]] extends Cartesian[->, ⊙] { self =>
 }
 
 object Ccc {
-  type Aux[->[_,_], P[_,_], E[_,_], ->#[_], PI] = Ccc[->, P, E] {
-    type TC[x] = ->#[x]
-    type Id = PI
-  }
-  type Aux1[->[_, _], ->#[_], P[_, _], E[_, _]] =
-    Ccc[->, P, E] {type TC[x] = ->#[x]}
+  type Aux[->[_,_], P[_,_], E[_,_], ->#[_], PI] = Ccc[->, P, E] { type TC[x] = ->#[x]; type Id = PI }
+  type Aux1[->[_, _], ->#[_], P[_, _], E[_, _]] = Ccc[->, P, E] { type TC[x] = ->#[x] }
 
-  type Homoiconic[->[_,_], P[_,_], E[_,_]] = Ccc[->, P, E] { type ⊙[a,b] = P[a,b] }
-
-  trait Proto[->[_,_], P[_,_], ->#[_], PI, E[_,_]] extends Ccc[->, P, E] with Cartesian.Proto[->, P, ->#, PI] {
+  trait Proto[->[_,_], P[_,_], ->#[_], PI, |->[_,_]] extends Ccc[->, P, |->] with Cartesian.Proto[->, P, ->#, PI] {
   }
+
+  extension[->[_,_], ⊙[_,_], I[_]](self: CccK.Aux[->, ⊙, I])
+    def curryK[F[_], G[_], H[_]](f: ∀[[a] =>> ⊙[F[a], G[a]] -> H[a]])(using IsInjective2[⊙], IsInjective2[->])
+    : ∀[[a] =>> F[a] -> (G[a] -> H[a])] =
+      self.curry(ArrowK[->, TypeK[F] ⊙ TypeK[G], TypeK[H], [a] =>> F[a] ⊙ G[a], H](f)).unapply
+    def uncurryK[F[_], G[_], H[_]](f: ∀[[a] =>> F[a] -> (G[a] -> H[a])])(using IsInjective2[⊙], IsInjective2[->])
+    : ∀[[a] =>> ⊙[F[a], G[a]] -> H[a]] =
+      self.uncurry(ArrowK[->, TypeK[F], TypeK[G] -> TypeK[H], F, [a] =>> G[a] -> H[a]](f)).unapply
+    def rcurryK[F[_], G[_], H[_]](f: ∀[[a] =>> ⊙[F[a], G[a]] -> H[a]])(using IsInjective2[⊙], IsInjective2[->])
+    : ∀[[a] =>> G[a] -> (F[a] -> H[a])] =
+      self.rcurry(ArrowK[->, TypeK[F] ⊙ TypeK[G], TypeK[H], [a] =>> (F[a] ⊙ G[a]), H](f)).unapply
+
 
 }

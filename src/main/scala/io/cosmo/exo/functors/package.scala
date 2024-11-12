@@ -29,7 +29,7 @@ object FunctorK:
   def apply[H[_[_]]](implicit F: FunctorK[H]): FunctorK[H] = F
 
   trait Proto[H[_[_]]] extends FunctorK[H]:
-    def map[A, B](f: FunK[A, B]): HasTc[H, A] => HasTc[H, B] = HasTc.isoFun(using f.kindA, f.kindB).flip(mapK(f.fn))
+    def map[A, B](f: FunK[A, B]): HasTc[H, A] => HasTc[H, B] = HasTc.isoFun(using f.kindA, f.kindB).from(mapK(f.fn))
     protected def mapK[F[_], G[_]](f: F ~> G): H[F] => H[G]
 
 end FunctorK
@@ -41,7 +41,7 @@ object CofunctorK:
   trait Proto[H[_[_]]] extends CofunctorK[H]:
     def map[A, B](f: Dual[FunK, A, B]): HasTc[H, A] => HasTc[H, B] =
       val fn = f.toFn
-      HasTc.isoFun[H, A, fn.TypeB, B, fn.TypeA](using fn.kindB, fn.kindA).flip(comapK(fn.fn))
+      HasTc.isoFun[H, A, fn.TypeB, B, fn.TypeA](using fn.kindB, fn.kindA).from(comapK(fn.fn))
     protected def comapK[F[_], G[_]](f: G ~> F): H[F] => H[G]
 
 end CofunctorK
@@ -55,8 +55,8 @@ object IsoFunctorK:
       val to = i.to
       val isok: to.TypeA <~> to.TypeB = FunK.isoFunKUnapply(i)(using to.kindA, to.kindB)
       Iso.unsafe(
-        HasTc.isoFun(using to.kindA, to.kindB).flip(mapK(isok)),
-        HasTc.isoFun(using to.kindB, to.kindA).flip(mapK(isok.flip))
+        HasTc.isoFun(using to.kindA, to.kindB).from(mapK(isok)),
+        HasTc.isoFun(using to.kindB, to.kindA).from(mapK(isok.flip))
       )
     protected def mapK[F[_], G[_]](f: F <~> G): H[F] => H[G]
 
@@ -67,7 +67,7 @@ object FunctorK2:
   def apply[H[_[_,_]]](implicit F: FunctorK2[H]): FunctorK2[H] = F
 
   trait Proto[H[_[_,_]]] extends FunctorK2[H]:
-    def map[A, B](f: FunK2[A, B]): HasTc2[H, A] => HasTc2[H, B] = HasTc2.isoFun(using f.kindA, f.kindB).flip(mapK(f.fn))
+    def map[A, B](f: FunK2[A, B]): HasTc2[H, A] => HasTc2[H, B] = HasTc2.isoFun(using f.kindA, f.kindB).from(mapK(f.fn))
     protected def mapK[F[_,_], G[_,_]](f: F ~~> G): H[F] => H[G]
 
 end FunctorK2
@@ -79,7 +79,7 @@ object CofunctorK2:
   trait Proto[H[_[_,_]]] extends CofunctorK2[H]:
     def map[A, B](f: Dual[FunK2, A, B]): HasTc2[H, A] => HasTc2[H, B] =
       val fn = f.toFn
-      HasTc2.isoFun[H, A, fn.TypeB, B, fn.TypeA](using fn.kindB, fn.kindA).flip(comapK(fn.fn))
+      HasTc2.isoFun[H, A, fn.TypeB, B, fn.TypeA](using fn.kindB, fn.kindA).from(comapK(fn.fn))
     protected def comapK[F[_,_], G[_,_]](f: G ~~> F): H[F] => H[G]
 
 end CofunctorK2
@@ -93,8 +93,8 @@ object IsoFunctorK2:
       val to = i.to
       val isok: to.TypeA <~~> to.TypeB = FunK2.isoFunK2Unapply(i)(using to.kindA, to.kindB)
       Iso.unsafe(
-        HasTc2.isoFun(using to.kindA, to.kindB).flip(mapK(isok)),
-        HasTc2.isoFun(using to.kindB, to.kindA).flip(mapK(isok.flip))
+        HasTc2.isoFun(using to.kindA, to.kindB).from(mapK(isok)),
+        HasTc2.isoFun(using to.kindB, to.kindA).from(mapK(isok.flip))
       )
     protected def mapK[F[_,_], G[_,_]](f: F <~~> G): H[F] => H[G]
 
@@ -105,7 +105,7 @@ end IsoFunctorK2
 //  def apply[H[_[_[_]]]](implicit F: FunctorHK[H]): FunctorHK[H] = F
 //
 //  trait Proto[H[_[_[_]]]] extends FunctorHK[H]:
-//    def map[A, B](f: FunHK[A, B]): HasTcHK[H, A] => HasTcHK[H, B] = HasTcHK.isoFun(using f.kindA, f.kindB).flip(mapK(f.fn))
+//    def map[A, B](f: FunHK[A, B]): HasTcHK[H, A] => HasTcHK[H, B] = HasTcHK.isoFun(using f.kindA, f.kindB).from(mapK(f.fn))
 //    protected def mapK[F[_[_]], G[_[_]]](f: F ~> G): H[F] => H[G]
 //
 //end FunctorHK

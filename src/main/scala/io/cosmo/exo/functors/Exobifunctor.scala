@@ -76,11 +76,11 @@ object Endobifunctor {
 trait ExobifunctorInstances {
 
   private[exo] def dicatToIso[==>[_, _], -->[_, _], >->[_, _], Bi[_, _], TC[_]](
-   E: Exobifunctor[Dicat[==>,*,*], Dicat[-->,*,*], >->, Bi]
- )(using
-   S1: Subcat.Aux[==>, TC],
-   S2: Subcat.Aux[-->, TC],
- ): Exobifunctor[Iso[==>,*,*], Iso[-->,*,*], >->, Bi] =
+    E: Exobifunctor[Dicat[==>,*,*], Dicat[-->,*,*], >->, Bi]
+  )(using
+    S1: Subcat.Aux[==>, TC],
+    S2: Subcat.Aux[-->, TC],
+  ): Exobifunctor[Iso[==>,*,*], Iso[-->,*,*], >->, Bi] =
     new Exobifunctor[Iso[==>,*,*], Iso[-->,*,*], >->, Bi]:
       override def bimap[A, X, B, Y](left: Iso[==>, A, X], right: Iso[-->, B, Y]) =
         E.bimap(Dicat[==>, A, X](left.to, left.from), Dicat[-->, B, Y](right.to, right.from))

@@ -41,4 +41,15 @@ object Associative extends Function1AssociativeInstances
       def associate  [X: TC, Y: TC, Z: TC] = i.apply[X, Y, Z].to
       def diassociate[X: TC, Y: TC, Z: TC] = i.apply[X, Y, Z].from
 
+  extension[->[_,_], ⊙[_,_]](a: AssociativeK[->, ⊙])
+    def associateK[F[_], G[_], H[_]](using IsInjective2[⊙]): ∀[[a] =>> ⊙[⊙[F[a], G[a]], H[a]] -> ⊙[F[a], ⊙[G[a], H[a]]]] =
+      a.associate[TypeK[F], TypeK[G], TypeK[H]].unapply
+    def diassociateK[F[_], G[_], H[_]](using IsInjective2[⊙]): ∀[[a] =>> ⊙[F[a], ⊙[G[a], H[a]]] -> ⊙[⊙[F[a], G[a]], H[a]]] =
+      a.diassociate[TypeK[F], TypeK[G], TypeK[H]].unapply
+    def groupedK[F[_], G[_], X[_], Y[_]](f: ∀[[a] =>> F[a] -> G[a]], g: ∀[[a] =>> X[a] -> Y[a]])(using IsInjective2[⊙])
+    : ∀[[a] =>> ⊙[F[a], X[a]] -> ⊙[G[a], Y[a]]] =
+      a.grouped[TypeK[F], TypeK[G], TypeK[X], TypeK[Y]](ArrowK(f), ArrowK(g)).unapply
+    def isoAssociatorK[F[_], G[_], H[_]](using IsInjective2[⊙], Subcat[->])
+    : IsoK[->, [a] =>> ⊙[⊙[F[a], G[a]], H[a]], [a] =>> ⊙[F[a], ⊙[G[a], H[a]]]] = IsoK.unsafe(associateK, diassociateK)
+
 }

@@ -60,12 +60,10 @@ trait ArrowKImplicits extends ArrowKImplicits01 {
   given bifunctor[==>[_,_], -->[_,_], >->[_,_], ⊙[_,_]](using b: Exobifunctor[==>, -->, >->, ⊙], i: IsInjective2[⊙])
   : Exobifunctor[ArrowK[==>,*,*], ArrowK[-->,*,*], ArrowK[>->,*,*], ⊙] =
     new BifunctorArrowK[==>, -->, >->, ⊙] { val (bif, inj) = (b, i) }
-  given distributive[->[_,_], ⨂[_, _], ProductId, ⨁[_, _], SumId](using
-    s: Distributive.Aux[->, Trivial, ⨂, ProductId, ⨁, SumId],
-    injProduct: IsInjective2[⨂],
-    injSum: IsInjective2[⨁]
+  given distributive[->[_,_], ⨂[_,_], ProductId, ⨁[_,_], SumId](using
+    s: Distributive.Aux[->, Trivial, ⨂, ProductId, ⨁, SumId], ip: IsInjective2[⨂], is: IsInjective2[⨁]
   ): Distributive.Aux[ArrowK[->,*,*], IsKind, ⨂, TypeK[[a] =>> ProductId], ⨁, TypeK[[a] =>> SumId]] =
-    new DistributiveArrowK[->, ⨂, ProductId, ⨁, SumId] { val (cat, injP, injS) = (s, injProduct, injSum) }
+    new DistributiveArrowK[->, ⨂, ProductId, ⨁, SumId] { val (cat, injP, injS) = (s, ip, is) }
   given ccc[->[_,_], ⊙[_,_], I, E[_,_]](using c: Ccc.Aux[->, ⊙, E, Trivial, I], ip: IsInjective2[⊙], ie: IsInjective2[E])
   : Ccc.Aux[ArrowK[->,*,*], ⊙, E, IsKind, TypeK[[a] =>> I]] =
     new CccArrowK[->, ⊙, I, E] { val (assoc, inj, injE) = (c, ip, ie) }
@@ -130,8 +128,8 @@ object ArrowKHelpers:
     protected given inj: IsInjective2[⊙]
     def bimap[A, X, B, Y](l: ArrowK[==>, A, X], r: ArrowK[-->, B, Y]): ArrowK[>->, A ⊙ B, X ⊙ Y] =
       ArrowK.from[>->, A ⊙ B, X ⊙ Y](using
-        IsKind.givenInjPair[⊙, A, B](using l.kindA, r.kindA),
-        IsKind.givenInjPair[⊙, X, Y](using l.kindB, r.kindB)
+        IsKind.pairInjectivity[⊙, A, B](using l.kindA, r.kindA),
+        IsKind.pairInjectivity[⊙, X, Y](using l.kindB, r.kindB)
       )(∀.of.fromH([a] => () => bif.bimap(l.fn[a], r.fn[a])))
 
 
@@ -147,7 +145,7 @@ object ArrowKHelpers:
     def id[A](using A: IsKind[A]): ArrowK[->, A, A] =
       ArrowK(∀.from(new ∀.Prototype[[a] =>> A.Type[a] -> A.Type[a]] { def apply[a] = cat.id[A.Type[a]] }))
 
-  trait DistributiveArrowK[->[_,_], ⨂[_, _], ProductId, ⨁[_, _], SumId]
+  trait DistributiveArrowK[->[_,_], ⨂[_,_], ProductId, ⨁[_,_], SumId]
     extends SubcatArrowK[->]
       with Distributive.Proto[ArrowK[->,*,*], IsKind, ⨂, TypeK[[a] =>> ProductId], ⨁, TypeK[[a] =>> SumId]]:
     override def cat: Distributive.Aux[->, Trivial, ⨂, ProductId, ⨁, SumId]
@@ -276,7 +274,7 @@ object ArrowKHelpers:
 
   trait InitialArrowK[->[_,_], I0] extends Initial[ArrowK[->,*,*]]:
     type TC[a] = IsKind[a]
-    type I = TypeK[[a] =>> I0]
+    type I = TypeK[[x] =>> I0]
     protected def ini: Initial.Aux[->, Trivial, I0]
     def TC: IsKind[I] = summon
     def subcat: Subcat.Aux[ArrowK[->,*,*], IsKind] = ArrowK.subcat[->](using ini.subcat)

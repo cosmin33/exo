@@ -88,7 +88,7 @@ trait ForallFunctions {
     )
 
   def fnLowerFunk[F[_], G[_]](fg: ∀[[a] =>> F[a] => G[a]]): ∀[F] => ∀[G] = ff => ∀.of[G].from(fg.apply(ff.apply))
-
+  
   def fnLowerIsok[F[_], G[_]](ik: ∀[[a] =>> F[a] <=> G[a]]): ∀[F] <=> ∀[G] =
     <=>.unsafe[∀[F], ∀[G]](
       ff => ∀.of[G].fromH([a] => () => ik.apply[a].to(ff[a])),
