@@ -89,7 +89,7 @@ object FunKHelpers:
 
   class FunKTerminal extends Terminal.Proto[FunK, IsKind, TypeK[UnitK]]:
     def TC: IsKind[TypeK[UnitK]] = summon
-    def subcat: Subcategory.Aux[Dual[FunK,_,_], IsKind] = Semicategory.dualSubcat[FunK, IsKind]
+    def subcat: Subcategory.Aux[Dual[FunK,*,*], IsKind] = Semicategory.dualSubcat[FunK, IsKind]
     def terminate[A](using A: IsKind[A]): FunK[A, TypeK[UnitK]] = FunK(~>.terminate[A.Type])
 
   trait FunkCccTuple extends Ccc.Proto[FunK, Tuple2, IsKind, TypeK[UnitK], FunK]:
@@ -133,7 +133,8 @@ object FunKHelpers:
     }
     def uncurry[A, B, C](f: FunK[A, FunK[B, C]]): FunK[(A, B), C] = {
       val a: IsKind.Aux[A, f.TypeA] = f.kindA
-      val (ib, ic) = f.kindB.funk[B, C]
+      val (ib, ic) = f.kindB.pairInjectivity[FunK, B, C]
+//      val (ib, ic) = f.kindB.funk[B, C]
       val fun = IsKind.injectivity(f.kindB, IsKind.injFunction[B, C](using ib, ic)).subst[[f[_]] =>> f.TypeA ~> f](f.fn)
       FunK[[o] =>> (a.Type[o], ib.Type[o]), ic.Type, (A, B), C](~>.product.uncurry(fun))(using IsKind.injTuple[A, B](using a, ib), ic)
     }

@@ -24,27 +24,29 @@ object syntax:
 
     def dual: Dual[->, B, A] = Dual(self)
 
-    def associateR[X, Y, Z, ⊙[_,_], TC[_]](using
-      A: Associative.Aux[->, ⊙, TC], ev: B === ⊙[⊙[X, Y], Z], tx: TC[X], ty: TC[Y], tz: TC[Z]
-    ): A -> ⊙[X, ⊙[Y, Z]] = A.C.andThen(ev.subst[[α] =>> A -> α](self), A.associate[X, Y, Z])
-    def diassociateR[X, Y, Z, ⊙[_,_], TC[_]](using
-      A: Associative.Aux[->, ⊙, TC], ev: B === ⊙[X, ⊙[Y, Z]], tx: TC[X], ty: TC[Y], tz: TC[Z]
-    ): A -> ⊙[⊙[X, Y], Z] = A.C.andThen(ev.subst[[α] =>> A -> α](self), A.diassociate[X, Y, Z])
+    def associateR[X, Y, Z, TC[_]](using
+      A: Associative.Aux[->, /\, TC], ev: B === /\[/\[X, Y], Z], tx: TC[X], ty: TC[Y], tz: TC[Z]
+    ): A -> /\[X, /\[Y, Z]] = A.C.andThen(ev.subst[[α] =>> A -> α](self), A.associate[X, Y, Z])
+    def diassociateR[X, Y, Z, TC[_]](using
+      A: Associative.Aux[->, /\, TC], ev: B === /\[X, /\[Y, Z]], tx: TC[X], ty: TC[Y], tz: TC[Z]
+    ): A -> /\[/\[X, Y], Z] = A.C.andThen(ev.subst[[α] =>> A -> α](self), A.diassociate[X, Y, Z])
 
-    def braid[X, Y, ⊙[_,_]](using B: Braided[->, ⊙], ev: B === ⊙[X, Y], tx: B.TC[X], ty: B.TC[Y]
-    ): A -> ⊙[Y, X] = B.C.andThen(ev.subst[[b] =>> A -> b](self), B.braid[X, Y])
+    def braid[X, Y](using B: Braided[->, /\], ev: B === /\[X, Y], tx: B.TC[X], ty: B.TC[Y]): A -> /\[Y, X] =
+      B.C.andThen(ev.subst[[b] =>> A -> b](self), B.braid[X, Y])
 
-    def split[⊙[_, _], D](fn: D -> B)(using c: Cocartesian[->, ⊙]): ⊙[A, D] -> B = c.|||(self, fn)
-    def split3[⊙[_, _], D, E](f1: D -> B, f2: E -> B)(using c: Cocartesian[->, ⊙]): ⊙[A, ⊙[D, E]] -> B = c.|||(self, c.|||(f1, f2))
+    def merge[D](fn: A -> D)(using c: Cartesian[->, /\]): A -> /\[D, B] = c.&&&(fn, self)
+    def merge3[D, E](f1: A -> D, f2: A -> E)(using c: Cartesian[->, /\]): A -> /\[D, /\[E, B]] = c.&&&(f1, c.&&&(f2, self))
+    def merge4[D, E, F](f1: A -> D, f2: A -> E, f3: A -> F)(using c: Cartesian[->, /\]): A -> /\[D, /\[E, /\[F, B]]] =
+      c.&&&(f1, c.&&&(f2, c.&&&(f3, self)))
 
-    def merge[⊙[_, _], D](fn: A -> D)(using c: Cartesian[->, ⊙]): A -> ⊙[D, B] = c.&&&(fn, self)
-    def merge3[⊙[_, _], D, E](f1: A -> D, f2: A -> E)(using c: Cartesian[->, ⊙]): A -> ⊙[D, ⊙[E, B]] = c.&&&(f1, c.&&&(f2, self))
+    def split[D](fn: D -> B)(using c: Cocartesian[->, \/]): \/[A, D] -> B = c.|||(self, fn)
+    def split3[D, E](f1: D -> B, f2: E -> B)(using c: Cocartesian[->, \/]): \/[A, \/[D, E]] -> B = c.|||(self, c.|||(f1, f2))
+    def split4[D, E, F](f1: D -> B, f2: E -> B, f3: F -> B)(using c: Cocartesian[->, \/]): \/[A, \/[D, \/[E, F]]] -> B =
+      c.|||(self, c.|||(f1, c.|||(f2, f3)))
 
     def toFunction(using C: Concrete[->], tc: C.TC[A]): A => B = C.toFunction(self)
-
+  
   extension[F[_,_], A, B](self: F[A, B])
     def bimapFn[C, D](f: A => C, g: B => D)(using F: Endobifunctor[* => *, F]): F[C, D] = F.bimap(f, g)(self)
-    
-//    def exobimap[==>[_,_], -->[_,_], C, D](f: A ==> C, g: B --> D)(using
-//      F: Exobifunctor[==>, -->, * => *, F]
-//    ): F[C, D] = F.bimap(f, g)(self)
+    def bimap[==>[_,_], -->[_,_], C, D](f: A ==> C, g: B --> D)(using F: Exobifunctor[==>, -->, * => *, F]): F[C, D] = 
+      F.bimap(f, g)(self)

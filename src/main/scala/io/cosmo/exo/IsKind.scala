@@ -6,7 +6,6 @@ import io.cosmo.exo.syntax.*
 
 sealed trait IsKind[A]:
   type Type[_]
-  def funk[X, Y](using ev: A === FunK[X, Y]): (IsKind[X], IsKind[Y]) = throw UninitializedFieldError("IsKind.funk")
   def pairInjectivity[P[_,_], X, Y](using ev: A === P[X, Y])(using i: IsInjective2[P]): (IsKind[X], IsKind[Y]) =
     throw UninitializedFieldError("IsKind.pairInjectivity")
 
@@ -41,10 +40,7 @@ trait IsKindImplicits extends IsKindImplicits01 {
 
   // TODO: remove this (after refactor FunctionK to be an alias of ArrowK)
   def injFunction[A, B](using a: IsKind[A], b: IsKind[B]): IsKind.Aux[FunK[A, B], [o] =>> a.Type[o] => b.Type[o]] =
-    new IsKind[FunK[A, B]]:
-      type Type[o] = a.Type[o] => b.Type[o]
-      override def funk[X, Y](using ev: FunK[A, B] === FunK[X, Y]): (IsKind[X], IsKind[Y]) =
-        IsInjective2[FunK].apply.bimapFn(_.subst(a), _.subst(b))
+    ???
 }
 
 trait IsKindImplicits01 extends IsKindImplicits02 {
@@ -56,7 +52,6 @@ trait IsKindImplicits01 extends IsKindImplicits02 {
         val eq: P =~~= ArrowK[->,*,*] = Unsafe.isK2
         val (ax, by) = i.apply[A, B, X, Y](using eq.is[A, B] andThen ev)
         (ax.subst(a), by.subst(b))
-
 }
 
 trait IsKindImplicits02 {

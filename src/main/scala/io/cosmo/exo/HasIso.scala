@@ -5,16 +5,10 @@ import io.cosmo.exo.evidence.*
 import scala.compiletime.summonFrom
 
 opaque type HasIso[->[_, _], A, B] <: Iso[->, A, B] = Iso[->, A, B]
-//  object HasIso:
-//    inline given [->[_, _], A, B]: HasIso[->, A, B] = summonFrom {
-//      case e: /\[A === B, SubcatHasId[->, A]] => e._1.subst[HasIso[->, A, *]](refl[->, A](using e._2))
-//      case i: Iso[->, A, B] => i
-//      case i: Iso[->, B, A] => i.flip
-//    }
 
 object HasIso:
   given[->[_, _], A, B](using e: EqImpIso[->, A, B] \/ (Iso[->, A, B] \/ Iso[->, B, A])): HasIso[->, A, B] =
-    e.fold3(eqIso => eqIso, ab => ab, ba => ba.flip)
+    e.fold3(identity, identity, _.flip)
 
 private[exo] opaque type ReflImpIso[->[_, _], A] = Iso[->, A, A]
 

@@ -57,6 +57,8 @@ object WeakApart {
 
   def witness[A, B](fn: (A === B) => Void): A =!= B = new WeakApart[A, B](fn)
 
+  given [A, B](using NotGiven[A === B]): (A =!= B) = Unsafe.weakApart[A, B]
+
   given isoCanonic[A, B]: (((A === B) => Void) <=> (A =!= B)) = Iso.unsafe(witness, _.run)
 
   given proposition[A, B]: Proposition[A =!= B] =
@@ -75,8 +77,6 @@ object WeakApart {
     def apply[X, Y](using A: A === F[X], B: B === F[Y]): X =!= Y =
       WeakApart.witness(xy => ab.run(A andThen xy.lift[F] andThen B.flip))
   }
-
-  given [A, B](using NotGiven[A === B]): (A =!= B) = Unsafe.weakApart[A, B]
 
   import scala.quoted._
 

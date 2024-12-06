@@ -30,7 +30,7 @@ trait Iso[->[_,_], A, B] { self =>
 
   final def compose[Z](that: Z <-> A): Z <-> B = that.andThen(self)
 
-  /** If A <-> B then having a function B -> B we can obtain A -> A */
+  /** If A <-> B then having an arrow B -> B we can obtain A -> A */
   def teleport(f: A -> A): B -> B = self.from >>> f >>> self.to
 
   /** Having A <-> B searches implicits for B <-> C to obtain A <-> C */
@@ -43,28 +43,28 @@ trait Iso[->[_,_], A, B] { self =>
   def derive[F[_]](implicit fa: F[A], I: Exo.IsoFun[->, F]): F[B] = I.map(self)(fa)
 
   /** From A <-> B, X <-> Y we can obtain (A ⨂ X) <-> (B ⨂ Y) if -> has an Associative instance with ⨂ */
-//  def grouped[⨂[_, _]] = new GroupedPartial[⨂]
-//  class GroupedPartial[⨂[_, _]]:
-//    def apply[I, J](ij: I <-> J)(using A: Associative[->, ⨂]): ⨂[A, I] <-> ⨂[B, J] =
-//      Associative[<->, ⨂].bifunctor.bimap(ab, ij)
+  def grouped[⨂[_,_]] = new GroupedPartial[⨂]
+  class GroupedPartial[⨂[_,_]]:
+    def apply[I, J](ij: I <-> J)(using A: Associative[->, ⨂]): ⨂[A, I] <-> ⨂[B, J] =
+      Associative[<->, ⨂].bifunctor.bimap(self, ij)
 
-//  /** From A <-> B, X <-> Y we can obtain (A, X) <-> (B, Y) if -> has an Associative instance with Tuple2 */
-//  def and[I, J](ij: I <-> J)(implicit C: Associative[->, Tuple2]): (A, I) <-> (B, J) = grouped[Tuple2](ij)
-//
-//  def and_[I, J](ij: I <-> J)(implicit C: Associative[->, /\]): (A /\ I) <-> (B /\ J) = grouped[/\](ij)
-//
-//  /** From A <-> B, X <-> Y we can obtain (A \/ X) <-> (B \/ Y) if -> has an associative instance with \/ */
-//  def or[I, J](ij: I <-> J)(implicit C: Associative[->, Either]): Either[A, I] <-> Either[B, J] = grouped[Either](ij)
-//
-//  def or_[I, J](ij: I <-> J)(implicit C: Associative[->, \/]): (A \/ I) <-> (B \/ J) = grouped[\/](ij)
+  /** From A <-> B, X <-> Y we can obtain (A, X) <-> (B, Y) if -> has an Associative instance with Tuple2 */
+  def and[I, J](ij: I <-> J)(implicit C: Associative[->, Tuple2]): (A, I) <-> (B, J) = grouped[Tuple2](ij)
+
+  def /\[I, J](ij: I <-> J)(implicit C: Associative[->, /\]): (A /\ I) <-> (B /\ J) = grouped[/\](ij)
+
+  /** From A <-> B, X <-> Y we can obtain (A \/ X) <-> (B \/ Y) if -> has an associative instance with \/ */
+  def or[I, J](ij: I <-> J)(implicit C: Associative[->, Either]): Either[A, I] <-> Either[B, J] = grouped[Either](ij)
+
+  def \/[I, J](ij: I <-> J)(implicit C: Associative[->, \/]): (A \/ I) <-> (B \/ J) = grouped[\/](ij)
 
 }
 
-object Iso extends IsoImplicits {
+object Iso extends IsoInstances with IsoImplicits {
   def apply[->[_,_], A, B](using iso: HasIso[->, A, B]): Iso[->, A, B] = iso
   def apply[->[_,_], A](using SubcatHasId[->, A]): Iso[->, A, A] = refl[->, A]
   def apply[A]: A <=> A = refl[A]
-
+  
   /** create an isomorphism given the two complementary functions as long as you promise they uphold the iso laws */
   def unsafe[->[_,_], A, B](ab: A -> B, ba: B -> A)(using C: Subcat[->]): Iso[->, A, B] =
     new Iso[->, A, B] { val (cat, to, from) = (C, ab, ba) }
@@ -85,7 +85,7 @@ object Iso extends IsoImplicits {
     <~~>.unsafe(liftFnFnToFnIso[==>, -->](iso.to), liftFnFnToFnIso[-->, ==>](iso.from))
 
   /** Isomorphism between any isomorphism and it's flipped self */
-  given flippedIso[->[_,_], A, B]: (Iso[->, A, B] <=> Iso[->, B, A]) = Iso.unsafe(_.flip, _.flip)
+  given flippedIso[->[_,_], A, B](using n: A =!= B): (Iso[->, A, B] <=> Iso[->, B, A]) = Iso.unsafe(_.flip, _.flip)
 
   /** Isomorphism between a case class and a tuple of the proper arity */
   //implicit def forCaseClass[S <: Product]: Iso[* => *, S, ev.Repr] = ???
@@ -95,22 +95,88 @@ object Iso extends IsoImplicits {
 
 }
 
+import IsoHelperTraits.*
+
+trait IsoInstances extends IsoInstances01 {
+  given bifunctor[->[_,_], ->#[_], ⊙[_,_]](using
+    S: Subcat.Aux[->, ->#], B: Endobifunctor[->, ⊙],
+  ): Endobifunctor[Iso[->, *, *], ⊙] =
+    new IsoBifunctor[->, ->#, ⊙] {val cat = S; val bif = B}
+  given groupoid[->[_,_], T[_]](using C: Subcat.Aux[->, T]
+  ): Groupoid.Aux[Iso[->, *, *], T] = new IsoGroupoid[->, T] {val cat = C}
+  given associative[->[_,_], ⊙[_,_]](using
+    a: Associative[->, ⊙]
+  ): Associative.Aux[Iso[->, *, *], ⊙, a.TC] = new IsoAssoc[->, a.TC, ⊙] {val A = a}
+}
+
+trait IsoInstances01 extends IsoInstances02 {
+  given braided[->[_,_], ⊙[_,_]](using
+    a: Braided[->, ⊙]
+  ): Braided.Aux[Iso[->, *, *], ⊙, a.TC] = new IsoBraided[->, ⊙, a.TC] {val A = a}
+  given monoidal[->[_,_], ⊙[_,_]](using
+    a: Monoidal[->, ⊙]
+  ): Monoidal.Aux[Iso[->, *, *], ⊙, a.TC, a.Id] = new IsoMonoidal[->, ⊙, a.TC, a.Id] {val A = a}
+}
+
+trait IsoInstances02 {
+  given symmetric[->[_,_], ⊙[_,_]](using
+    a: Symmetric[->, ⊙]
+  ): Symmetric.Aux[Iso[->, *, *], ⊙, a.TC] = new IsoSymmetric[->, ⊙, a.TC] {val A = a}
+}
+
+private[exo] object IsoHelperTraits {
+  trait IsoBifunctor[->[_,_], ->#[_], ⊙[_,_]] extends Endobifunctor[Iso[->,*,*], ⊙]:
+    given cat: Subcat.Aux[->, ->#]
+    def bif: Endobifunctor[->, ⊙]
+    private type <->[a,b] = Iso[->, a, b]
+    override def bimap[A, X, B, Y](l: A <-> X, r: B <-> Y): ⊙[A, B] <-> ⊙[X, Y] =
+      Iso.unsafe(bif.bimap(l.to, r.to), bif.bimap(l.from, r.from))
+
+  trait IsoGroupoid[->[_,_], T[_]] extends Groupoid[Iso[->, *, *]]:
+    given cat: Subcat.Aux[->, T]
+    type TC[a] = T[a]
+    def id[A](using A: T[A]): Iso[->, A, A] = Iso.refl[->, A](using SubcatHasId.from)
+    def flip[A, B](f: Iso[->, A, B]): Iso[->, B, A] = f.flip
+    def andThen[A, B, C](ab: Iso[->, A, B], bc: Iso[->, B, C]): Iso[->, A, C] = ab.andThen(bc)
+
+  trait IsoAssoc[->[_,_], T[_], ⊙[_,_]] extends Associative[Iso[->, *, *], ⊙]:
+    def A: Associative.Aux[->, ⊙, T]
+    type TC[a] = T[a]
+    def C = Iso.groupoid(using A.C)
+    def bifunctor = Iso.bifunctor(using A.C, A.bifunctor)
+    def associate  [X: TC, Y: TC, Z: TC]  : Iso[->, X ⊙ Y ⊙ Z, X ⊙ (Y ⊙ Z)] = Iso.unsafe(A.associate[X, Y, Z], A.diassociate[X, Y, Z])(using A.C)
+    def diassociate[X: TC, Y: TC, Z: TC]: Iso[->, X ⊙ (Y ⊙ Z), X ⊙ Y ⊙ Z] = Iso.unsafe(A.diassociate[X, Y, Z], A.associate[X, Y, Z])(using A.C)
+
+  trait IsoBraided[->[_,_], ⊙[_,_], T[_]] extends Braided[Iso[->, *, *], ⊙] with IsoAssoc[->, T, ⊙]:
+    def A: Braided.Aux[->, ⊙, T]
+    def braid[A: TC, B: TC]: Iso[->, A ⊙ B, B ⊙ A] = Iso.unsafe(A.braid[A, B], A.braid[B, A])(using A.C)
+
+  trait IsoSymmetric[->[_,_], ⊙[_,_], T[_]] extends Symmetric[Iso[->, *, *], ⊙] with IsoBraided[->, ⊙, T]:
+    def A: Symmetric.Aux[->, ⊙, T]
+
+  trait IsoMonoidal[->[_,_], ⊙[_,_], T[_], I] extends Monoidal[Iso[->, *, *], ⊙] with IsoAssoc[->, T, ⊙]:
+    def A: Monoidal.Aux[->, ⊙, T, I]
+    type Id = I
+    def idl  [A: TC]: Iso[->, I ⊙ A, A  ] = Iso.unsafe(A.idl[A], A.coidl[A])(using A.C)
+    def coidl[A: TC]: Iso[->,   A, I ⊙ A] = Iso.unsafe(A.coidl[A], A.idl[A])(using A.C)
+    def idr  [A: TC]: Iso[->, A ⊙ I, A  ] = Iso.unsafe(A.idr[A], A.coidr[A])(using A.C)
+    def coidr[A: TC]: Iso[->,   A, A ⊙ I] = Iso.unsafe(A.coidr[A], A.idr[A])(using A.C)
+
+}
 
 trait IsoImplicits extends IsoImplicits01 {
 
   /** Any singleton is isomorphic with unit */
-  given isoUnitSingleton[A <: Singleton](using
-    a: ValueOf[A]
-  ): (A <=> Unit) = Iso.unsafe((_: A) => (), (_: Unit) => a.value)
+  given isoUnitSingleton[A <: Singleton](using a: ValueOf[A]): (A <=> Unit) = Iso.unsafe(_ => (), _ => a.value)
 
   /** Any two singletons are isomorphic */
   given isoBetweenSingletons[A <: Singleton, B <: Singleton](using
     a: ValueOf[A], b: ValueOf[B], neq: NotGiven[A === B]
-  ): (A <=> B) = Iso.unsafe((_: A) => b.value, (_: B) => a.value)
+  ): (A <=> B) = Iso.unsafe(_ => b.value, _ => a.value)
 
   /** Isomorphisms from categorical constructs */
   given isoSymmetric[->[_,_], ⊙[_,_], A, B, T[_]](using
-    S: Symmetric.Aux[->, ⊙, T], a: T[A], b: T[B]
+    S: Symmetric.Aux[->, ⊙, T], a: T[A], b: T[B], n: A =!= B
   ): Iso[->, A ⊙ B, B ⊙ A] = S.isoSymmetric(a, b)
   given isoUnitorL[->[_,_], ⊙[_,_], A, T[_], I](using
     M: Monoidal.Aux[->, ⊙, T, I], a: T[A]
@@ -176,7 +242,7 @@ trait IsoImplicits01 extends IsoImplicits02 {
     A: Associative.Aux[->, ⊙, T], a: T[A], b: T[B], c: T[C]
   ): Iso[->, (A ⊙ B) ⊙ C, A ⊙ (B ⊙ C)] = A.isoAssociator(a, b, c)
   given isoGroupoidFlip[->[_,_], A, B](using
-    G: Groupoid[->]
+    G: Groupoid[->], n: A =!= B
   ): ((A -> B) <=> (B -> A)) = Iso.unsafe(Groupoid[->].flip, Groupoid[->].flip)
 }
 

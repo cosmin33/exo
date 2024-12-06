@@ -12,7 +12,9 @@ val \/ = Disjunction
 def -\/[L, R](l: L): \/[L, R] = \/.left(l)
 def \/-[L, R](r: R): \/[L, R] = \/.right(r)
 
-object Disjunction extends DisjunctionImplicits {
+object Disjunction extends DisjunctionImplicits
+  with DisjunctionTypeclassImplicits {
+
   def apply[L, R](e: Either[L, R]): \/[L, R] = e
 
   def left [L, R](l: L): \/[L, R] = Left(l)
@@ -30,7 +32,8 @@ object Disjunction extends DisjunctionImplicits {
   given bifunctor: Endobifunctor[Function, \/] with
     def bimap[A, B, C, D](fab: A => B, fcd: C => D): (A \/ C) => (B \/ D) = _.bimap(fab, fcd)
 
-  given coproductTypeclass[T[_], A, B](using L: LaxSemigroupal[\/, Function, /\, T], ta: T[A], tb: T[B]): T[A \/ B] =
+  // TODO: scrap this with all the dependencies, only keep what's in DisjunctionTypeclassImplicits
+  given disjConjTypeclass[T[_], A, B](using L: LaxSemigroupal[\/, Function, /\, T], ta: T[A], tb: T[B]): T[A \/ B] =
     L.product(/\(ta, tb))
 
   extension [A, B](e: A \/ B)
@@ -54,3 +57,8 @@ trait DisjunctionImplicits extends DisjunctionImplicits01:
 trait DisjunctionImplicits01:
   given secondary[A, B](using b: B): \/[A, B] = \/.right(b)
 
+trait DisjunctionTypeclassImplicits extends DisjunctionTypeclassImplicits01:
+  given disjunctionTypeclassLeft[T[_], A, B](using L: LaxSemigroupal[\/, Function, \/, T], ta: T[A]): T[A \/ B] = L.product(-\/(ta))
+
+trait DisjunctionTypeclassImplicits01:
+  given disjunctionTypeclassRight[T[_], A, B](using L: LaxSemigroupal[\/, Function, \/, T], tb: T[B]): T[A \/ B] = L.product(\/-(tb))

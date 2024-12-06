@@ -6,39 +6,12 @@ import io.cosmo.exo.syntax.*
 
 sealed trait IsHKind[A]:
   type Type[_[_]]
-  def tuple[X, Y](using ev: A === (X, Y)): (IsHKind[X], IsHKind[Y]) = throw UninitializedFieldError("IsHKind.tuple")
-  def function[X, Y](using ev: A === FunH[X, Y]): (IsHKind[X], IsHKind[Y]) = throw UninitializedFieldError("IsHKind.funk")
-  def either[X, Y](using ev: A === Either[X, Y]): (IsHKind[X], IsHKind[Y]) = throw UninitializedFieldError("IsHKind.either")
+  def pairInjectivity[P[_,_], X, Y](using ev: A === P[X, Y])(using i: IsInjective2[P]): (IsHKind[X], IsHKind[Y]) =
+    throw UninitializedFieldError("IsHKind.pairInjectivity")
 
-object IsHKind:
+object IsHKind extends IsHKindImplicits:
   type Aux[A, T[_[_]]] = IsHKind[A] { type Type[f[_]] = T[f] }
   def apply[A](using a: IsHKind[A]): IsHKind.Aux[A, a.Type] = a
-
-  given impl[F[_[_]]]: IsHKind.Aux[TypeHK[F], F] = new IsHKind[TypeHK[F]] { type Type[f[_]] = F[f] }
-
-  given givenTuple[A, B](using l: IsHKind[A], r: IsHKind[B]): IsHKind.Aux[(A, B), [f[_]] =>> (l.Type[f], r.Type[f])] =
-    new IsHKind[(A, B)]:
-      type Type[f[_]] = (l.Type[f], r.Type[f])
-      override def tuple[X, Y](using ev: (A, B) === (X, Y)): (IsHKind[X], IsHKind[Y]) =
-        IsInjective2[Tuple2].apply.bimapFn(_.subst(l), _.subst(r))
-
-  given givenConjunction[A, B](using l: IsHKind[A], r: IsHKind[B]): IsHKind.Aux[A /\ B, [f[_]] =>> l.Type[f] /\ r.Type[f]] =
-    /\.unsafeLeibniz.subst[[f[_,_]] =>> IsHKind.Aux[f[A, B], [o[_]] =>> f[l.Type[o], r.Type[o]]]](givenTuple[A, B])
-
-  given givenFunction[A, B](using a: IsHKind[A], b: IsHKind[B]): IsHKind.Aux[FunH[A, B], [o[_]] =>> a.Type[o] => b.Type[o]] =
-    new IsHKind[FunH[A, B]]:
-      type Type[o[_]] = a.Type[o] => b.Type[o]
-      override def function[X, Y](using ev: FunH[A, B] === FunH[X, Y]): (IsHKind[X], IsHKind[Y]) =
-        IsInjective2[FunH].apply.bimapFn(_.subst(a), _.subst(b))
-
-  given givenEither[A, B](using a: IsHKind[A], b: IsHKind[B]): IsHKind.Aux[Either[A, B], [f[_]] =>> Either[a.Type[f], b.Type[f]]] =
-    new IsHKind[Either[A, B]]:
-      type Type[f[_]] = Either[a.Type[f], b.Type[f]]
-      override def either[X, Y](using ev: Either[A, B] === Either[X, Y]): (IsHKind[X], IsHKind[Y]) =
-        IsInjective2[Either].apply.bimapFn(_.subst(a), _.subst(b))
-
-  given givenDisjunction[A, B](using a: IsHKind[A], b: IsHKind[B]): IsHKind.Aux[A \/ B, [f[_]] =>> a.Type[f] \/ b.Type[f]] =
-    \/.unsafeLeibniz.subst[[f[_,_]] =>> IsHKind.Aux[f[A, B], [o[_]] =>> f[a.Type[o], b.Type[o]]]](givenEither[A, B])
 
   def injectivity[A, B](a: IsHKind[A], b: IsHKind[B])(using eq: IsHKind[A] === IsHKind[B]): a.Type =≈= b.Type = Unsafe.isHK
 
@@ -46,3 +19,48 @@ object IsHKind:
     Iso.unsafe(_ => Unsafe.isHK, _ => Unsafe.is)
 
 end IsHKind
+
+trait IsHKindImplicits extends IsHKindImplicits01 {
+  given impl[F[_[_]]]: IsHKind.Aux[TypeHK[F], F] = new IsHKind[TypeHK[F]] { type Type[f[_]] = F[f] }
+
+  def pairInjectivity[F[_,_], A, B](using a: IsHKind[A], b: IsHKind[B])(using ii: IsInjective2[F])
+  : IsHKind.Aux[F[A, B], [α[_]] =>> F[a.Type[α], b.Type[α]]] = givenPairInj
+
+  def injTuple[A, B](using l: IsHKind[A], r: IsHKind[B]): IsHKind.Aux[(A, B), [f[_]] =>> (l.Type[f], r.Type[f])] =
+    givenPairInj
+
+  def injConjunction[A, B](using l: IsHKind[A], r: IsHKind[B]): IsHKind.Aux[A /\ B, [f[_]] =>> l.Type[f] /\ r.Type[f]] =
+    givenPairInj
+
+  def injEither[A, B](using a: IsHKind[A], b: IsHKind[B]): IsHKind.Aux[Either[A, B], [f[_]] =>> Either[a.Type[f], b.Type[f]]] =
+    givenPairInj
+
+  def injDisjunction[A, B](using a: IsHKind[A], b: IsHKind[B]): IsHKind.Aux[A \/ B, [f[_]] =>> a.Type[f] \/ b.Type[f]] =
+    givenPairInj
+
+
+  def injFunction[A, B](using a: IsHKind[A], b: IsHKind[B]): IsHKind.Aux[FunH[A, B], [o[_]] =>> a.Type[o] => b.Type[o]] =
+    ???
+}
+
+trait IsHKindImplicits01 extends IsHKindImplicits02 {
+  given arrowK[->[_,_], A, B](using a: IsHKind[A], b: IsHKind[B])
+  : IsHKind.Aux[ArrowH[->, A, B], [α[_]] =>> a.Type[α] -> b.Type[α]] =
+    new IsHKind[ArrowH[->, A, B]]:
+      type Type[α[_]] = a.Type[α] -> b.Type[α]
+      override def pairInjectivity[P[_,_], X, Y](using ev: ArrowH[->, A, B] === P[X, Y])(using i: IsInjective2[P]): (IsHKind[X], IsHKind[Y]) =
+        val eq: P =~~= ArrowH[->,*,*] = Unsafe.isK2
+        val (ax, by) = i.apply[A, B, X, Y](using eq.is[A, B] andThen ev)
+        (ax.subst(a), by.subst(b))
+}
+
+trait IsHKindImplicits02 {
+  given givenPairInj[P[_,_], A, B, F[_[_]], G[_[_]]](using a: IsHKind.Aux[A, F], b: IsHKind.Aux[B, G])(using ii: IsInjective2[P])
+  : IsHKind.Aux[P[A, B], [α[_]] =>> P[F[α], G[α]]] =
+    new IsHKind[P[A, B]]:
+      type Type[α[_]] = P[a.Type[α], b.Type[α]]
+      override def pairInjectivity[Q[_,_], X, Y](using ev: P[A, B] === Q[X, Y])(using i: IsInjective2[Q]): (IsHKind[X], IsHKind[Y]) =
+        val eq: Q =~~= P = Unsafe.isK2
+        val (ax, by) = i.apply[A, B, X, Y](using eq.is[A, B] andThen ev)
+        (ax.subst(a), by.subst(b))
+}

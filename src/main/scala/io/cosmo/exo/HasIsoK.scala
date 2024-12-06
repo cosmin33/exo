@@ -16,8 +16,4 @@ private[exo] object EqImpIsoK:
 opaque type HasIsoK[->[_,_], F[_], G[_]] <: IsoK[->, F, G] = IsoK[->, F, G]
 object HasIsoK:
   given impl[->[_,_], F[_], G[_]](using e: EqImpIsoK[->, F, G] \/ (IsoK[->, F, G] \/ IsoK[->, G, F])): HasIsoK[->, F, G] =
-    e.fold3(
-      ei => ei,
-      ab => ab,
-      ba => ∀.mk[IsoK[->, F, G]].from(ba.apply.flip)
-    )
+    e.fold3(identity, identity, _.flip)
