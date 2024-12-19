@@ -18,7 +18,13 @@
   object Dicat:
     def apply[->[_,_], A, B](to: A -> B, from: B -> A): Dicat[->, A, B] = (to, Dual(from))
 
-  //////////////// Categories for kinds F[_] ////////////////
+  //////////////// Categories for kind F[_] ////////////////
+
+  type SemicategoryK[->[_,_]] = Semicategory[ArrowK[->,*,*]]
+  type SubcategoryK[->[_,_]] = Subcategory.Aux[ArrowK[->,*,*], IsKind]
+  type DistributiveK[->[_,_], ⨂[_, _], ⨁[_, _]] = Distributive.Aux1[ArrowK[->,*,*], IsKind, ⨂, ⨁]
+  object DistributiveK:
+    type Aux[->[_,_], ⨂[_,_], ⨁[_,_], P[_], S[_]] = Distributive.Aux[ArrowK[->,*,*], IsKind, ⨂, TypeK[P], ⨁, TypeK[S]]
 
   type AssociativeK[->[_,_], ⊙[_,_]] = Associative.Aux[ArrowK[->,*,*], ⊙, IsKind]
   type CoAssociativeK[->[_,_], ⊙[_,_]] = Associative.Aux[Dual[ArrowK[->,*,*],*,*], ⊙, IsKind]
@@ -55,7 +61,7 @@
   object TerminalK:
     type Aux[->[_,_], I[_]] = Terminal.Aux[ArrowK[->,*,*], IsKind, TypeK[I]]
 
-  //////////////// Categories for kinds 2 F[_,_] ////////////////
+  //////////////// Categories for kind F[_,_] ////////////////
 
   type AssociativeK2[->[_,_], ⊙[_,_]] = Associative.Aux[ArrowK2[->,*,*], ⊙, IsKind2]
   type CoAssociativeK2[->[_,_], ⊙[_,_]] = Associative.Aux[Dual[ArrowK2[->,*,*], *, *], ⊙, IsKind2]

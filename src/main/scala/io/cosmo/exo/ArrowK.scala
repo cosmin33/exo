@@ -186,7 +186,7 @@ object ArrowKHelpers:
     def C: Subcat.Aux[[a,b] =>> Dual[ArrowK[->,*,*],a,b], IsKind] = summon
     def bifunctor: Endobifunctor[[a,b] =>> Dual[ArrowK[->,*,*],a,b], ⊙] =
       val ff = Endobifunctor[ArrowK[Dual[->,*,*],*,*], ⊙]
-      IsoFunctorK2[[f[_,_]] =>> Endobifunctor[f, ⊙]].isoMapK2(ArrowK.invertDual)(ff)
+      IsoFunctorK2[* => *, * => *, [f[_,_]] =>> Endobifunctor[f, ⊙]].isoMapK2(ArrowK.invertDual)(ff)
     def associate[A, B, C](using ia: IsKind[A], ib: IsKind[B], ic: IsKind[C]): Dual[ArrowK[->,*,*], A ⊙ B ⊙ C, A ⊙ (B ⊙ C)] =
       Dual(ArrowK.from[->, ⊙[A, ⊙[B, C]], ⊙[⊙[A, B], C]](
         ∀.of.fromH([a] => () => assoc.associate[ia.Type[a], ib.Type[a], ic.Type[a]])
@@ -288,7 +288,7 @@ object ArrowKHelpers:
     def TC: IsKind[I] = summon
     def subcat: Subcat.Aux[Dual[ArrowK[->,*,*],*,*], IsKind] =
       val sad = ArrowK.subcat[Dual[->,*,*]](using term.subcat)
-      IsoFunctorK2[[f[_,_]] =>> Subcat.Aux[f, IsKind]].isoMapK2(ArrowK.invertDual)(sad)
+      IsoFunctorK2[* => *, * => *, [f[_,_]] =>> Subcat.Aux[f, IsKind]].isoMapK2(ArrowK.invertDual)(sad)
     def initiate[A](using A: IsKind[A]): Dual[ArrowK[->,*,*], TypeK[[a] =>> T], A] =
       Dual(ArrowK.from[->, A, TypeK[[a] =>> T]](∀.of.fromH([a] => () => term.terminate[A.Type[a]])))
   }

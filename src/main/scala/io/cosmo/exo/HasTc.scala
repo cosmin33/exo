@@ -1,6 +1,6 @@
 package io.cosmo.exo
 
-/** Witness for a given F[_] that there exists a given TC[F] instance. */
+/** Witness for `F[_]` that there is a stored `TC[F]` instance. `F[_]` is computed by `IsKind.Aux[TF, F]` */
 sealed trait HasTc[TC[_[_]], TF]:
   type F[_]
   def isk: IsKind.Aux[TF, F]
@@ -19,27 +19,20 @@ object HasTc:
 
   given instance[TC[_[_]], F[_]](using tc: TC[F]): HasTc.Aux[TC, TypeK[F], F] = apply(tc)
 
-  given isoCanonic[TC[_[_]], A](using i: IsKind[A]): (HasTc[TC, A] <=> TC[i.Type]) =
-    Iso.unsafe(ht => IsKind.injectivity(ht.isk, i).subst[TC](ht.instance), from(_, i))
+  given isoCanonic[TC[_[_]], A](using i: IsKind[A]): (TC[i.Type] <=> HasTc[TC, A]) =
+    Iso.unsafe(from(_, i), ht => IsKind.injectivity(ht.isk, i).subst[TC](ht.instance))
 
   given isoFun[TC[_[_]], A, F[_], B, G[_]](using
     ia: IsKind.Aux[A, F], ib: IsKind.Aux[B, G]
-  ): ((HasTc[TC, A] => HasTc[TC, B]) <=> (TC[F] => TC[G])) =
-    val i1 = isoCanonic[TC, A]
-    val i2 = isoCanonic[TC, B]
-    Iso.unsafe(i1.from andThen _ andThen i2.to, i1.to andThen _ andThen i2.from)
-
-  def isoFun1[TC[_[_]], A, F[_], B, G[_]](using
-    ia: IsKind.Aux[A, F], ib: IsKind.Aux[B, G]
   ): ((TC[F] => TC[G]) <=> (HasTc[TC, A] => HasTc[TC, B])) =
-    val i1 = isoCanonic[TC, A]
-    val i2 = isoCanonic[TC, B]
-    Iso.unsafe(i1.to andThen _ andThen i2.from, i1.from andThen _ andThen i2.to)
-
+    val i1: TC[F] <=> HasTc[TC, A] = isoCanonic
+    val i2: TC[G] <=> HasTc[TC, B] = isoCanonic
+    Iso.unsafe(i1.from andThen _ andThen i2.to, i1.to andThen _ andThen i2.from)
+  
   given isoIso[TC[_[_]], A, F[_], B, G[_]](using
     ia: IsKind.Aux[A, F], ib: IsKind.Aux[B, G]
-  ): ((HasTc[TC, A] <=> HasTc[TC, B]) <=> (TC[F] <=> TC[G])) =
-    val i1 = isoCanonic[TC, A]
-    val i2 = isoCanonic[TC, B]
+  ): ((TC[F] <=> TC[G]) <=> (HasTc[TC, A] <=> HasTc[TC, B])) =
+    val i1: TC[F] <=> HasTc[TC, A] = isoCanonic
+    val i2: TC[G] <=> HasTc[TC, B] = isoCanonic
     Iso.unsafe(i1.flip andThen _ andThen i2, i1 andThen _ andThen i2.flip)
 end HasTc

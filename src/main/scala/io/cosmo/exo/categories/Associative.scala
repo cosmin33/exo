@@ -53,3 +53,26 @@ object Associative extends Function1AssociativeInstances
     : IsoK[->, [a] =>> ⊙[⊙[F[a], G[a]], H[a]], [a] =>> ⊙[F[a], ⊙[G[a], H[a]]]] = IsoK.unsafe(associateK, diassociateK)
 
 }
+
+object AssociativeK {
+  trait Proto[->[_,_], ⊙[_,_]] extends Associative[ArrowK[->,*,*], ⊙] {
+    given inj: IsInjective2[⊙]
+    given sub: Subcategory.Aux[->, Trivial]
+    type TC[a] = IsKind[a]
+    def C: Subcategory.Aux[ArrowK[->,*,*], IsKind] = summon
+    def bifunctor: Endobifunctor[ArrowK[->,*,*], ⊙] = ???
+    def associateK  [F[_], G[_], H[_]](using IsInjective2[⊙]): ∀[[a] =>> ⊙[⊙[F[a], G[a]], H[a]] -> ⊙[F[a], ⊙[G[a], H[a]]]]
+    def diassociateK[F[_], G[_], H[_]](using IsInjective2[⊙]): ∀[[a] =>> ⊙[F[a], ⊙[G[a], H[a]]] -> ⊙[⊙[F[a], G[a]], H[a]]]
+    def associate[X: IsKind, Y: IsKind, Z: IsKind]: ArrowK[->, X ⊙ Y ⊙ Z, X ⊙ (Y ⊙ Z)] =
+      ArrowK.from[->, X ⊙ Y ⊙ Z, X ⊙ (Y ⊙ Z)](associateK)
+    def diassociate[X: IsKind, Y: IsKind, Z: IsKind]: ArrowK[->, X ⊙ (Y ⊙ Z), X ⊙ Y ⊙ Z] =
+      ArrowK.from[->, X ⊙ (Y ⊙ Z), X ⊙ Y ⊙ Z](diassociateK)
+  }
+}
+
+trait AssociativeImplicits {
+}
+
+object AssociativeHelpers
+
+end AssociativeHelpers

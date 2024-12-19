@@ -7,15 +7,15 @@ import io.cosmo.exo.syntax.*
 
 import scala.util.NotGiven
 
-trait Iso[->[_,_], A, B] { self =>
+trait Iso[->[_,_], A, B]:
+  self =>
 
   def cat: Subcat[->]
 
-  def to: A -> B
-
+  def to:   A -> B
   def from: B -> A
 
-  final def apply(a: A)(implicit ev: =~~=[->, * => *]): B = ev(to)(a)
+  final def apply(a: A)(using ev: =~~=[->, * => *]): B = ev(to)(a)
 
   private type <->[a, b] = Iso[->, a, b]
 
@@ -35,12 +35,11 @@ trait Iso[->[_,_], A, B] { self =>
 
   /** Having A <-> B searches implicits for B <-> C to obtain A <-> C */
   def chain[C](using i: HasIso[->, B, C]): A <-> C = self andThen i
-
   /** Having F <~> G searches implicits for G <~> H to obtain F <~> H */
-  def chainK[C[_]](implicit i: HasIso[->, B, TypeK[C]]): A <-> TypeK[C] = self.andThen(i)
+  def chainK[C[_]](using i: HasIso[->, B, TypeK[C]]): A <-> TypeK[C] = self.andThen(i)
 
   /** For some F[_] that has an iso functor, if we have an F[A] we can obtain an F[B] using A <-> B */
-  def derive[F[_]](implicit fa: F[A], I: Exo.IsoFun[->, F]): F[B] = I.map(self)(fa)
+  def derive[F[_]](using fa: F[A], I: Exo.IsoFun[->, F]): F[B] = I.map(self)(fa)
 
   /** From A <-> B, X <-> Y we can obtain (A ⨂ X) <-> (B ⨂ Y) if -> has an Associative instance with ⨂ */
   def grouped[⨂[_,_]] = new GroupedPartial[⨂]
@@ -49,18 +48,16 @@ trait Iso[->[_,_], A, B] { self =>
       Associative[<->, ⨂].bifunctor.bimap(self, ij)
 
   /** From A <-> B, X <-> Y we can obtain (A, X) <-> (B, Y) if -> has an Associative instance with Tuple2 */
-  def and[I, J](ij: I <-> J)(implicit C: Associative[->, Tuple2]): (A, I) <-> (B, J) = grouped[Tuple2](ij)
-
-  def /\[I, J](ij: I <-> J)(implicit C: Associative[->, /\]): (A /\ I) <-> (B /\ J) = grouped[/\](ij)
+  def and[I, J](ij: I <-> J)(using C: Associative[->, Tuple2]): (A, I) <-> (B, J) = grouped[Tuple2](ij)
+  /** From A <-> B, X <-> Y we can obtain (A, X) <-> (B, Y) if -> has an Associative instance with Tuple2 */
+  def /\[I, J](ij: I <-> J)(using C: Associative[->, /\]): (A /\ I) <-> (B /\ J) = grouped[/\](ij)
 
   /** From A <-> B, X <-> Y we can obtain (A \/ X) <-> (B \/ Y) if -> has an associative instance with \/ */
-  def or[I, J](ij: I <-> J)(implicit C: Associative[->, Either]): Either[A, I] <-> Either[B, J] = grouped[Either](ij)
+  def or[I, J](ij: I <-> J)(using C: Associative[->, Either]): Either[A, I] <-> Either[B, J] = grouped[Either](ij)
+  /** From A <-> B, X <-> Y we can obtain (A \/ X) <-> (B \/ Y) if -> has an associative instance with \/ */
+  def \/[I, J](ij: I <-> J)(using C: Associative[->, \/]): (A \/ I) <-> (B \/ J) = grouped[\/](ij)
 
-  def \/[I, J](ij: I <-> J)(implicit C: Associative[->, \/]): (A \/ I) <-> (B \/ J) = grouped[\/](ij)
-
-}
-
-object Iso extends IsoInstances with IsoImplicits {
+object Iso extends IsoInstances with IsoImplicits:
   def apply[->[_,_], A, B](using iso: HasIso[->, A, B]): Iso[->, A, B] = iso
   def apply[->[_,_], A](using SubcatHasId[->, A]): Iso[->, A, A] = refl[->, A]
   def apply[A]: A <=> A = refl[A]
@@ -87,13 +84,7 @@ object Iso extends IsoInstances with IsoImplicits {
   /** Isomorphism between any isomorphism and it's flipped self */
   given flippedIso[->[_,_], A, B](using n: A =!= B): (Iso[->, A, B] <=> Iso[->, B, A]) = Iso.unsafe(_.flip, _.flip)
 
-  /** Isomorphism between a case class and a tuple of the proper arity */
-  //implicit def forCaseClass[S <: Product]: Iso[* => *, S, ev.Repr] = ???
-
-  /** Isomorphism between a case class and it's generic representation (from shapeless) */
-  //def forGeneric[A, Repr](implicit g: Generic.Aux[A, Repr]): A <=> Repr = ???
-
-}
+end Iso
 
 import IsoHelperTraits.*
 
@@ -144,7 +135,7 @@ private[exo] object IsoHelperTraits {
     type TC[a] = T[a]
     def C = Iso.groupoid(using A.C)
     def bifunctor = Iso.bifunctor(using A.C, A.bifunctor)
-    def associate  [X: TC, Y: TC, Z: TC]  : Iso[->, X ⊙ Y ⊙ Z, X ⊙ (Y ⊙ Z)] = Iso.unsafe(A.associate[X, Y, Z], A.diassociate[X, Y, Z])(using A.C)
+    def associate  [X: TC, Y: TC, Z: TC]: Iso[->, X ⊙ Y ⊙ Z, X ⊙ (Y ⊙ Z)] = Iso.unsafe(A.associate[X, Y, Z], A.diassociate[X, Y, Z])(using A.C)
     def diassociate[X: TC, Y: TC, Z: TC]: Iso[->, X ⊙ (Y ⊙ Z), X ⊙ Y ⊙ Z] = Iso.unsafe(A.diassociate[X, Y, Z], A.associate[X, Y, Z])(using A.C)
 
   trait IsoBraided[->[_,_], ⊙[_,_], T[_]] extends Braided[Iso[->, *, *], ⊙] with IsoAssoc[->, T, ⊙]:
@@ -157,10 +148,10 @@ private[exo] object IsoHelperTraits {
   trait IsoMonoidal[->[_,_], ⊙[_,_], T[_], I] extends Monoidal[Iso[->, *, *], ⊙] with IsoAssoc[->, T, ⊙]:
     def A: Monoidal.Aux[->, ⊙, T, I]
     type Id = I
-    def idl  [A: TC]: Iso[->, I ⊙ A, A  ] = Iso.unsafe(A.idl[A], A.coidl[A])(using A.C)
-    def coidl[A: TC]: Iso[->,   A, I ⊙ A] = Iso.unsafe(A.coidl[A], A.idl[A])(using A.C)
-    def idr  [A: TC]: Iso[->, A ⊙ I, A  ] = Iso.unsafe(A.idr[A], A.coidr[A])(using A.C)
-    def coidr[A: TC]: Iso[->,   A, A ⊙ I] = Iso.unsafe(A.coidr[A], A.idr[A])(using A.C)
+    def idl  [A: TC]: Iso[->, I ⊙ A, A] = Iso.unsafe(A.idl[A], A.coidl[A])(using A.C)
+    def coidl[A: TC]: Iso[->, A, I ⊙ A] = Iso.unsafe(A.coidl[A], A.idl[A])(using A.C)
+    def idr  [A: TC]: Iso[->, A ⊙ I, A] = Iso.unsafe(A.idr[A], A.coidr[A])(using A.C)
+    def coidr[A: TC]: Iso[->, A, A ⊙ I] = Iso.unsafe(A.coidr[A], A.idr[A])(using A.C)
 
 }
 

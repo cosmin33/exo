@@ -16,15 +16,15 @@ trait EvidenceCatBifunctorInstances {
   given firstCatBifunctorConj [T[_]](using L: LaxSemigroupal[/\, Function, /\, T]): Endobifunctor[First[T, *, *], /\] =
     new Endobifunctor[First[T, *, *], /\]:
       def bimap[A, B, C, D](a: T[A], b: T[C]): T[A /\ C] = L.product((a, b))
-  given firstCatBifunctorDisj [T[_]](using L: LaxSemigroupal[\/, Function, /\, T]): Endobifunctor[First[T, *, *], \/] =
+  given firstCatBifunctorDisj [T[_]](using L: LaxSemigroupal[\/, Function, \/, T]): Endobifunctor[First[T, *, *], \/] =
     new Endobifunctor[First[T, *, *], \/]:
-      def bimap[A, B, C, D](a: T[A], b: T[C]): T[A \/ C] = L.product((a, b))
+      def bimap[A, B, C, D](a: T[A], b: T[C]): T[A \/ C] = L.product(-\/(a))
   given secondCatBifunctorConj[T[_]](using L: LaxSemigroupal[/\, Function, /\, T]): Endobifunctor[Second[T, *, *], /\] =
     new Endobifunctor[Second[T, *, *], /\]:
       def bimap[A, B, C, D](a: T[B], b: T[D]): T[B /\ D] = L.product((a, b))
-  given secondCatBifunctorDisj[T[_]](using L: LaxSemigroupal[\/, Function, /\, T]): Endobifunctor[Second[T, *, *], \/] =
+  given secondCatBifunctorDisj[T[_]](using L: LaxSemigroupal[\/, Function, \/, T]): Endobifunctor[Second[T, *, *], \/] =
     new Endobifunctor[Second[T, *, *], \/]:
-      def bimap[A, B, C, D](a: T[B], b: T[D]): T[B \/ D] = L.product((a, b))
+      def bimap[A, B, C, D](a: T[B], b: T[D]): T[B \/ D] = L.product(-\/(a))
 }
 
 trait EvidenceCatSubcatInstances extends EvidenceCatSubcatInstances01 {
@@ -34,14 +34,14 @@ trait EvidenceCatSubcatInstances extends EvidenceCatSubcatInstances01 {
 trait EvidenceCatSubcatInstances01 {
   given firstCatDistributive[T[_]](using
     lc: LaxSemigroupal[/\, Function, /\, T],
-    ld: LaxSemigroupal[\/, Function, /\, T],
+    ld: LaxSemigroupal[\/, Function, \/, T],
     tp: T[Unit],
     ts: T[Void]
   ): Distributive.Aux[First[T,*,*], T, /\, Unit, \/, Void] =
     new FirstDistributive[T] { val LC = lc; val LD = ld; val TP = tp; val TS = ts }
   given secondCatDistributive[T[_]](using
     lc: LaxSemigroupal[/\, Function, /\, T],
-    ld: LaxSemigroupal[\/, Function, /\, T],
+    ld: LaxSemigroupal[\/, Function, \/, T],
     tp: T[Unit],
     ts: T[Void]
   ): Distributive.Aux[Second[T,*,*], T, /\, Unit, \/, Void] =
@@ -51,30 +51,30 @@ trait EvidenceCatSubcatInstances01 {
 trait EvidenceCatAssocInstances extends EvidenceCatAssocInstances01 {
   given firstCatAssociativeConj [T[_]](using l: LaxSemigroupal[/\, Function, /\, T]): Associative.Aux[First[T,*,*], /\, T] =
     new FirstAssociativeConj[T] { val L = l }
-  given firstCatAssociativeDisj [T[_]](using l: LaxSemigroupal[\/, Function, /\, T]): Associative.Aux[First[T,*,*], \/, T] =
+  given firstCatAssociativeDisj [T[_]](using l: LaxSemigroupal[\/, Function, \/, T]): Associative.Aux[First[T,*,*], \/, T] =
     new FirstAssociativeDisj[T] { val L = l }
   given secondCatAssociativeConj[T[_]](using l: LaxSemigroupal[/\, Function, /\, T]): Associative.Aux[Second[T,*,*], /\, T] =
     new SecondAssociativeConj[T] { val L = l }
-  given secondCatAssociativeDisj[T[_]](using l: LaxSemigroupal[\/, Function, /\, T]): Associative.Aux[Second[T,*,*], \/, T] =
+  given secondCatAssociativeDisj[T[_]](using l: LaxSemigroupal[\/, Function, \/, T]): Associative.Aux[Second[T,*,*], \/, T] =
     new SecondAssociativeDisj[T] { val L = l }
 }
 
 trait EvidenceCatAssocInstances01 {
   given firstCatCartesianConj [T[_]](using l: LaxSemigroupal[/\, Function, /\, T], u: T[Unit]): Cartesian.Aux[First[T,*,*], /\, T, Unit] =
     new FirstCartesianConj[T] { val L = l; val TU = u }
-  given firstCatCartesianDisj [T[_]](using l: LaxSemigroupal[\/, Function, /\, T], u: T[Void]): Cartesian.Aux[First[T,*,*], \/, T, Void] =
+  given firstCatCartesianDisj [T[_]](using l: LaxSemigroupal[\/, Function, \/, T], u: T[Void]): Cartesian.Aux[First[T,*,*], \/, T, Void] =
     new FirstCartesianDisj[T] { val L = l; val TU = u }
   given secondCatCartesianConj[T[_]](using l: LaxSemigroupal[/\, Function, /\, T], u: T[Unit]): Cartesian.Aux[Second[T,*,*], /\, T, Unit] =
     new SecondCartesianConj[T] { val L = l; val TU = u }
-  given secondCatCartesianDisj[T[_]](using l: LaxSemigroupal[\/, Function, /\, T], u: T[Void]): Cartesian.Aux[Second[T,*,*], \/, T, Void] =
+  given secondCatCartesianDisj[T[_]](using l: LaxSemigroupal[\/, Function, \/, T], u: T[Void]): Cartesian.Aux[Second[T,*,*], \/, T, Void] =
     new SecondCartesianDisj[T] { val L = l; val TU = u }
   given firstCatCocartesianConj [T[_]](using LaxSemigroupal[/\, Function, /\, T], T[Unit]): Cocartesian.Aux[First[T,*,*], /\, T, Unit] =
     Dual.leibniz[First[T,*,*]].subst[[f[_,_]] =>> Cartesian.Aux[f, /\, T, Unit]](secondCatCartesianConj)
-  given firstCatCocartesianDisj [T[_]](using LaxSemigroupal[\/, Function, /\, T], T[Void]): Cocartesian.Aux[First[T,*,*], \/, T, Void] =
+  given firstCatCocartesianDisj [T[_]](using LaxSemigroupal[\/, Function, \/, T], T[Void]): Cocartesian.Aux[First[T,*,*], \/, T, Void] =
     Dual.leibniz[First[T,*,*]].subst[[f[_,_]] =>> Cartesian.Aux[f, \/, T, Void]](secondCatCartesianDisj)
   given secondCatCocartesianConj[T[_]](using LaxSemigroupal[/\, Function, /\, T], T[Unit]): Cocartesian.Aux[Second[T,*,*], /\, T, Unit] =
     Dual.leibniz[Second[T,*,*]].subst[[f[_,_]] =>> Cartesian.Aux[f, /\, T, Unit]](firstCatCartesianConj)
-  given secondCatCocartesianDisj[T[_]](using LaxSemigroupal[\/, Function, /\, T], T[Void]): Cocartesian.Aux[Second[T,*,*], \/, T, Void] =
+  given secondCatCocartesianDisj[T[_]](using LaxSemigroupal[\/, Function, \/, T], T[Void]): Cocartesian.Aux[Second[T,*,*], \/, T, Void] =
     Dual.leibniz[Second[T,*,*]].subst[[f[_,_]] =>> Cartesian.Aux[f, \/, T, Void]](firstCatCartesianDisj)
 }
 
@@ -108,7 +108,7 @@ object EvidenceCatHelpers:
 
   trait FirstDistributive[T[_]] extends Distributive.Proto[First[T,*,*], T, /\, Unit, \/, Void] with FirstSubcat[T]:
     given LC: LaxSemigroupal[/\, Function, /\, T]
-    given LD: LaxSemigroupal[\/, Function, /\, T]
+    given LD: LaxSemigroupal[\/, Function, \/, T]
     given TP: T[Unit]
     given TS: T[Void]
     def cartesian: Cartesian.Aux[First[T,*,*], /\, T, Unit] = summon
@@ -117,7 +117,7 @@ object EvidenceCatHelpers:
 
   trait SecondDistributive[T[_]] extends Distributive.Proto[Second[T,*,*], T, /\, Unit, \/, Void] with SecondSubcat[T]:
     given LC: LaxSemigroupal[/\, Function, /\, T]
-    given LD: LaxSemigroupal[\/, Function, /\, T]
+    given LD: LaxSemigroupal[\/, Function, \/, T]
     given TP: T[Unit]
     given TS: T[Void]
     def cartesian: Cartesian.Aux[Second[T,*,*], /\, T, Unit] = summon
@@ -144,7 +144,7 @@ object EvidenceCatHelpers:
     def &&&[A, B, C](a: T[A], b: T[A]): T[A] = a
 
   trait FirstAssociativeDisj[T[_]] extends Associative.Proto[First[T,*,*], \/, T]:
-    given L: LaxSemigroupal[\/, Function, /\, T]
+    given L: LaxSemigroupal[\/, Function, \/, T]
     def C: Subcat.Aux[First[T,*,*], T] = summon
     def bifunctor: Endobifunctor[First[T,*,*], \/] = summon
     def associate  [X: T, Y: T, Z: T]: T[(X \/ Y) \/ Z] = summon
@@ -182,7 +182,7 @@ object EvidenceCatHelpers:
     def &&&[A, B, C](f: T[B], g: T[C]): T[B /\ C] = L.product((f, g))
 
   trait SecondAssociativeDisj[T[_]] extends Associative.Proto[Second[T,*,*], \/, T]:
-    given L: LaxSemigroupal[\/, Function, /\, T]
+    given L: LaxSemigroupal[\/, Function, \/, T]
     def C: Subcat.Aux[Second[T,*,*], T] = summon
     def bifunctor: Endobifunctor[Second[T,*,*], \/] = summon
     def associate  [X: T, Y: T, Z: T]: T[X \/ (Y \/ Z)] = summon
@@ -198,6 +198,6 @@ object EvidenceCatHelpers:
     def snd[A: T, B: T]: T[B] = summon
     def diag[A: T]: T[A \/ A] = summon
     def braid[A: T, B: T]: T[B \/ A] = summon
-    def &&&[A, B, C](f: T[B], g: T[C]): T[B \/ C] = L.product((f, g))
+    def &&&[A, B, C](f: T[B], g: T[C]): T[B \/ C] = L.product(-\/(f))
 
 end EvidenceCatHelpers

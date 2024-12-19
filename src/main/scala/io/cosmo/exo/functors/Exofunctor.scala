@@ -53,23 +53,25 @@ object Exofunctor extends ExofunctorInstances {
     def apply[->[_,_], F[_]](using E: IsoFun[->, F]): IsoFun[->, F] = E
 
   // extension methods for higher kinded functors
-  extension [H[_[_]]](self: FunctorK[H])
-    def mapK[F[_], G[_]](f: F ~> G): H[F] => H[G] = self.map(FunK(f)).isoTo
+  extension [==>[_,_], H[_[_]]](self: FunctorK[==>, * => *, H])
+    def mapK[F[_], G[_]](f: ∀[[a] =>> F[a] ==> G[a]]): H[F] => H[G] = self.map(ArrowK(f)).isoTo
 
-  extension[H[_[_]]](self: CofunctorK[H])
-    def comapK[F[_], G[_]](f: G ~> F): H[F] => H[G] = self.map(Dual(FunK(f))).isoTo
+  extension[==>[_,_], H[_[_]]](self: CofunctorK[==>, * => *, H])
+    def comapK[F[_], G[_]](f: ∀[[a] =>> G[a] ==> F[a]]): H[F] => H[G] = self.map(Dual(ArrowK(f))).isoTo
 
-  extension[H[_[_]]](self: IsoFunctorK[H])
-    def isoMapK[F[_], G[_]](f: F <~> G): H[F] <=> H[G] = self.map(IsoFunK(f)).isoTo
+  extension[==>[_,_], H[_[_]]](self: IsoFunctorK[==>, * => *, H])
+    def isoMapK[F[_], G[_]](i: IsoK[==>, F, G])(using s: Subcat.Aux[==>, Trivial]): H[F] <=> H[G] =
+      self.map(IsoArrowK(i)).isoTo
 
-  extension[H[_[_,_]]](self: FunctorK2[H])
-    def mapK2[F[_,_], G[_,_]](f: F ~~> G): H[F] => H[G] = self.map(FunK2(f)).isoTo
+  extension[==>[_,_], H[_[_,_]]](self: FunctorK2[==>, * => *, H])
+    def mapK2[F[_,_], G[_,_]](f: ∀∀[[a,b] =>> F[a,b] ==> G[a,b]]): H[F] => H[G] = self.map(ArrowK2(f)).isoTo
 
-  extension[H[_[_,_]]](self: CofunctorK2[H])
-    def comapK2[F[_,_], G[_,_]](f: G ~~> F): H[F] => H[G] = self.map(Dual(FunK2(f))).isoTo
-
-  extension[H[_[_,_]]](self: IsoFunctorK2[H])
-    def isoMapK2[F[_,_], G[_,_]](f: F <~~> G): H[F] <=> H[G] = self.map(IsoFunK2(f)).isoTo
+  extension[==>[_,_], H[_[_,_]]](self: CofunctorK2[==>, * => *, H])
+    def comapK2[F[_,_], G[_,_]](f: ∀∀[[a,b] =>> G[a,b] ==> F[a,b]]): H[F] => H[G] = self.map(Dual(ArrowK2(f))).isoTo
+  
+  extension[==>[_,_], H[_[_,_]]](self: IsoFunctorK2[==>, * => *, H])
+    def isoMapK2[F[_,_], G[_,_]](i: IsoK2[==>, F, G])(using s: Subcat.Aux[==>, Trivial]): H[F] <=> H[G] = 
+      self.map(IsoArrowK2(i)).isoTo
 }
 
 trait ExofunctorInstances extends ExofunctorInstances01 {
@@ -104,3 +106,27 @@ trait ExofunctorInstances02 {
   given groupoidMap[==>[_,_], -->[_,_], F[_]](using F: Exo[==>, -->, F], G: Groupoid[-->]): Exo[==>, Dual[-->, *, *], F] =
     Exo.unsafe[==>, Dual[-->,*,*], F]([a, b] => (f: a ==> b) => Dual(G.flip(F.map(f))))
 }
+
+trait ExofunctorImplicits:
+//  given exofunctorFunctorK2[->[_,_], F[_]]: FunctorK2[[f[_,_]] =>> Exofunctor[->, f, F]] =
+//    new FunctorK2.Proto[[f[_,_]] =>> Exofunctor[->, f, F]]:
+//      protected def mapK[==>[_,_], -->[_,_]](fk: ==> ~~> -->): Exofunctor[->, ==>, F] => Exofunctor[->, -->, F] =
+//        ef => Exo.unsafe[->, -->, F]([A, B] => (f: A -> B) => fk(ef.map(f)))
+//  given exofunctorCofunctorK2[->[_,_], F[_]]: CofunctorK2[[f[_,_]] =>> Exofunctor[f, ->, F]] =
+//    new CofunctorK2.Proto[[f[_,_]] =>> Exofunctor[f, ->, F]]:
+//      protected def comapK[==>[_,_], -->[_,_]](fk: --> ~~> ==>): Exofunctor[==>, ->, F] => Exofunctor[-->, ->, F] =
+//        ef => Exo.unsafe[-->, ->, F]([A, B] => (f: A --> B) => ef.map(fk(f)))
+//  given exofunctorIsoFunctorK[==>[_,_], -->[_,_]]: IsoFunctorK[[f[_]] =>> Exofunctor[==>, -->, f]] =
+//    new IsoFunctorK.Proto[[f[_]] =>> Exofunctor[==>, -->, f]]:
+//      override protected def mapK[F[_], G[_]](f: F <~> G): Exo[==>, -->, F] => Exo[==>, -->, G] =
+//        ef => Exo.unsafe[==>, -->, G]([A, B] => (fa: A ==> B) =>
+//          val xx: F[A] --> F[B] = ef.map(fa)
+//          val i1 =
+//          ???)
+
+//      protected def mapK[F[_], G[_]](iso: IsoK[-->, F, G]): Exofunctor[==>, -->, F] => Exofunctor[==>, -->, G] =
+//        ef => Exo.unsafe[==>, -->, G]([A, B] => (fa: A ==> B) =>
+//          val xx: F[A] --> F[B] = ef.map(fa)
+//          val rr = iso.from[A]
+//          ???)
+end ExofunctorImplicits

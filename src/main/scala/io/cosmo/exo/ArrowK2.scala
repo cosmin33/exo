@@ -29,7 +29,7 @@ object ArrowK2 extends ArrowK2Implicits {
   case class MkArrowK2[->[_,_], A, B, F[_,_], G[_,_]](ia: IsKind2.Aux[A, F], ib: IsKind2.Aux[B, G]):
     def apply(f: ∀∀[[x, y] =>> ia.Type[x, y] -> ib.Type[x, y]]): ArrowK2[->, A, B] = ArrowK2.apply[->, A, B, F, G](f)(using ia, ib)
 
-  def isoFunKUnapply[->[_,_], A, B](i: Iso[ArrowK2[->,*,*], A, B])(
+  def isoFunK2Unapply[->[_,_], A, B](i: Iso[ArrowK2[->,*,*], A, B])(
     using a: IsKind2[A], b: IsKind2[B])(
     using s: Subcat[->]
   ): IsoK2[->, a.Type, b.Type] = IsoK2.unsafe(i.to.unapply, i.from.unapply)
@@ -185,7 +185,7 @@ object ArrowK2Helpers:
     def C: Subcat.Aux[[a,b] =>> Dual[ArrowK2[->,*,*],a,b], IsKind2] = summon
     def bifunctor: Endobifunctor[[a,b] =>> Dual[ArrowK2[->,*,*],a,b], ⊙] =
       val ff = Endobifunctor[ArrowK2[Dual[->,*,*],*,*], ⊙]
-      IsoFunctorK2[[f[_,_]] =>> Endobifunctor[f, ⊙]].isoMapK2(ArrowK2.invertDual)(ff)
+      IsoFunctorK2[* => *, * => *, [f[_,_]] =>> Endobifunctor[f, ⊙]].isoMapK2(ArrowK2.invertDual)(ff)
     def associate[A, B, C](using ia: IsKind2[A], ib: IsKind2[B], ic: IsKind2[C]): Dual[ArrowK2[->,*,*], A ⊙ B ⊙ C, A ⊙ (B ⊙ C)] =
       Dual(ArrowK2.from[->, ⊙[A, ⊙[B, C]], ⊙[⊙[A, B], C]](
         ∀∀.of.fromH([a,b] => () => assoc.associate[ia.Type[a,b], ib.Type[a,b], ic.Type[a,b]])
@@ -287,7 +287,7 @@ object ArrowK2Helpers:
     def TC: IsKind2[I] = summon
     def subcat: Subcat.Aux[Dual[ArrowK2[->,*,*],*,*], IsKind2] =
       val sad = ArrowK2.subcat[Dual[->,*,*]](using term.subcat)
-      IsoFunctorK2[[f[_,_]] =>> Subcat.Aux[f, IsKind2]].isoMapK2(ArrowK2.invertDual)(sad)
+      IsoFunctorK2[* => *, * => *, [f[_,_]] =>> Subcat.Aux[f, IsKind2]].isoMapK2(ArrowK2.invertDual)(sad)
     def initiate[A](using A: IsKind2[A]): Dual[ArrowK2[->,*,*], TypeK2[[a,b] =>> T], A] =
       Dual(ArrowK2.from[->, A, TypeK2[[a,b] =>> T]](∀∀.of.fromH([a,b] => () => term.terminate[A.Type[a,b]])))
   }

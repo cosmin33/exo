@@ -27,5 +27,5 @@ object SubcatHasId:
   def apply[->[_,_], A](using sub: SubcatHasId[->, A]): SubcatHasId[->, A] = sub
 
   given from[->[_,_], A, T[_]](using sub: Subcat.Aux[->, T], tc: T[A]): SubcatHasId[->, A] =
-    new SubcatHasId[->, A] { type TC[a] = T[a]; val s = sub; val id = sub.id(using tc) }
+    new SubcatHasId[->, A] { type TC[a] = T[a]; val s = sub; val id = sub.id }
 end SubcatHasId
