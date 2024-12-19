@@ -17,19 +17,19 @@ object HasHc:
 
   given instance[TC[_[_[_]]], F[_[_]]](using tc: TC[F]): HasHc.Aux[TC, TypeHK[F], F] = apply(tc)
 
-  given isoCanonic[TC[_[_[_]]], A](using i: IsHKind[A]): (HasHc[TC, A] <=> TC[i.Type]) =
-    Iso.unsafe(ht => IsHKind.injectivity(ht.isk, i).subst[TC](ht.instance), from(_, i))
+  given isoCanonic[TC[_[_[_]]], A](using i: IsHKind[A]): (TC[i.Type] <=> HasHc[TC, A]) =
+    Iso.unsafe(from(_, i), ht => IsHKind.injectivity(ht.isk, i).subst[TC](ht.instance))
 
   given isoFun[TC[_[_[_]]], A, F[_[_]], B, G[_[_]]](using
     ia: IsHKind.Aux[A, F], ib: IsHKind.Aux[B, G]
-  ): ((HasHc[TC, A] => HasHc[TC, B]) <=> (TC[F] => TC[G])) =
+  ): ((TC[F] => TC[G]) <=> (HasHc[TC, A] => HasHc[TC, B])) =
     val i1 = isoCanonic[TC, A]
     val i2 = isoCanonic[TC, B]
     Iso.unsafe(i1.from andThen _ andThen i2.to, i1.to andThen _ andThen i2.from)
 
   given isoIso[TC[_[_[_]]], A, F[_[_]], B, G[_[_]]](using
     ia: IsHKind.Aux[A, F], ib: IsHKind.Aux[B, G]
-  ): ((HasHc[TC, A] <=> HasHc[TC, B]) <=> (TC[F] <=> TC[G])) =
+  ): ((TC[F] <=> TC[G]) <=> (HasHc[TC, A] <=> HasHc[TC, B])) =
     val i1 = isoCanonic[TC, A]
     val i2 = isoCanonic[TC, B]
     Iso.unsafe(i1.flip andThen _ andThen i2, i1 andThen _ andThen i2.flip)

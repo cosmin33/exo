@@ -56,12 +56,12 @@ object IsoArrowK2:
 
 type IsoArrowH[->[_,_], A, B] = Iso[ArrowH[->,*,*], A, B]
 object IsoArrowH:
-  def apply[->[_,_], A[_[_]], B[_[_]]](i: IsoHK[->, A, B])(using s: Subcat.Aux[->, Trivial]): IsoArrowH[->, TypeHK[A], TypeHK[B]] =
+  def apply[->[_,_], A[_[_]], B[_[_]]](i: IsoH[->, A, B])(using s: Subcat.Aux[->, Trivial]): IsoArrowH[->, TypeHK[A], TypeHK[B]] =
     Iso.unsafe[ArrowH[->,*,*], TypeHK[A], TypeHK[B]](ArrowH(i.to), ArrowH(i.from))
 
 type IsoK [->[_,_], F[_],    G[_]]    =  ∀[[a]    =>> Iso[->, F[a], G[a]]]
 type IsoK2[->[_,_], F[_,_],  G[_,_]]  = ∀∀[[a, b] =>> Iso[->, F[a, b], G[a, b]]]
-type IsoHK[->[_,_], A[_[_]], B[_[_]]] = ∀~[[f[_]] =>> Iso[->, A[f], B[f]]]
+type IsoH [->[_,_], A[_[_]], B[_[_]]] = ∀~[[f[_]] =>> Iso[->, A[f], B[f]]]
 
 object IsoK:
   def unsafe[->[_,_], F[_], G[_]](f: ∀[[a] =>> F[a] -> G[a]], g: ∀[[a] =>> G[a] -> F[a]])(using s: Subcat[->]): IsoK[->, F, G] =
@@ -72,8 +72,8 @@ object IsoK2:
     ∀∀.mk[IsoK2[->, F, G]].fromH([a, b] => () => Iso.unsafe(f[a, b], g[a, b]))
 
 object IsoHK:
-  def unsafe[->[_,_], A[_[_]], B[_[_]]](f: ∀~[[F[_]] =>> A[F] -> B[F]], g: ∀~[[F[_]] =>> B[F] -> A[F]])(using s: Subcat[->]): IsoHK[->, A, B] =
-    ∀~.mk[IsoHK[->, A, B]].fromH([F[_]] => () => Iso.unsafe(f[F], g[F]))
+  def unsafe[->[_,_], A[_[_]], B[_[_]]](f: ∀~[[F[_]] =>> A[F] -> B[F]], g: ∀~[[F[_]] =>> B[F] -> A[F]])(using s: Subcat[->]): IsoH[->, A, B] =
+    ∀~.mk[IsoH[->, A, B]].fromH([F[_]] => () => Iso.unsafe(f[F], g[F]))
 
 infix type <=>[A, B] = Iso[Function, A, B]
 

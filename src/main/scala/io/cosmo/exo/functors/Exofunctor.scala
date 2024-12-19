@@ -68,10 +68,20 @@ object Exofunctor extends ExofunctorInstances {
 
   extension[==>[_,_], H[_[_,_]]](self: CofunctorK2[==>, * => *, H])
     def comapK2[F[_,_], G[_,_]](f: ∀∀[[a,b] =>> G[a,b] ==> F[a,b]]): H[F] => H[G] = self.map(Dual(ArrowK2(f))).isoTo
-  
+
   extension[==>[_,_], H[_[_,_]]](self: IsoFunctorK2[==>, * => *, H])
-    def isoMapK2[F[_,_], G[_,_]](i: IsoK2[==>, F, G])(using s: Subcat.Aux[==>, Trivial]): H[F] <=> H[G] = 
+    def isoMapK2[F[_,_], G[_,_]](i: IsoK2[==>, F, G])(using s: Subcat.Aux[==>, Trivial]): H[F] <=> H[G] =
       self.map(IsoArrowK2(i)).isoTo
+
+  extension[==>[_,_], H[_[_[_]]]](self: FunctorH[==>, * => *, H])
+    def mapH[F[_[_]], G[_[_]]](f: ∀~[[a[_]] =>> F[a] ==> G[a]]): H[F] => H[G] = self.map(ArrowH(f)).isoTo
+
+  extension[==>[_,_], H[_[_[_]]]](self: CofunctorH[==>, * => *, H])
+    def comapH[F[_[_]], G[_[_]]](f: ∀~[[a[_]] =>> G[a] ==> F[a]]): H[F] => H[G] = self.map(Dual(ArrowH(f))).isoTo
+
+  extension[==>[_,_], H[_[_[_]]]](self: IsoFunctorH[==>, * => *, H])
+    def isoMapH[F[_[_]], G[_[_]]](i: IsoH[==>, F, G])(using s: Subcat.Aux[==>, Trivial]): H[F] <=> H[G] =
+      self.map(IsoArrowH(i)).isoTo
 }
 
 trait ExofunctorInstances extends ExofunctorInstances01 {

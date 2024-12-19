@@ -32,7 +32,7 @@ object ArrowH extends ArrowHImplicits {
   def isoFunKUnapply[->[_,_], A, B](i: Iso[ArrowH[->,*,*], A, B])(
     using a: IsHKind[A], b: IsHKind[B])(
     using s: Subcat[->]
-  ): IsoHK[->, a.Type, b.Type] = IsoHK.unsafe(i.to.unapply, i.from.unapply)
+  ): IsoH[->, a.Type, b.Type] = IsoHK.unsafe(i.to.unapply, i.from.unapply)
 
   def isInjective[->[_,_]]: IsInjective2[ArrowH[->,*,*]] = IsInjective2.witness1[ArrowH[->,*,*], 1, 2, 3]
 
@@ -49,7 +49,7 @@ object ArrowH extends ArrowHImplicits {
     Iso.unsafe(_.unapply, apply)
 
   given isoIsoArrowHCanonic[->[_,_], A, B](using a: IsHKind[A], b: IsHKind[B])(using s: Subcat.Aux[->, Trivial])
-  : (Iso[ArrowH[->,*,*], A, B] <=> IsoHK[->, a.Type, b.Type]) =
+  : (Iso[ArrowH[->,*,*], A, B] <=> IsoH[->, a.Type, b.Type]) =
     Iso.unsafe(i => IsoHK.unsafe(i.to.unapply, i.from.unapply), i => Iso.unsafe(apply(i.to), apply(i.from)))
 
 }
