@@ -19,7 +19,7 @@ sealed abstract class IsHK[F[_[_]], G[_[_]]] { self =>
 
   final def is[A[_]]: F[A] === G[A] = subst[[f[_[_]]] =>> F[A] === f[A]](Is.refl[F[A]])
 
-  final def toIso: F <≈> G = <≈>.unsafe([A[_]] => () => is[A].toIso)
+//  final def toIso: F <≈> G = <≈>.unsafe([A[_]] => () => is[A].toIso)
 
 }
 

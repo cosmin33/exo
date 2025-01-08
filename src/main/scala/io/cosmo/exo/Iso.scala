@@ -10,7 +10,7 @@ import scala.util.NotGiven
 trait Iso[->[_,_], A, B]:
   self =>
 
-  def cat: Subcat[->]
+  def cat: Semicategory[->]
 
   def to:   A -> B
   def from: B -> A
@@ -23,7 +23,7 @@ trait Iso[->[_,_], A, B]:
     val (cat, to, from) = (self.cat, self.from, self.to)
     override lazy val flip = self
 
-  private[this] given Subcat[->] = cat
+  private[this] given Semicategory[->] = cat
 
   final def andThen[C](that: B <-> C): A <-> C =
     Iso.unsafe(self.to >>> that.to, that.from >>> self.from)
@@ -61,9 +61,9 @@ object Iso extends IsoInstances with IsoImplicits:
   def apply[->[_,_], A, B](using iso: HasIso[->, A, B]): Iso[->, A, B] = iso
   def apply[->[_,_], A](using SubcatHasId[->, A]): Iso[->, A, A] = refl[->, A]
   def apply[A]: A <=> A = refl[A]
-  
+
   /** create an isomorphism given the two complementary functions as long as you promise they uphold the iso laws */
-  def unsafe[->[_,_], A, B](ab: A -> B, ba: B -> A)(using C: Subcat[->]): Iso[->, A, B] =
+  def unsafe[->[_,_], A, B](ab: A -> B, ba: B -> A)(using C: Semicategory[->]): Iso[->, A, B] =
     new Iso[->, A, B] { val (cat, to, from) = (C, ab, ba) }
 
   def refl[->[_,_], A](using c: SubcatHasId[->, A]): Iso[->, A, A] =
@@ -73,13 +73,20 @@ object Iso extends IsoInstances with IsoImplicits:
 
   def refl[A]: A <=> A = forall[A]
 
+  extension[->[_,_], F[_], G[_]](i: ∀[[a] =>> Iso[->, F[a], G[a]]])
+    def flipK: ∀[[a] =>> Iso[->, G[a], F[a]]] = ∀[[a] =>> Iso[->, G[a], F[a]]](i.apply.flip)
+  extension[->[_,_], F[_,_], G[_,_]](i: ∀∀[[a, b] =>> Iso[->, F[a, b], G[a, b]]])
+    def flipK2: ∀∀[[a, b] =>> Iso[->, G[a, b], F[a, b]]] = ∀∀[[a, b] =>> Iso[->, G[a, b], F[a, b]]](i.apply.flip)
+  extension[->[_,_], A[_[_]], B[_[_]]](i: ∀~[[f[_]] =>> A[f] <=> B[f]])
+    def flipH: ∀~[[f[_]] =>> B[f] <=> A[f]] = ∀~[[f[_]] =>> B[f] <=> A[f]](i.apply.flip)
+
   /** if I can transform an arrow into another then I can also transform the corresponding isomorphisms */
   def liftFnFnToFnIso[==>[_,_], -->[_,_] :Subcat](fn: ==> ~~> -->): Iso[==>, *, *] ~~> Iso[-->, *, *] =
     ~~>([A, B] => (i: Iso[==>, A, B]) => Iso.unsafe[-->, A, B](fn.run(i.to), fn.run(i.from)))
 
   /** If two arrow are isomorphic then those arrows isomorphisms are isomorphic */
   def liftIsoFnToIso[==>[_,_] : Subcat, -->[_,_] : Subcat](iso: ==> <~~> -->): Iso[==>, *, *] <~~> Iso[-->, *, *] =
-    <~~>.unsafe(liftFnFnToFnIso[==>, -->](iso.to), liftFnFnToFnIso[-->, ==>](iso.from))
+    IsoK2.unsafe(liftFnFnToFnIso[==>, -->](iso.forallTo), liftFnFnToFnIso[-->, ==>](iso.forallFrom))
 
   /** Isomorphism between any isomorphism and it's flipped self */
   given flippedIso[->[_,_], A, B](using n: A =!= B): (Iso[->, A, B] <=> Iso[->, B, A]) = Iso.unsafe(_.flip, _.flip)
@@ -176,14 +183,14 @@ trait IsoImplicits extends IsoImplicits01 {
     M: Monoidal.Aux[->, ⊙, T, I], a: T[A]
   ): Iso[->, A ⊙ I, A] = M.isoUnitorR(a)
   given isoCartesian[->[_,_], ⊙[_,_], A, B, C, T[_]](using
-    C: Cartesian[->, ⊙] {type TC[a] = T[a]}, b: T[B], c: T[C]
-  ): ((A -> B, A -> C) <=> (A -> ⊙[B, C])) = C.isoCartesian(b, c)
+    C: Cartesian[->, ⊙] {type TC[a] = T[a]}, a: T[A], b: T[B], c: T[C]
+  ): ((A -> B, A -> C) <=> (A -> ⊙[B, C])) = C.isoCartesian(using a, b, c)
   given isoCocartesian[->[_,_], ⊙[_,_], A, B, C, T[_]](using
-    C: Cocartesian[->, ⊙] {type TC[a] = T[a]}, a: T[A], b: T[B]
-  ): ((A -> C, B -> C) <=> ((A ⊙ B) -> C)) = C.isoCocartesian(a, b)
+    C: Cocartesian[->, ⊙] {type TC[a] = T[a]}, a: T[A], b: T[B], c: T[C]
+  ): ((A -> C, B -> C) <=> ((A ⊙ B) -> C)) = C.isoCocartesian(using a, b, c)
   given isoDistributive[->[_,_], ⨂[_,_], ⨁[_,_], A, B, C, T[_]](using
     D: Distributive.Aux1[->, T, ⨂, ⨁], a: T[A], b: T[B], c: T[C]
-  ): Iso[->, ⨂[A, ⨁[B, C]], ⨁[⨂[A, B], ⨂[A, C]]] = D.isoDistributive(using a, b, c)
+  )(using T: T[(A ⨂ B) ⨁ (A ⨂ C)]): Iso[->, ⨂[A, ⨁[B, C]], ⨁[⨂[A, B], ⨂[A, C]]] = D.isoDistributive(using a, b, c)
   given isoInitialUnit[->[_,_], I, A, TC[_]](using
     I: Initial.Aux[->, TC, I], a: TC[A],
   ): ((I -> A) <=> Unit) = Iso.unsafe(_ => (), _ => I.initiate)

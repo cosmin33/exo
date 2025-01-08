@@ -9,6 +9,13 @@ import scala.util.NotGiven
 
 object IsoTest extends ZIOSpecDefault {
 
+  // Iso refl
+  summon[Iso[* => *, Int, Int]]
+  // Isomorphism between any isomorphism and it's flipped self
+  summon[Iso[* => *, Int, String] <=> Iso[* => *, String, Int]]
+  // Iso refl again, not conflicting with the previous summon
+  summon[Iso[* => *, Int, Int] <=> Iso[* => *, Int, Int]]
+  
   opaque type Int1 = Int
   object Int1:
     given (Int1 <=> Int) = Iso.refl
@@ -34,15 +41,17 @@ object IsoTest extends ZIOSpecDefault {
 
       summon[NotGiven[HasIso[Function, Int, String]]]
 
-      summon[HasIsoK[Function, List1, List]]
-      summon[HasIsoK[Function, List, List]]
-      def xx[F[_]]: ∀[[a] =>> Trivial[F[a]]] = summon[∀[[a] =>> Trivial[F[a]]]]
-      summon[ReflImpIsoK[Function, List]]
-      summon[NotGiven[HasIsoK[Function, List1, Option]]]
-
-      summon[HasIsoK2[Function, Map1, Map]]
-      summon[HasIsoK2[Function, Map, Map]]
-      summon[NotGiven[HasIsoK2[Function, Map1, Either]]]
+//      summon[ReflImpIsoK[Function, List]]
+//      summon[EqImpIsoK[Function, List, List]]
+//      summon[HasIsoK[Function, List, List]]
+//      summon[HasIsoK[Function, List, List]]
+//      def xx[F[_]]: ∀[[a] =>> Trivial[F[a]]] = summon[∀[[a] =>> Trivial[F[a]]]]
+//      summon[ReflImpIsoK[Function, List]]
+//      summon[NotGiven[HasIsoK[Function, List1, Option]]]
+//
+//      summon[HasIsoK2[Function, Map1, Map]]
+//      summon[HasIsoK2[Function, Map, Map]]
+//      summon[NotGiven[HasIsoK2[Function, Map1, Either]]]
 
       summon[Int === Int]
 

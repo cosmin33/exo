@@ -23,7 +23,7 @@ object Conjunction {
 
   given iso[A, B]: ((A, B) <=> (A /\ B)) = Iso.refl
 
-  given isoK2: (Tuple2 <~~> /\) = /\.unsafeLeibniz.toIso
+//  given isoK2: (Tuple2 <~~> /\) = /\.unsafeLeibniz.toIso
   
   given bifunctor: Endobifunctor[Function, /\] with
     def bimap[A, B, C, D](ab: A => B, cd: C => D): (A /\ C) => (B /\ D) = p => (ab(p._1), cd(p._2))

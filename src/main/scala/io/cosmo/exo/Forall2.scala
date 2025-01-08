@@ -20,6 +20,7 @@ private[exo] sealed trait Forall2Module {
   def monotonicity[F[_,_], G[_,_]](ev: ∀∀[[a, b] =>> F[a, b] <~< G[a, b]]): ∀∀[F] <~< ∀∀[G]
   def from[F[_,_]](p: Prototype[F]): ∀∀[F]
   def of[F[_,_]]: MkForall2[F]
+  def apply[F[_,_]]: MkForall2[F] = of[F]
   def mk[X](using u: Unapply[X]): MkForall2[u.F] = of[u.F]
 
   sealed trait MkForall2[F[_,_]] extends Any:
@@ -57,15 +58,15 @@ private[exo] final class MkForall2Impl[F[_,_]](val dummy: Boolean = false) exten
   def from(ft: F[T, U]): Forall2Impl.∀∀[F] = ft
 
 trait Forall2Functions {
-  extension[F[_, _], G[_, _]] (fg: F ~~> G)
+  extension[F[_,_], G[_,_]] (fg: F ~~> G)
     def run[A, B](fab: F[A, B]): G[A, B] = fg[A, B](fab)
     def $(f: ∀∀[F]): ∀∀[G] = ∀∀.of[G].from(run(f.apply))
-    def andThen[H[_, _]](gh: G ~~> H): F ~~> H = ~~>[F, H]([A, B] => (fab: F[A, B]) => gh.run(fg.run(fab)))
-    def compose[E[_, _]](ef: E ~~> F): E ~~> G = ef andThen fg
-  extension[->[_, _], F[_,_], G[_,_]] (iso: IsoK2[->, F, G])
-    def to:   ∀∀[[a, b] =>> F[a, b] -> G[a, b]] = ∀∀.of[[a, b] =>> F[a, b] -> G[a, b]].fromH([T, U] => () => iso[T, U].to)
-    def from: ∀∀[[a, b] =>> G[a, b] -> F[a, b]] = ∀∀.of[[a, b] =>> G[a, b] -> F[a, b]].fromH([T, U] => () => iso[T, U].from)
-    def flip: IsoK2[->, G, F] = ∀∀.mk[IsoK2[->, G, F]].fromH([T, U] => () => iso[T, U].flip)
-    def andThen[H[_,_]](iso2: IsoK2[->, G, H])(using DummyImplicit): IsoK2[->, F, H] =
-      ∀∀.mk[IsoK2[->, F, H]].fromH([T, U] => () => iso[T, U].andThen(iso2[T, U]))
+    def andThen[H[_,_]](gh: G ~~> H): F ~~> H = ~~>[F, H]([A, B] => (fab: F[A, B]) => gh.run(fg.run(fab)))
+    def compose[E[_,_]](ef: E ~~> F): E ~~> G = ef andThen fg
+//  extension[->[_,_], F[_,_], G[_,_]] (iso: IsoK2[->, F, G])
+//    def to:   ∀∀[[a, b] =>> F[a, b] -> G[a, b]] = ∀∀.of[[a, b] =>> F[a, b] -> G[a, b]].fromH([T, U] => () => iso[T, U].to)
+//    def from: ∀∀[[a, b] =>> G[a, b] -> F[a, b]] = ∀∀.of[[a, b] =>> G[a, b] -> F[a, b]].fromH([T, U] => () => iso[T, U].from)
+//    def flip: IsoK2[->, G, F] = ∀∀.mk[IsoK2[->, G, F]].fromH([T, U] => () => iso[T, U].flip)
+//    def andThen[H[_,_]](iso2: IsoK2[->, G, H])(using DummyImplicit): IsoK2[->, F, H] =
+//      ∀∀.mk[IsoK2[->, F, H]].fromH([T, U] => () => iso[T, U].andThen(iso2[T, U]))
 }

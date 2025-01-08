@@ -25,7 +25,7 @@ trait Function1SemicategoryInstances extends Function1SemicategoryInstances01 {
 
 trait Function1SemicategoryInstances01 {
   given function1Distributive2: Distributive.Aux[Function, Trivial, /\, Unit, \/, Void] =
-    IsK2.lower2[[f[_, _], g[_, _]] =>> Distributive.Aux[Function, Trivial, f, Unit, g, Void]]
+    IsK2.lower2[[f[_,_], g[_,_]] =>> Distributive.Aux[Function, Trivial, f, Unit, g, Void]]
       .on(/\.unsafeLeibniz, \/.unsafeLeibniz)(Semicategory.function1Distributive1)
 }
 
@@ -94,4 +94,16 @@ trait Function1AssociativeInstances {
   given cocartesianFn1EitherDual: Cartesian.Aux[Dual[Function,*,*], Either, Trivial, Void] =
     Dual.leibniz[Function].subst[[f[_,_]] =>> Cartesian.Aux[f, Either, Trivial, Void]](cocartesianFn1Either)
 
+}
+
+trait Function1SemicategoryKInstances extends Function1SemicategoryKInstances01 {
+  
+} 
+
+trait Function1SemicategoryKInstances01 {
+  
+}
+
+trait Function1AssociativeKInstances {
+  
 }

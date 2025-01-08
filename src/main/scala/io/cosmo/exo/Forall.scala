@@ -24,6 +24,7 @@ sealed trait ForallModule {
   def monotonicity[F[_], G[_]](ev: ∀[[α] =>> F[α] <~< G[α]]): ∀[F] <~< ∀[G]
   def from[F[_]](p: Prototype[F]): ∀[F]
   def of[F[_]]: MkForall[F]
+  def apply[F[_]]: MkForall[F] = of[F]
   def mk[X](using u: Unapply[X]): MkForall[u.F] = of[u.F]
   def const[A](a: A): ∀[[α] =>> A]
 
@@ -72,12 +73,6 @@ trait ForallFunctions {
     def $(f: ∀[F]): ∀[G] = ∀.of[G].from(run(f.apply))
     def andThen[H[_]](gh: G ~> H): F ~> H = ~>[F, H]([T] => (ft: F[T]) => gh.run(fg.run(ft)))
     def compose[E[_]](ef: E ~> F): E ~> G = ef andThen fg
-  extension[->[_, _], F[_], G[_]] (iso: IsoK[->, F, G])
-    def to:   ∀[[a] =>> F[a] -> G[a]] = ∀.of[[a] =>> F[a] -> G[a]].fromH([T] => () => iso[T].to)
-    def from: ∀[[a] =>> G[a] -> F[a]] = ∀.of[[a] =>> G[a] -> F[a]].fromH([T] => () => iso[T].from)
-    def flip: IsoK[->, G, F] = ∀.mk[IsoK[->, G, F]].fromH([T] => () => iso[T].flip)
-    def andThen[H[_]](iso2: IsoK[->, G, H])(using DummyImplicit): IsoK[->, F, H] =
-      ∀.mk[IsoK[->, F, H]].fromH([T] => () => iso[T].andThen(iso2[T]))
 
   // https://nokyotsu.com/qscripts/2014/07/distribution-of-quantifiers-over-logic-connectives.html
   ////////////////////////
@@ -98,17 +93,17 @@ trait ForallFunctions {
   //////////////////////////// ⨂
 
   /** ∀ distributes over the product of a Cartesian */
-  def fnDistribCartesianTo[F[_], G[_], ⨂[_, _]](using
+  def fnDistribCartesianTo[F[_], G[_], ⨂[_,_]](using
     cc: Cartesian.AuxT[* => *, ⨂, Trivial]
   ): ∀[[x] =>> F[x] ⨂ G[x]] => (∀[F] ⨂ ∀[G]) =
     cc.&&&(f => ∀.of[F].fromH([T] => () => cc.fst.apply(f[T])), f => ∀.of[G].fromH([T] => () => cc.snd.apply(f[T])))
 
-  def fnDistribCartesianFrom[F[_], G[_], ⨂[_, _]](using
+  def fnDistribCartesianFrom[F[_], G[_], ⨂[_,_]](using
     cc: Cartesian[* => *, ⨂]
   ): (∀[F] ⨂ ∀[G]) => ∀[[x] =>> F[x] ⨂ G[x]] =
     fg => ∀.of[[x] =>> F[x] ⨂ G[x]].fromH([T] => () => cc.bifunctor.bimap[∀[F], F[T], ∀[G], G[T]](_[T], _[T])(fg))
 
-  def isoDistributeCartesian[F[_], G[_], ⨂[_, _]](using
+  def isoDistributeCartesian[F[_], G[_], ⨂[_,_]](using
     cc: Cartesian.AuxT[* => *, ⨂, Trivial]
   ): ∀[[x] =>> F[x] ⨂ G[x]] <=> (∀[F] ⨂ ∀[G]) = Iso.unsafe(fnDistribCartesianTo, fnDistribCartesianFrom)
 
@@ -120,19 +115,18 @@ trait ForallFunctions {
     (f, g) => ∀.of[[x] =>> (F[x], G[x])].fromH([T] => () => (f[T], g[T]))
 
   def isoDistribTuple[F[_], G[_]]: ∀[[x] =>> (F[x], G[x])] <=> (∀[F], ∀[G]) =
-    Iso.unsafe(fnDistribTupleTo, fnDistribTupleFrom(_, _))
+    Iso.unsafe(fnDistribTupleTo, fnDistribTupleFrom(_,_))
 
   //////////////////////// ⨁
 
   /** ∀ distributes over the coproduct of a Cocartesian (one way only) */
-  def fnDistributeCocartesian[F[_], G[_], ⨁[_, _]](using
+  def fnDistributeCocartesian[F[_], G[_], ⨁[_,_]](using
     cc: Cocartesian.AuxT[* => *, ⨁, Trivial]
-  ): (∀[F] ⨁ ∀[G]) => ∀[[x] =>> F[x] ⨁ G[x]] = coproduct =>
-    {
+  ): (∀[F] ⨁ ∀[G]) => ∀[[x] =>> F[x] ⨁ G[x]] = 
+    coproduct =>
       def f1[x]: ∀[F] => F[x] ⨁ G[x] = f => cc.fst[F[x], G[x]].apply(f[x])
       def f2[x]: ∀[G] => F[x] ⨁ G[x] = f => cc.snd[F[x], G[x]].apply(f[x])
       ∀.of[[x] =>> F[x] ⨁ G[x]].fromH([T] => () => cc.&&&(Dual(f1[T]), Dual(f2[T]))(coproduct))
-    }
 
   // these are not really needed because they are a specific type (for \/) of those above
   def fnDistribDisj[F[_], G[_]]: (∀[F] \/ ∀[G]) => ∀[[x] =>> F[x] \/ G[x]] =
@@ -141,13 +135,13 @@ trait ForallFunctions {
   ////////////////////////
 
   /** ∀ is commutative */
-  def commute1[F[_, _]]: ∀[[a] =>> ∀[F[a, *]]] => ∀[[b] =>> ∀[F[*, b]]] =
+  def commute1[F[_,_]]: ∀[[a] =>> ∀[F[a, *]]] => ∀[[b] =>> ∀[F[*, b]]] =
     ab => ∀.of[[b] =>> ∀[F[*, b]]].fromH([b] => () => ∀.of[F[*, b]].fromH([a] => () => ab[a][b]))
 
-  def commute2[F[_, _]]: ∀[[b] =>> ∀[F[*, b]]] => ∀[[a] =>> ∀[F[a, *]]] =
+  def commute2[F[_,_]]: ∀[[b] =>> ∀[F[*, b]]] => ∀[[a] =>> ∀[F[a, *]]] =
     ab => ∀.of[[a] =>> ∀[F[a, _]]].fromH([a] => () => ∀.of[F[a, _]].fromH([b] => () => ab[b][a]))
 
-  def isoCommute[F[_, _]]: ∀[[a] =>> ∀[[b] =>> F[a, b]]] <=> ∀[[b] =>> ∀[[a] =>> F[a, b]]] =
+  def isoCommute[F[_,_]]: ∀[[a] =>> ∀[[b] =>> F[a, b]]] <=> ∀[[b] =>> ∀[[a] =>> F[a, b]]] =
     Iso.unsafe(commute1[F], commute2[F])
 
   def isoLift2[F[_,_]]: ∀[[a] =>> ∀[[b] =>> F[a, b]]] <=> ∀∀[F] =

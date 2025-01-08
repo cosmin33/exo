@@ -28,7 +28,7 @@ object Disjunction extends DisjunctionImplicits
 
   given iso[L, R]: (Either[L, R] <=> (L \/ R)) = unsafeLeibniz.is[L, R].toIso
   
-  given isoK2: (Either <~~> \/) = unsafeLeibniz.toIso
+//  given isoK2: (Either <~~> \/) = unsafeLeibniz.toIso
 
   given bifunctor: Endobifunctor[Function, \/] with
     def bimap[A, B, C, D](fab: A => B, fcd: C => D): (A \/ C) => (B \/ D) = _.bimap(fab, fcd)

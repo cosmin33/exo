@@ -22,7 +22,7 @@ sealed abstract class IsK2[F[_,_], G[_,_]] private[IsK2]() { ab =>
 
   final def is[A, B]: F[A, B] === G[A, B] = subst[[f[_,_]] =>> F[A,B] === f[A,B]](Is.refl[F[A, B]])
 
-  final def toIso: F <~~> G = <~~>.unsafe([A, B] => () => is[A, B].toIso)
+//  final def toIso: F <~~> G = <~~>.unsafe([A, B] => () => is[A, B].toIso)
 
 }
 
@@ -35,7 +35,7 @@ object IsK2 {
   given refl[A[_,_]]: IsK2[A, A] with
     def subst[Alg[_[_,_]]](fa: Alg[A]): Alg[A] = fa
 
-  given isoExtensionality[F[_, _], G[_, _]]: (∀∀[[a, b] =>> F[a, b] === G[a, b]] <=> (F =~~= G)) =
+  given isoExtensionality[F[_,_], G[_,_]]: (∀∀[[a, b] =>> F[a, b] === G[a, b]] <=> (F =~~= G)) =
     Iso.unsafe(
       fa => Axioms.tcExtensionality2[F, G].applyT([A, B] => () => fa[A, B]),
       fg => ∀∀.of[[a, b] =>> F[a, b] === G[a, b]].from(fg.is)

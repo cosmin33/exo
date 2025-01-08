@@ -5,7 +5,8 @@ import io.cosmo.exo.evidence.*
 import io.cosmo.exo.functors.*
 import io.cosmo.exo.syntax.*
 
-trait Ccc[->[_,_], ⊙[_,_], |->[_,_]] extends Cartesian[->, ⊙] { self =>
+trait Ccc[->[_,_], ⊙[_,_], |->[_,_]] extends Cartesian[->, ⊙]:
+  self =>
   def curry  [A, B, C](f: (A ⊙ B) -> C): A -> (B |-> C)
   def uncurry[A, B, C](f: A -> (B |-> C)): (A ⊙ B) -> C
 
@@ -45,32 +46,47 @@ trait Ccc[->[_,_], ⊙[_,_], |->[_,_]] extends Cartesian[->, ⊙] { self =>
     c: SubcatHasId[->, X],
     exo: Exo[->, ->, |->[X, *]]
   ): Exoadjunction[->, ->, ⊙[*, X], |->[X, *]] =
-    new Exoadjunction[->, ->, ⊙[*, X], |->[X, *]] {
+    new Exoadjunction[->, ->, ⊙[*, X], |->[X, *]]:
       val subL: Subcat.Aux[->, TC] = C
       val subR: Subcat.Aux[->, TC] = C
       def left: Exo[->, ->, ⊙[*, X]] = Exo.unsafe[->, ->, ⊙[*, X]]([a, b] => (ab: a -> b) => bifunctor.leftMap(ab))
       def right: Exo[->, ->, |->[X, *]] = exo
       def iso[A, B]: (A ⊙ X) -> B <=> (A -> (X |-> B)) = isoClosedAdjunction
-    }
-}
 
-object Ccc {
-  type Aux[->[_,_], P[_,_], E[_,_], ->#[_], PI] = Ccc[->, P, E] { type TC[x] = ->#[x]; type Id = PI }
-  type Aux1[->[_, _], ->#[_], P[_, _], E[_, _]] = Ccc[->, P, E] { type TC[x] = ->#[x] }
+object Ccc:
+  type Aux[->[_,_], P[_,_], E[_,_], ->#[_], I] = Ccc[->, P, E] { type TC[x] = ->#[x]; type Id = I }
+  type Aux1[->[_,_], ->#[_], P[_,_], E[_,_]] = Ccc[->, P, E] { type TC[x] = ->#[x] }
+  
+  trait Proto[->[_,_], P[_,_], ->#[_], PI, |->[_,_]] extends Ccc[->, P, |->] with Cartesian.Proto[->, P, ->#, PI]
+end Ccc
 
-  trait Proto[->[_,_], P[_,_], ->#[_], PI, |->[_,_]] extends Ccc[->, P, |->] with Cartesian.Proto[->, P, ->#, PI] {
-  }
+trait CccK[->[_,_], ⊙[_,_], |->[_,_]] extends CartesianK[->, ⊙]:
+  self =>
+  def curry  [F[_], G[_], H[_]](f: ∀[[a] =>> (F[a] ⊙ G[a]) -> H[a]]): ∀[[a] =>> F[a] -> (G[a] |-> H[a])]
+  def uncurry[F[_], G[_], H[_]](f: ∀[[a] =>> F[a] -> (G[a] |-> H[a])]): ∀[[a] =>> (F[a] ⊙ G[a]) -> H[a]]
 
-  extension[->[_,_], ⊙[_,_], I[_]](self: CccK.Aux[->, ⊙, I])
-    def curryK[F[_], G[_], H[_]](f: ∀[[a] =>> ⊙[F[a], G[a]] -> H[a]])(using IsInjective2[⊙], IsInjective2[->])
-    : ∀[[a] =>> F[a] -> (G[a] -> H[a])] =
-      self.curry(ArrowK[->, TypeK[F] ⊙ TypeK[G], TypeK[H], [a] =>> F[a] ⊙ G[a], H](f)).unapply
-    def uncurryK[F[_], G[_], H[_]](f: ∀[[a] =>> F[a] -> (G[a] -> H[a])])(using IsInjective2[⊙], IsInjective2[->])
-    : ∀[[a] =>> ⊙[F[a], G[a]] -> H[a]] =
-      self.uncurry(ArrowK[->, TypeK[F], TypeK[G] -> TypeK[H], F, [a] =>> G[a] -> H[a]](f)).unapply
-    def rcurryK[F[_], G[_], H[_]](f: ∀[[a] =>> ⊙[F[a], G[a]] -> H[a]])(using IsInjective2[⊙], IsInjective2[->])
-    : ∀[[a] =>> G[a] -> (F[a] -> H[a])] =
-      self.rcurry(ArrowK[->, TypeK[F] ⊙ TypeK[G], TypeK[H], [a] =>> (F[a] ⊙ G[a]), H](f)).unapply
+object CccK:
+  type Aux[->[_,_], P[_,_], E[_,_], ->#[_[_]], I[_]] = CccK[->, P, E] { type TC[A[_]] = ->#[A]; type Id[a] = I[a] }
+  def apply[->[_,_], ⊙[_,_], |->[_,_]](using ev: CccK[->, ⊙, |->]): CccK[->, ⊙, |->] = ev
+end CccK
 
+trait CccK2[->[_,_], ⊙[_,_], |->[_,_]] extends CartesianK2[->, ⊙]:
+  self =>
+  def curry  [F[_,_], G[_,_], H[_,_]](f: ∀∀[[a, b] =>> (F[a, b] ⊙ G[a, b]) -> H[a, b]]): ∀∀[[a, b] =>> F[a, b] -> (G[a, b] |-> H[a, b])]
+  def uncurry[F[_,_], G[_,_], H[_,_]](f: ∀∀[[a, b] =>> F[a, b] -> (G[a, b] |-> H[a, b])]): ∀∀[[a, b] =>> (F[a, b] ⊙ G[a, b]) -> H[a, b]]
 
-}
+object CccK2:
+  type Aux[->[_,_], P[_,_], E[_,_], ->#[_[_,_]], I[_,_]] = CccK2[->, P, E] { type TC[A[_,_]] = ->#[A]; type Id[a,b] = I[a,b] }
+  def apply[->[_,_], ⊙[_,_], |->[_,_]](using ev: CccK2[->, ⊙, |->]): CccK2[->, ⊙, |->] = ev
+end CccK2
+
+trait CccH[->[_,_], ⊙[_,_], |->[_,_]] extends CartesianH[->, ⊙]:
+  self =>
+  def curry  [F[_[_]], G[_[_]], H[_[_]]](f: ∀~[[a[_]] =>> (F[a] ⊙ G[a]) -> H[a]]): ∀~[[a[_]] =>> F[a] -> (G[a] |-> H[a])]
+  def uncurry[F[_[_]], G[_[_]], H[_[_]]](f: ∀~[[a[_]] =>> F[a] -> (G[a] |-> H[a])]): ∀~[[a[_]] =>> (F[a] ⊙ G[a]) -> H[a]]
+
+object CccH:
+  type Aux[->[_,_], P[_,_], E[_,_], ->#[_[_[_]]], I[a[_]]] = CccH[->, P, E] { type TC[A[_[_]]] = ->#[A]; type Id[a[_]] = I[a] }
+  def apply[->[_,_], ⊙[_,_], |->[_,_]](using ev: CccH[->, ⊙, |->]): CccH[->, ⊙, |->] = ev
+end CccH
+

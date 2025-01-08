@@ -5,8 +5,8 @@ import io.cosmo.exo.evidence.*
 
 private[exo] opaque type ReflImpIsoK[->[_,_], F[_]] = IsoK[->, F, F]
 private[exo] object ReflImpIsoK:
-  given impl[->[_,_], F[_]](using s: Subcat[->], tc: ∀[[a] =>> s.TC[F[a]]]): ReflImpIsoK[->, F] =
-    ∀.mk[IsoK[->, F, F]].fromH([a] => () => Iso.refl[->, F[a]](using SubcatHasId.from(using s, tc[a])))
+  given impl[->[_,_], F[_]](using s: SubcategoryK[->], tc: s.TC[F]): ReflImpIsoK[->, F] =
+    IsoK.refl[->, F](using SubcatKHasId.from(using s, tc))
 
 private[exo] opaque type EqImpIsoK[->[_,_], F[_], G[_]] = IsoK[->, F, G]
 private[exo] object EqImpIsoK:

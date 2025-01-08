@@ -38,7 +38,7 @@ object yoneda {
     ca: SubcatHasId[->, A], cb: SubcatHasId[->, B]
   ): (->[A,*] <~> ->[B,*]) <=> Iso[->, B, A] =
       Iso.unsafe(
-        i => Iso.unsafe(i.apply[A].to(ca.id), i.apply[B].from(cb.id))(using ca.s),
+        i => Iso.unsafe(i.to[A](ca.id), i.from[B](cb.id))(using ca.s),
         i => <~>.unsafe(yoEmbedding[->, A, B].from(i.to), yoEmbedding[->, B, A].from(i.from))
       )
 
@@ -46,7 +46,7 @@ object yoneda {
     ca: SubcatHasId[->, A], cb: SubcatHasId[->, B]
   ): (->[*,A] <~> ->[*,B]) <=> Iso[->, A, B] =
     Iso.unsafe(
-      i => Iso.unsafe(i.apply[A].to(ca.id), i.apply[B].from(cb.id))(using ca.s),
+      i => Iso.unsafe(i.to[A](ca.id), i.from[B](cb.id))(using ca.s),
       i => <~>.unsafe[->[*,A], ->[*,B]](coyoEmbedding[->, A, B].from(i.to), coyoEmbedding[->, B, A].from(i.from))
     )
 
@@ -69,6 +69,16 @@ object yoneda {
   // applied yoneda examples
   private def lemmaYoUnrestricted  [A, F[_]]: (===[A,*] ~> F) <=> F[A] = lemmaYoIso  [===, A, F]
   private def lemmaCoyoUnrestricted[A, F[_]]: (===[*,A] ~> F) <=> F[A] = lemmaCoyoIso[===, A, F]
+
+  private def isoIndirectLiskov [A, B]: ∀[[a] =>> (A <~< a)  => (B <~< a)] <=> (B <~< A) = yoEmbedding
+  private def isoIndirectLeibniz[A, B]: ∀[[a] =>> (A === a)  => (B === a)] <=> (A === B) = yoEmbedding[===, A, B] andThen Iso.isoGroupoidFlip
+  private def isoIndirectLeibni_[A, B]: ∀[[a] =>> (A === a) <=> (B === a)] <=> (A === B) = {
+    val ee: (===[A,*] <~> ===[B,*]) <=> Iso[===, B, A] = yoCorollary[===, A, B]
+    
+    //yoCorollary[===, A, B] andThen Iso.isoGroupoid[===, B, A].flip andThen Iso.isoGroupoidFlip
+    ???
+  }
+  //       coyoCorollary[===, A, B].chain[B === A].chain[A === B] // strange compile error for this one but it should work, I think it's a scala bug ?!?!
 
 //  private def isoIndirectLiskov [A, B]: ((A <~< *)  ~> (B <~< *)) <=> (B <~< A) = yoEmbedding
 //  private def isoIndirectLeibniz[A, B]: ((A === *)  ~> (B === *)) <=> (A === B) = yoEmbedding[===, A, B] andThen Iso.isoGroupoidFlip

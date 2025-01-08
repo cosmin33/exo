@@ -25,7 +25,4 @@ object IsInjective2 {
   given conjunction: IsInjective2[/\]     = witness1[/\, 1, 2, 3]
   given disjunction: IsInjective2[\/]     = witness1[\/, 1, 2, 3]
   given fun:         IsInjective2[* => *] = witness1[Function, 1, 2, 3]
-  given funK:        IsInjective2[FunK]   = witness1[FunK, 1, 2, 3]
-  given FunK2:       IsInjective2[FunK2]  = witness1[FunK2, 1, 2, 3]
-  given funH:        IsInjective2[FunH]   = witness1[FunH, 1, 2, 3]
 }

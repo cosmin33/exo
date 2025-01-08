@@ -3,215 +3,138 @@ package io.cosmo.exo.functors
 import io.cosmo.exo.categories.*
 import io.cosmo.exo.*
 
-type Exo[==>[_, _], -->[_, _], F[_]] = Exofunctor[==>, -->, F]
+type Exo[==>[_,_], -->[_,_], F[_]] = Exofunctor[==>, -->, F]
 val Exo = Exofunctor
+type ExoK[==>[_,_], -->[_,_], A[_[_]]] = ExofunctorK[==>, -->, A]
+val ExoK = ExofunctorK
+type ExoK2[==>[_,_], -->[_,_], A[_[_,_]]] = ExofunctorK2[==>, -->, A]
+val ExoK2 = ExofunctorK2
+type ExoH[==>[_,_], -->[_,_], A[_[_[_]]]] = ExofunctorH[==>, -->, A]
+val ExoH = ExofunctorH
+
+type Exocon[==>[_,_], -->[_,_], F[_]] = Exofunctor[Dual[==>,*,*], -->, F]
+object Exocon:
+  def apply[==>[_,_], -->[_,_], F[_]](using E: Exocon[==>, -->, F]): Exocon[==>, -->, F] = E
+  def unsafe[==>[_,_], -->[_,_], F[_]](fn: [a, b] => (a ==> b) => (F[b] --> F[a])): Exocon[==>, -->, F] =
+    Exofunctor.unsafe([a,b] => (f: Dual[==>, a, b]) => fn(f.toFn))
+type ExoconK[==>[_,_], -->[_,_], A[_[_]]] = ExofunctorK[Dual[==>,*,*], -->, A]
+object ExoconK:
+  def apply[==>[_,_], -->[_,_], A[_[_]]](using E: ExoconK[==>, -->, A]): ExoconK[==>, -->, A] = E
+  def unsafe[==>[_,_], -->[_,_], A[_[_]]](fn: [F[_], G[_]] => ∀[[a] =>> F[a] ==> G[a]] => (A[G] --> A[F])): ExoconK[==>, -->, A] =
+    ExofunctorK.unsafe([F[_], G[_]] => (f: ∀[[a] =>> Dual[==>, F[a], G[a]]]) => fn(f.toFnK))
+type ExoconK2[==>[_,_], -->[_,_], A[_[_,_]]] = ExofunctorK2[Dual[==>,*,*], -->, A]
+object ExoconK2:
+  def apply[==>[_,_], -->[_,_], A[_[_,_]]](using E: ExoconK2[==>, -->, A]): ExoconK2[==>, -->, A] = E
+  def unsafe[==>[_,_], -->[_,_], A[_[_,_]]](fn: [F[_,_], G[_,_]] => ∀∀[[a, b] =>> F[a, b] ==> G[a, b]] => (A[G] --> A[F])): ExoconK2[==>, -->, A] =
+    ExofunctorK2.unsafe([F[_,_], G[_,_]] => (f: ∀∀[[a, b] =>> Dual[==>, F[a, b], G[a, b]]]) => fn(f.toFnK2))
+type ExoconH[==>[_,_], -->[_,_], A[_[_[_]]]] = ExofunctorH[Dual[==>,*,*], -->, A]
+object ExoconH:
+  def apply[==>[_,_], -->[_,_], A[_[_[_]]]](using E: ExoconH[==>, -->, A]): ExoconH[==>, -->, A] = E
+  def unsafe[==>[_,_], -->[_,_], A[_[_[_]]]](fn: [F[_[_]], G[_[_]]] => ∀~[[a[_]] =>> F[a] ==> G[a]] => (A[G] --> A[F])): ExoconH[==>, -->, A] =
+    ExofunctorH.unsafe([F[_[_]], G[_[_]]] => (f: ∀~[[a[_]] =>> Dual[==>, F[a], G[a]]]) => fn(f.toFnH))
+
+type FunctorK[A[_[_]]] = ExofunctorK[* => *, * => *, A]
+object FunctorK:
+  def apply[A[_[_]]](using E: FunctorK[A]): FunctorK[A] = E
+type FunctorK2[A[_[_,_]]] = ExofunctorK2[* => *, * => *, A]
+object FunctorK2:
+  def apply[A[_[_,_]]](using E: FunctorK2[A]): FunctorK2[A] = E
+type FunctorH[A[_[_[_]]]] = ExofunctorH[* => *, * => *, A]
+object FunctorH:
+  def apply[A[_[_[_]]]](using E: FunctorH[A]): FunctorH[A] = E
+
+type ContravariantK[A[_[_]]] = ExofunctorK[Dual[* => *,*,*], * => *, A]
+object ContravariantK:
+  def apply[A[_[_]]](using E: ContravariantK[A]): ContravariantK[A] = E
+type ContravariantK2[A[_[_,_]]] = ExofunctorK2[Dual[* => *,*,*], * => *, A]
+object ContravariantK2:
+  def apply[A[_[_,_]]](using E: ContravariantK2[A]): ContravariantK2[A] = E
+type ContravariantH[A[_[_[_]]]] = ExofunctorH[Dual[* => *,*,*], * => *, A]
+object ContravariantH:
+  def apply[A[_[_[_]]]](using E: ContravariantH[A]): ContravariantH[A] = E
+
+type Isofunctor[F[_]] = Exofunctor[<=>, <=>, F]
+object Isofunctor:
+  def apply[F[_]](using E: Isofunctor[F]): Isofunctor[F] = E
+  trait Proto[F[_]] extends Exofunctor[<=>, <=>, F]:
+    def map1[A, B](f: A <=> B): F[A] => F[B]
+    def map[A, B](f: A <=> B): F[A] <=> F[B] = <=>.unsafe(map1(f), map1(f.flip))
+type IsofunctorK[A[_[_]]] = ExofunctorK[<=>, <=>, A]
+object IsofunctorK:
+  def apply[A[_[_]]](using E: IsofunctorK[A]): IsofunctorK[A] = E
+  trait Proto[A[_[_]]] extends ExofunctorK[<=>, <=>, A]:
+    def map1[F[_], G[_]](i: ∀[[a] =>> F[a] <=> G[a]]): A[F] => A[G]
+    def map[F[_], G[_]](i: ∀[[a] =>> F[a] <=> G[a]]): A[F] <=> A[G] = <=>.unsafe(map1(i), map1(i.flipK))
+type IsofunctorK2[A[_[_,_]]] = ExofunctorK2[<=>, <=>, A]
+object IsofunctorK2:
+  def apply[A[_[_,_]]](using E: IsofunctorK2[A]): IsofunctorK2[A] = E
+  trait Proto[A[_[_,_]]] extends ExofunctorK2[<=>, <=>, A]:
+    def map1[F[_,_], G[_,_]](i: ∀∀[[a, b] =>> F[a, b] <=> G[a, b]]): A[F] => A[G]
+    def map[F[_,_], G[_,_]](i: ∀∀[[a, b] =>> F[a, b] <=> G[a, b]]): A[F] <=> A[G] = <=>.unsafe(map1(i), map1(i.flipK2))
+type IsofunctorH[A[_[_[_]]]] = ExofunctorH[<=>, <=>, A]
+object IsofunctorH:
+  def apply[A[_[_[_]]]](using E: IsofunctorH[A]): IsofunctorH[A] = E
+  trait Proto[A[_[_[_]]]] extends ExofunctorH[<=>, <=>, A]:
+    def map1[F[_[_]], G[_[_]]](i: ∀~[[a[_]] =>> F[a] <=> G[a]]): A[F] => A[G]
+    def map[F[_[_]], G[_[_]]](i: ∀~[[a[_]] =>> F[a] <=> G[a]]): A[F] <=> A[G] = <=>.unsafe(map1(i), map1(i.flipH))
 
 type Endofunctor[->[_,_], F[_]] = Exofunctor[->, ->, F]
 object Endofunctor:
   /** This is isomorphic to cats.Functor[F] */
   type CovF[F[_]] = Endofunctor[* => *, F]
-
   def apply[->[_,_], F[_]](using E: Endofunctor[->, F]): Endofunctor[->, F] = E
   def unsafe[->[_,_], F[_]](fn: [a, b] => (a -> b) => (F[a] -> F[b])): Endofunctor[->, F] = Exofunctor.unsafe(fn)
-end Endofunctor
+
+type EndofunctorK[->[_,_], A[_[_]]] = ExofunctorK[->, ->, A]
+object EndofunctorK:
+  def apply[->[_,_], A[_[_]]](using E: EndofunctorK[->, A]): EndofunctorK[->, A] = E
+
+type EndofunctorK2[->[_,_], A[_[_,_]]] = ExofunctorK2[->, ->, A]
+object EndofunctorK2:
+  def apply[->[_,_], A[_[_,_]]](using E: EndofunctorK2[->, A]): EndofunctorK2[->, A] = E
+
+type EndofunctorH[->[_,_], A[_[_[_]]]] = ExofunctorH[->, ->, A]
+object EndofunctorH:
+  def apply[->[_,_], A[_[_[_]]]](using E: EndofunctorH[->, A]): EndofunctorH[->, A] = E
 
 type Endobifunctor[->[_,_], ⊙[_,_]] = Exobifunctor[->, ->, ->, ⊙]
+object Endobifunctor:
+  def apply[->[_,_], Bi[_,_]](using e: Endobifunctor[->, Bi]): Endobifunctor[->, Bi] = e
 /** Endo bifunctor on scala function */
 type EndobifunctorF[⊙[_,_]] = Endobifunctor[* => *, ⊙]
 type Exoprofunctor[==>[_,_], -->[_,_], >->[_,_], ⊙[_,_]] = Exobifunctor[Dual[==>,*,*], -->, >->, ⊙]
-type Endoprofunctor[->[_,_], ⊙[_,_]] = Exobifunctor[Dual[->, *, *], ->, ->, ⊙]
+type Endoprofunctor[->[_,_], ⊙[_,_]] = Exobifunctor[Dual[->,*,*], ->, ->, ⊙]
 
-type OplaxSemigroupal[=⊙[_, _], -->[_, _], -⊙[_, _], F[_]] = LaxSemigroupal[=⊙, Dual[-->, *, *], -⊙, F]
-type OplaxMonoidal   [=⊙[_, _], -->[_, _], -⊙[_, _], F[_]] = LaxMonoidal   [=⊙, Dual[-->, *, *], -⊙, F]
+type EndobifunctorK[->[_,_], ⊙[_[_],_[_]]] = ExobifunctorK[->, ->, ->, ⊙]
+object EndobifunctorK:
+  def apply[->[_,_], ⊙[_[_],_[_]]](using e: EndobifunctorK[->, ⊙]): EndobifunctorK[->, ⊙] = e
+type EndobifunctorK2[->[_,_], ⊙[_[_,_],_[_,_]]] = ExobifunctorK2[->, ->, ->, ⊙]
+object EndobifunctorK2:
+  def apply[->[_,_], ⊙[_[_,_],_[_,_]]](using e: EndobifunctorK2[->, ⊙]): EndobifunctorK2[->, ⊙] = e
+type EndobifunctorH[->[_,_], ⊙[_[_[_]],_[_[_]]]] = ExobifunctorH[->, ->, ->, ⊙]
+object EndobifunctorH:
+  def apply[->[_,_], ⊙[_[_[_]],_[_[_]]]](using e: EndobifunctorH[->, ⊙]): EndobifunctorH[->, ⊙] = e
 
-type FunctorK[==>[_,_], -->[_,_], H[_[_]]] = Exo[ArrowK[==>,*,*], -->, HasTc[H, *]]
-object FunctorK:
-  def apply[==>[_,_], -->[_,_], H[_[_]]](using F: FunctorK[==>, -->, H]): FunctorK[==>, -->, H] = F
-  trait Proto[==>[_,_], -->[_,_], H[_[_]]] extends FunctorK[==>, -->, H]:
-    def map[A, B](f: ArrowK[==>, A, B]): HasTc[H, A] --> HasTc[H, B] =
-      val ia = HasTc.isoCanonic[H, A](using f.kindA)
-      val ib = HasTc.isoCanonic[H, B](using f.kindB)
-      bif.bimap(ia, ib)(mapK(f.fn))
-    protected def bif: Exobifunctor[<=>, <=>, * => *, -->]
-    protected def mapK[F[_], G[_]](f: ∀[[a] =>> F[a] ==> G[a]]): H[F] --> H[G]
-  trait Proto1[==>[_,_], H[_[_]]] extends FunctorK[==>, * => *, H]:
-    def map[A, B](f: ArrowK[==>, A, B]): HasTc[H, A] => HasTc[H, B] =
-      HasTc.isoFun(using f.kindA, f.kindB).to(mapK(f.fn))
-    protected def mapK[F[_], G[_]](f: ∀[[a] =>> F[a] ==> G[a]]): H[F] => H[G]
-  trait ProtoF[H[_[_]]] extends Proto1[* => *, H]
+type OplaxSemigroupal[=⊙[_,_], -->[_,_], -⊙[_,_], F[_]] = LaxSemigroupal[=⊙, Dual[-->,*,*], -⊙, F]
+type OplaxMonoidal   [=⊙[_,_], -->[_,_], -⊙[_,_], F[_]] = LaxMonoidal   [=⊙, Dual[-->,*,*], -⊙, F]
 
-type CofunctorK[==>[_,_], -->[_,_], H[_[_]]] = Exo[Dual[ArrowK[==>,*,*],*,*], -->, HasTc[H, *]]
-object CofunctorK:
-  def apply[==>[_,_], -->[_,_], H[_[_]]](using F: CofunctorK[==>, -->, H]): CofunctorK[==>, -->, H] = F
-  trait Proto[==>[_,_], -->[_,_], H[_[_]]] extends CofunctorK[==>, -->, H]:
-    def map[A, B](f: Dual[ArrowK[==>,*,*], A, B]): HasTc[H, A] --> HasTc[H, B] =
-      val fn = f.toFn
-      val ia = HasTc.isoCanonic[H, B](using fn.kindA)
-      val ib = HasTc.isoCanonic[H, A](using fn.kindB)
-      bif.bimap(ib, ia)(comapK(fn.fn))
-    protected def bif: Exobifunctor[<=>, <=>, * => *, -->]
-    protected def comapK[F[_], G[_]](f: ∀[[a] =>> G[a] ==> F[a]]): H[F] --> H[G]
-  trait Proto1[==>[_,_], H[_[_]]] extends CofunctorK[==>, * => *, H]:
-    def map[A, B](f: Dual[ArrowK[==>,*,*], A, B]): HasTc[H, A] => HasTc[H, B] =
-      val fn: ArrowK[==>, B, A] = f.toFn
-      HasTc.isoFun[H, A, fn.TypeB, B, fn.TypeA](using fn.kindB, fn.kindA).to(comapK(fn.fn))
-    protected def comapK[F[_], G[_]](f: G ~> F): H[F] => H[G]
-  trait ProtoF[H[_[_]]] extends Proto1[* => *, H]
+type OplaxSemigroupalK[=⊙[_,_], -->[_,_], -⊙[_,_], A[_[_]]] = LaxSemigroupalK[=⊙, Dual[-->,*,*], -⊙, A]
+type OplaxMonoidalK   [=⊙[_,_], -->[_,_], -⊙[_,_], A[_[_]]] = LaxMonoidalK   [=⊙, Dual[-->,*,*], -⊙, A]
 
-type IsoFunctorK[==>[_,_], -->[_,_], H[_[_]]] = Exo[IsoArrowK[==>,*,*], Iso[-->,*,*], HasTc[H, *]]
-object IsoFunctorK:
-  def apply[==>[_,_], -->[_,_], H[_[_]]](using F: IsoFunctorK[==>, -->, H]): IsoFunctorK[==>, -->, H] = F
-  trait Proto[==>[_,_], -->[_,_], H[_[_]]] extends IsoFunctorK[==>, -->, H]:
-    def map[A, B](iso: IsoArrowK[==>, A, B]): Iso[-->, HasTc[H, A], HasTc[H, B]] =
-      val to = iso.to
-      val isok = ArrowK.isoFunKUnapply(iso)(using to.kindA, to.kindB)(using cat1)
-      val iso1 = Iso.unsafe(mapK(isok), mapK(isok.flip))(using cat2)
-      val ia = HasTc.isoCanonic[H, A](using to.kindA)
-      val ib = HasTc.isoCanonic[H, B](using to.kindB)
-      val x1 = bif.bimap(ia, ib)
-      val x2 = bif.bimap(ib, ia)
-      Iso.unsafe(x1(iso1.to), x2(iso1.from))(using iso1.cat)
-    protected def cat1: Subcat[==>]
-    protected def cat2: Subcat[-->]
-    protected def bif: Exobifunctor[<=>, <=>, * => *, -->]
-    protected def mapK[F[_], G[_]](f: IsoK[==>, F, G]): H[F] --> H[G]
-  trait Proto1[==>[_,_], H[_[_]]] extends IsoFunctorK[==>, * => *, H]:
-    def map[A, B](f: IsoArrowK[==>, A, B]): Iso[* => *, HasTc[H, A], HasTc[H, B]] =
-      val to = f.to
-      val isok: IsoK[==>, to.TypeA, to.TypeB] = ArrowK.isoFunKUnapply(f)(using to.kindA, to.kindB)(using cat)
-      Iso.unsafe(
-        HasTc.isoFun(using to.kindA, to.kindB).to(mapK(isok)),
-        HasTc.isoFun(using to.kindB, to.kindA).to(mapK(isok.flip))
-      )
-    protected def cat: Subcat[==>]
-    protected def mapK[F[_], G[_]](f: IsoK[==>, F, G]): H[F] => H[G]
-  trait ProtoF[H[_[_]]] extends Proto1[* => *, H]:
-    protected def cat: Subcat[* => *] = summon
+type OplaxSemigroupalK2[=⊙[_,_], -->[_,_], -⊙[_,_], A[_[_,_]]] = LaxSemigroupalK2[=⊙, Dual[-->,*,*], -⊙, A]
+type OplaxMonoidalK2   [=⊙[_,_], -->[_,_], -⊙[_,_], A[_[_,_]]] = LaxMonoidalK2   [=⊙, Dual[-->,*,*], -⊙, A]
 
-type FunctorK2[==>[_,_], -->[_,_], H[_[_,_]]] = Exo[ArrowK2[==>,*,*], -->, HasTc2[H, *]]
-object FunctorK2:
-  def apply[==>[_,_], -->[_,_], H[_[_,_]]](using F: FunctorK2[==>, -->, H]): FunctorK2[==>, -->, H] = F
-  trait Proto[==>[_,_], -->[_,_], H[_[_,_]]] extends FunctorK2[==>, -->, H]:
-    def map[A, B](f: ArrowK2[==>, A, B]): HasTc2[H, A] --> HasTc2[H, B] =
-      val ia = HasTc2.isoCanonic[H, A](using f.kindA)
-      val ib = HasTc2.isoCanonic[H, B](using f.kindB)
-      bif.bimap(ia, ib)(mapK2(f.fn))
-    protected def bif: Exobifunctor[<=>, <=>, * => *, -->]
-    protected def mapK2[F[_,_], G[_,_]](f: ∀∀[[a, b] =>> F[a, b] ==> G[a, b]]): H[F] --> H[G]
-  trait Proto1[==>[_,_], H[_[_,_]]] extends FunctorK2[==>, * => *, H]:
-    def map[A, B](f: ArrowK2[==>, A, B]): HasTc2[H, A] => HasTc2[H, B] =
-      HasTc2.isoFun(using f.kindA, f.kindB).to(mapK2(f.fn))
-    protected def mapK2[F[_,_], G[_,_]](f: ∀∀[[a, b] =>> F[a, b] ==> G[a, b]]): H[F] => H[G]
-  trait ProtoF[H[_[_,_]]] extends Proto1[* => *, H]
+type OplaxSemigroupalH[=⊙[_,_], -->[_,_], -⊙[_,_], A[_[_[_]]]] = LaxSemigroupalH[=⊙, Dual[-->,*,*], -⊙, A]
+type OplaxMonoidalH   [=⊙[_,_], -->[_,_], -⊙[_,_], A[_[_[_]]]] = LaxMonoidalH   [=⊙, Dual[-->,*,*], -⊙, A]
 
-type CofunctorK2[==>[_,_], -->[_,_], H[_[_,_]]] = Exo[Dual[ArrowK2[==>,*,*],*,*], -->, HasTc2[H, *]]
-object CofunctorK2:
-  def apply[==>[_,_], -->[_,_], H[_[_,_]]](using F: CofunctorK2[==>, -->, H]): CofunctorK2[==>, -->, H] = F
-  trait Proto[==>[_,_], -->[_,_], H[_[_,_]]] extends CofunctorK2[==>, -->, H]:
-    def map[A, B](f: Dual[ArrowK2[==>,*,*], A, B]): HasTc2[H, A] --> HasTc2[H, B] =
-      val fn = f.toFn
-      val ia = HasTc2.isoCanonic[H, B](using fn.kindA)
-      val ib = HasTc2.isoCanonic[H, A](using fn.kindB)
-      bif.bimap(ib, ia)(comapK2(fn.fn))
-    protected def bif: Exobifunctor[<=>, <=>, * => *, -->]
-    protected def comapK2[F[_,_], G[_,_]](f: ∀∀[[a, b] =>> G[a, b] ==> F[a, b]]): H[F] --> H[G]
-  trait Proto1[==>[_,_], H[_[_,_]]] extends CofunctorK2[==>, * => *, H]:
-    def map[A, B](f: Dual[ArrowK2[==>,*,*], A, B]): HasTc2[H, A] => HasTc2[H, B] =
-      val fn: ArrowK2[==>, B, A] = f.toFn
-      HasTc2.isoFun[H, A, fn.TypeB, B, fn.TypeA](using fn.kindB, fn.kindA).to(comapK2(fn.fn))
-    protected def comapK2[F[_,_], G[_,_]](f: ∀∀[[a, b] =>> G[a, b] ==> F[a, b]]): H[F] => H[G]
-  trait ProtoF[H[_[_,_]]] extends Proto1[* => *, H]
+type StrongSemigroupal[=⊙[_,_], -->[_,_], -⊙[_,_], F[_]] = LaxSemigroupal[=⊙, Iso[-->,*,*], -⊙, F]
+type StrongMonoidal   [=⊙[_,_], -->[_,_], -⊙[_,_], F[_]] = LaxMonoidal   [=⊙, Iso[-->,*,*], -⊙, F]
 
-type IsoFunctorK2[==>[_,_], -->[_,_], H[_[_,_]]] = Exo[IsoArrowK2[==>,*,*], Iso[-->,*,*], HasTc2[H, *]]
-object IsoFunctorK2:
-  def apply[==>[_,_], -->[_,_], H[_[_,_]]](using F: IsoFunctorK2[==>, -->, H]): IsoFunctorK2[==>, -->, H] = F
-  trait Proto[==>[_,_], -->[_,_], H[_[_,_]]] extends IsoFunctorK2[==>, -->, H]:
-    def map[A, B](iso: IsoArrowK2[==>, A, B]): Iso[-->, HasTc2[H, A], HasTc2[H, B]] =
-      val to = iso.to
-      val isok = ArrowK2.isoFunK2Unapply(iso)(using to.kindA, to.kindB)(using cat1)
-      val iso1 = Iso.unsafe(mapK2(isok), mapK2(isok.flip))(using cat2)
-      val ia = HasTc2.isoCanonic[H, A](using to.kindA)
-      val ib = HasTc2.isoCanonic[H, B](using to.kindB)
-      val x1 = bif.bimap(ia, ib)
-      val x2 = bif.bimap(ib, ia)
-      Iso.unsafe(x1(iso1.to), x2(iso1.from))(using iso1.cat)
-    protected def cat1: Subcat[==>]
-    protected def cat2: Subcat[-->]
-    protected def bif: Exobifunctor[<=>, <=>, * => *, -->]
-    protected def mapK2[F[_,_], G[_,_]](f: IsoK2[==>, F, G]): H[F] --> H[G]
-  trait Proto1[==>[_,_], H[_[_,_]]] extends IsoFunctorK2[==>, * => *, H]:
-    def map[A, B](f: IsoArrowK2[==>, A, B]): Iso[* => *, HasTc2[H, A], HasTc2[H, B]] =
-      val to = f.to
-      val isok: IsoK2[==>, to.TypeA, to.TypeB] = ArrowK2.isoFunK2Unapply(f)(using to.kindA, to.kindB)(using cat)
-      Iso.unsafe(
-        HasTc2.isoFun(using to.kindA, to.kindB).to(mapK2(isok)),
-        HasTc2.isoFun(using to.kindB, to.kindA).to(mapK2(isok.flip))
-      )
-    protected def cat: Subcat[==>]
-    protected def mapK2[F[_,_], G[_,_]](f: IsoK2[==>, F, G]): H[F] => H[G]
-  trait ProtoF[H[_[_,_]]] extends Proto1[* => *, H]:
-    protected def cat: Subcat[* => *] = summon
+type StrongSemigroupalK[=⊙[_,_], -->[_,_], -⊙[_,_], A[_[_]]] = LaxSemigroupalK[=⊙, Iso[-->,*,*], -⊙, A]
+type StrongMonoidalK   [=⊙[_,_], -->[_,_], -⊙[_,_], A[_[_]]] = LaxMonoidalK   [=⊙, Iso[-->,*,*], -⊙, A]
 
-type FunctorH[==>[_,_], -->[_,_], H[_[_[_]]]] = Exo[ArrowH[==>,*,*], -->, HasHc[H, *]]
-object FunctorH:
-  def apply[==>[_,_], -->[_,_], H[_[_[_]]]](using F: FunctorH[==>, -->, H]): FunctorH[==>, -->, H] = F
-  trait Proto[==>[_,_], -->[_,_], H[_[_[_]]]] extends FunctorH[==>, -->, H]:
-    def map[A, B](f: ArrowH[==>, A, B]): HasHc[H, A] --> HasHc[H, B] =
-      val ia = HasHc.isoCanonic[H, A](using f.kindA)
-      val ib = HasHc.isoCanonic[H, B](using f.kindB)
-      bif.bimap(ia, ib)(mapH(f.fn))
-    protected def bif: Exobifunctor[<=>, <=>, * => *, -->]
-    protected def mapH[F[_[_]], G[_[_]]](f: ∀~[[a[_]] =>> F[a] ==> G[a]]): H[F] --> H[G]
-  trait Proto1[==>[_,_], H[_[_[_]]]] extends FunctorH[==>, * => *, H]:
-    def map[A, B](f: ArrowH[==>, A, B]): HasHc[H, A] => HasHc[H, B] =
-      HasHc.isoFun(using f.kindA, f.kindB).to(mapH(f.fn))
-    protected def mapH[F[_[_]], G[_[_]]](f: ∀~[[a[_]] =>> F[a] ==> G[a]]): H[F] => H[G]
-  trait ProtoF[H[_[_[_]]]] extends Proto1[* => *, H]
+type StrongSemigroupalK2[=⊙[_,_], -->[_,_], -⊙[_,_], A[_[_,_]]] = LaxSemigroupalK2[=⊙, Iso[-->,*,*], -⊙, A]
+type StrongMonoidalK2   [=⊙[_,_], -->[_,_], -⊙[_,_], A[_[_,_]]] = LaxMonoidalK2   [=⊙, Iso[-->,*,*], -⊙, A]
 
-type CofunctorH[==>[_,_], -->[_,_], H[_[_[_]]]] = Exo[Dual[ArrowH[==>,*,*],*,*], -->, HasHc[H, *]]
-object CofunctorH:
-  def apply[==>[_,_], -->[_,_], H[_[_[_]]]](using F: CofunctorH[==>, -->, H]): CofunctorH[==>, -->, H] = F
-  trait Proto[==>[_,_], -->[_,_], H[_[_[_]]]] extends CofunctorH[==>, -->, H]:
-    def map[A, B](f: Dual[ArrowH[==>,*,*], A, B]): HasHc[H, A] --> HasHc[H, B] =
-      val fn = f.toFn
-      val ia = HasHc.isoCanonic[H, B](using fn.kindA)
-      val ib = HasHc.isoCanonic[H, A](using fn.kindB)
-      bif.bimap(ib, ia)(comapH(fn.fn))
-    protected def bif: Exobifunctor[<=>, <=>, * => *, -->]
-    protected def comapH[F[_[_]], G[_[_]]](f: ∀~[[a[_]] =>> G[a] ==> F[a]]): H[F] --> H[G]
-  trait Proto1[==>[_,_], H[_[_[_]]]] extends CofunctorH[==>, * => *, H]:
-    def map[A, B](f: Dual[ArrowH[==>,*,*], A, B]): HasHc[H, A] => HasHc[H, B] =
-      val fn: ArrowH[==>, B, A] = f.toFn
-      HasHc.isoFun[H, A, fn.TypeB, B, fn.TypeA](using fn.kindB, fn.kindA).to(comapH(fn.fn))
-    protected def comapH[F[_[_]], G[_[_]]](f: ∀~[[a[_]] =>> G[a] ==> F[a]]): H[F] => H[G]
-  trait ProtoF[H[_[_[_]]]] extends Proto1[* => *, H]
-
-type IsoFunctorH[==>[_,_], -->[_,_], H[_[_[_]]]] = Exo[IsoArrowH[==>,*,*], Iso[-->,*,*], HasHc[H, *]]
-object IsoFunctorH:
-  def apply[==>[_,_], -->[_,_], H[_[_[_]]]](using F: IsoFunctorH[==>, -->, H]): IsoFunctorH[==>, -->, H] = F
-  trait Proto[==>[_,_], -->[_,_], H[_[_[_]]]] extends IsoFunctorH[==>, -->, H]:
-    def map[A, B](iso: IsoArrowH[==>, A, B]): Iso[-->, HasHc[H, A], HasHc[H, B]] =
-      val to = iso.to
-      val isok = ArrowH.isoFunKUnapply(iso)(using to.kindA, to.kindB)(using cat1)
-      val iso1 = Iso.unsafe(mapH(isok), mapH(isok.flip))(using cat2)
-      val ia = HasHc.isoCanonic[H, A](using to.kindA)
-      val ib = HasHc.isoCanonic[H, B](using to.kindB)
-      val x1 = bif.bimap(ia, ib)
-      val x2 = bif.bimap(ib, ia)
-      Iso.unsafe(x1(iso1.to), x2(iso1.from))(using iso1.cat)
-    protected def cat1: Subcat[==>]
-    protected def cat2: Subcat[-->]
-    protected def bif: Exobifunctor[<=>, <=>, * => *, -->]
-    protected def mapH[F[_[_]], G[_[_]]](f: IsoH[==>, F, G]): H[F] --> H[G]
-  trait Proto1[==>[_,_], H[_[_[_]]]] extends IsoFunctorH[==>, * => *, H]:
-    def map[A, B](f: IsoArrowH[==>, A, B]): Iso[* => *, HasHc[H, A], HasHc[H, B]] =
-      val to = f.to
-      val isok: IsoH[==>, to.TypeA, to.TypeB] = ArrowH.isoFunKUnapply(f)(using to.kindA, to.kindB)(using cat)
-      Iso.unsafe(
-        HasHc.isoFun(using to.kindA, to.kindB).to(mapH(isok)),
-        HasHc.isoFun(using to.kindB, to.kindA).to(mapH(isok.flip))
-      )
-    protected def cat: Subcat[==>]
-    protected def mapH[F[_[_]], G[_[_]]](f: IsoH[==>, F, G]): H[F] => H[G]
-  trait ProtoF[H[_[_[_]]]] extends Proto1[* => *, H]:
-    protected def cat: Subcat[* => *] = summon
+type StrongSemigroupalH[=⊙[_,_], -->[_,_], -⊙[_,_], A[_[_[_]]]] = LaxSemigroupalH[=⊙, Iso[-->,*,*], -⊙, A]
+type StrongMonoidalH   [=⊙[_,_], -->[_,_], -⊙[_,_], A[_[_[_]]]] = LaxMonoidalH   [=⊙, Iso[-->,*,*], -⊙, A]

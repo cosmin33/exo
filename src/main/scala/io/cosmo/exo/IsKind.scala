@@ -38,20 +38,17 @@ trait IsKindImplicits extends IsKindImplicits01 {
   def injDisjunction[A, B](using a: IsKind[A], b: IsKind[B]): IsKind.Aux[A \/ B, [α] =>> a.Type[α] \/ b.Type[α]] =
     givenPairInj
 
-  // TODO: remove this (after refactor FunctionK to be an alias of ArrowK)
-  def injFunction[A, B](using a: IsKind[A], b: IsKind[B]): IsKind.Aux[FunK[A, B], [o] =>> a.Type[o] => b.Type[o]] =
-    ???
 }
 
 trait IsKindImplicits01 extends IsKindImplicits02 {
-  given arrowK[->[_,_], A, B](using a: IsKind[A], b: IsKind[B])
-  : IsKind.Aux[ArrowK[->, A, B], [α] =>> a.Type[α] -> b.Type[α]] =
-    new IsKind[ArrowK[->, A, B]]:
-      type Type[α] = a.Type[α] -> b.Type[α]
-      override def pairInjectivity[P[_,_], X, Y](using ev: ArrowK[->, A, B] === P[X, Y])(using i: IsInjective2[P]): (IsKind[X], IsKind[Y]) =
-        val eq: P =~~= ArrowK[->,*,*] = Unsafe.isK2
-        val (ax, by) = i.apply[A, B, X, Y](using eq.is[A, B] andThen ev)
-        (ax.subst(a), by.subst(b))
+//  given arrowK[->[_,_], A, B](using a: IsKind[A], b: IsKind[B])
+//  : IsKind.Aux[ArrowK[->, A, B], [α] =>> a.Type[α] -> b.Type[α]] =
+//    new IsKind[ArrowK[->, A, B]]:
+//      type Type[α] = a.Type[α] -> b.Type[α]
+//      override def pairInjectivity[P[_,_], X, Y](using ev: ArrowK[->, A, B] === P[X, Y])(using i: IsInjective2[P]): (IsKind[X], IsKind[Y]) =
+//        val eq: P =~~= ArrowK[->,*,*] = Unsafe.isK2
+//        val (ax, by) = i.apply[A, B, X, Y](using eq.is[A, B] andThen ev)
+//        (ax.subst(a), by.subst(b))
 }
 
 trait IsKindImplicits02 {

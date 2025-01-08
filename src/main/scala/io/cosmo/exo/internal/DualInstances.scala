@@ -16,8 +16,8 @@ trait DualSemicategoryInstances extends DualSemicategoryInstances01 {
   given dualSubcat[->[_,_], C[_]](using s: Subcat.Aux[->, C]): Subcat.Aux[Dual[->, *, *], C] =
     Dual.leibniz[->].subst[[f[_,_]] =>> Subcat.Aux[f, C]](oppSubcat(using s))
 
-  given dualdualSubcat[->[_, _], T[_]](using Subcat.Aux[Dual[->, *, *], T]): Subcat.Aux[->, T] =
-    Dual.nestedDualCancelsItself.subst[[f[_, _]] =>> Subcat.Aux[f, T]](dualSubcat)
+  given dualdualSubcat[->[_,_], T[_]](using Subcat.Aux[Dual[->, *, *], T]): Subcat.Aux[->, T] =
+    Dual.nestedDualCancelsItself.subst[[f[_,_]] =>> Subcat.Aux[f, T]](dualSubcat)
 }
 
 trait DualSemicategoryInstances01 {
@@ -27,8 +27,8 @@ trait DualSemicategoryInstances01 {
   given dualSemicat[->[_,_]](using s: Semicategory[->]): Semicategory[Dual[->, *, *]] =
     Dual.leibniz[->].subst[[f[_,_]] =>> Semicategory[f]](oppSemicat(using s))
 
-  given dualdualSemicat[->[_, _], T[_]](using Semicategory[Dual[->, *, *]]): Semicategory[->] =
-    Dual.nestedDualCancelsItself.subst[[f[_, _]] =>> Semicategory[f]](dualSemicat)
+  given dualdualSemicat[->[_,_], T[_]](using Semicategory[Dual[->, *, *]]): Semicategory[->] =
+    Dual.nestedDualCancelsItself.subst[[f[_,_]] =>> Semicategory[f]](dualSemicat)
 }
 
 trait DualAssociativeInstances extends DualAssociativeInstances01 {
@@ -38,8 +38,8 @@ trait DualAssociativeInstances extends DualAssociativeInstances01 {
   given dualMonoidal[->[_,_], P[_,_], C[_], I](using m: Monoidal.Aux[->, P, C, I]): Monoidal.Aux[Dual[->, *, *], P, C, I] =
     Dual.leibniz[->].subst[[f[_,_]] =>> Monoidal.Aux[f, P, C, I]](oppMonoidal(using m))
 
-  given dualdualMonoidal[->[_, _], ⊙[_, _], T[_], I](using Monoidal.Aux[Dual[->, *, *], ⊙, T, I]): Monoidal.Aux[->, ⊙, T, I] =
-    Dual.nestedDualCancelsItself.subst[[f[_, _]] =>> Monoidal.Aux[f, ⊙, T, I]](dualMonoidal)
+  given dualdualMonoidal[->[_,_], ⊙[_,_], T[_], I](using Monoidal.Aux[Dual[->, *, *], ⊙, T, I]): Monoidal.Aux[->, ⊙, T, I] =
+    Dual.nestedDualCancelsItself.subst[[f[_,_]] =>> Monoidal.Aux[f, ⊙, T, I]](dualMonoidal)
 }
 
 trait DualAssociativeInstances01 extends DualAssociativeInstances02 {
@@ -49,8 +49,8 @@ trait DualAssociativeInstances01 extends DualAssociativeInstances02 {
   given dualSymmetric[->[_,_], P[_,_], C[_]](using s: Symmetric.Aux[->, P, C]): Symmetric.Aux[Dual[->, *, *], P, C] =
     Dual.leibniz[->].subst[[f[_,_]] =>> Symmetric.Aux[f, P, C]](oppSymmetric(using s))
 
-  given dualdualSymmetric[->[_, _], ⊙[_, _], T[_]](using Symmetric.Aux[Dual[->, *, *], ⊙, T]): Symmetric.Aux[->, ⊙, T] =
-    Dual.nestedDualCancelsItself.subst[[f[_, _]] =>> Symmetric.Aux[f, ⊙, T]](dualSymmetric)
+  given dualdualSymmetric[->[_,_], ⊙[_,_], T[_]](using Symmetric.Aux[Dual[->, *, *], ⊙, T]): Symmetric.Aux[->, ⊙, T] =
+    Dual.nestedDualCancelsItself.subst[[f[_,_]] =>> Symmetric.Aux[f, ⊙, T]](dualSymmetric)
 }
 
 trait DualAssociativeInstances02 extends DualAssociativeInstances03 {
@@ -60,8 +60,8 @@ trait DualAssociativeInstances02 extends DualAssociativeInstances03 {
   given dualBraided[->[_,_], P[_,_], C[_]](using b: Braided.Aux[->, P, C]): Braided.Aux[Dual[->, *, *], P, C] =
     Dual.leibniz[->].subst[[f[_,_]] =>> Braided.Aux[f, P, C]](oppBraided(using b))
 
-  given dualdualBraided[->[_, _], ⊙[_, _], T[_]](using Braided.Aux[Dual[->, *, *], ⊙, T]): Braided.Aux[->, ⊙, T] =
-    Dual.nestedDualCancelsItself.subst[[f[_, _]] =>> Braided.Aux[f, ⊙, T]](dualBraided)
+  given dualdualBraided[->[_,_], ⊙[_,_], T[_]](using Braided.Aux[Dual[->, *, *], ⊙, T]): Braided.Aux[->, ⊙, T] =
+    Dual.nestedDualCancelsItself.subst[[f[_,_]] =>> Braided.Aux[f, ⊙, T]](dualBraided)
 }
 
 trait DualAssociativeInstances03 {
@@ -71,8 +71,8 @@ trait DualAssociativeInstances03 {
   given dualAssociative[->[_,_], P[_,_], C[_]](using a: Associative.Aux[->, P, C]): Associative.Aux[Dual[->, *, *], P, C] =
     Dual.leibniz[->].subst[[f[_,_]] =>> Associative.Aux[f, P, C]](oppAssociative(using a))
 
-  given dualdualAssociative[->[_, _], ⊙[_, _], T[_]](using Associative.Aux[Dual[->, *, *], ⊙, T]): Associative.Aux[->, ⊙, T] =
-    Dual.nestedDualCancelsItself.subst[[f[_, _]] =>> Associative.Aux[f, ⊙, T]](dualAssociative)
+  given dualdualAssociative[->[_,_], ⊙[_,_], T[_]](using Associative.Aux[Dual[->, *, *], ⊙, T]): Associative.Aux[->, ⊙, T] =
+    Dual.nestedDualCancelsItself.subst[[f[_,_]] =>> Associative.Aux[f, ⊙, T]](dualAssociative)
 }
 
 trait DualBifunctorInstances extends DualBifunctorInstances01 {
@@ -83,8 +83,8 @@ trait DualBifunctorInstances extends DualBifunctorInstances01 {
     Dual.leibniz[->].subst[[f[_,_]] =>> Endobifunctor[f, P]](oppEndobifunctor(using e))
 
   // if this is a "given" then I have strange errors about implicits found in more than one place
-  def dualdualEndobifunctor[->[_, _], ⊙[_, _]](using Endobifunctor[Dual[->, *, *], ⊙]): Endobifunctor[->, ⊙] =
-    Dual.nestedDualCancelsItself.subst[[f[_, _]] =>> Endobifunctor[f, ⊙]](Exobifunctor.dualEndobifunctor)
+  def dualdualEndobifunctor[->[_,_], ⊙[_,_]](using Endobifunctor[Dual[->, *, *], ⊙]): Endobifunctor[->, ⊙] =
+    Dual.nestedDualCancelsItself.subst[[f[_,_]] =>> Endobifunctor[f, ⊙]](Exobifunctor.dualEndobifunctor)
 }
 
 trait DualBifunctorInstances01 {

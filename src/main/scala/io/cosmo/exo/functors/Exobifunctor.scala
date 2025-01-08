@@ -6,7 +6,7 @@ import io.cosmo.exo.syntax._
 import io.cosmo.exo.internal.any._
 import io.cosmo.exo.internal._
 
-trait Exobifunctor[==>[_,_], -->[_,_], >->[_,_], ⊙[_,_]] { self =>
+trait Exobifunctor[==>[_,_], -->[_,_], >->[_,_], ⊙[_,_]]:
   def bimap[A, X, B, Y](left: A ==> X, right: B --> Y): ⊙[A, B] >-> ⊙[X, Y]
 
   def leftMap [A, B, Z](fn: A ==> Z)(using C: SubcatHasId[-->, B]): ⊙[A, B] >-> ⊙[Z, B] = bimap(fn, C.id)
@@ -22,15 +22,10 @@ trait Exobifunctor[==>[_,_], -->[_,_], >->[_,_], ⊙[_,_]] { self =>
   def rightForall[T[_]](using C: Subcat.Aux[==>, T]): T ~> ([x] =>> Exo[-->, >->, ⊙[x, *]]) =
     ~>([A] => (ta: T[A]) => rightFunctor(using SubcatHasId.from(using C, ta)))
 
-}
-
 object Exobifunctor extends ExobifunctorInstances 
   with DualBifunctorInstances 
   with EvidenceCatBifunctorInstances
-  with ProdcatBifunctorInstances {
-
-  type Con[==>[_,_], -->[_,_], >->[_,_], B[_,_]] = Exobifunctor[Dual[==>,*,*], Dual[-->,*,*], >->, B]
-  type ConF[B[_,_]] = Con[* => *, * => *, * => *, B]
+  with ProdcatBifunctorInstances:
 
   def apply[=>:[_,_], ->:[_,_], ~>:[_,_], ⊙[_,_]](using bi: Exobifunctor[=>:, ->:, ~>:, ⊙]): Exobifunctor[=>:, ->:, ~>:, ⊙] = bi
 
@@ -47,6 +42,8 @@ object Exobifunctor extends ExobifunctorInstances
     def compose[G[_,_]](using G: Endobifunctor[==>, G]): Exobifunctor[==>, ==>, >->, [α, β] =>> F[G[α, β], G[α, β]]] =
       new Exobifunctor[==>, ==>, >->, [α, β] =>> F[G[α, β], G[α, β]]]:
         def bimap[A, X, B, Y](l: A ==> X, r: B ==> Y) = G.bimap(l, r) |> (i => self.bimap(i, i))
+  extension[==>[_,_], -->[_,_], >->[_,_], P[_,_]](self: Exoprofunctor[==>, -->, >->, P])
+    def promap[A, X, B, Y](l: X ==> A, r: B --> Y): P[A, B] >-> P[X, Y] = self.bimap(Dual(l), r)
 
   def dual[->[_,_], Bi[_,_]](F: Endobifunctor[->, Bi]): Endobifunctor[Dual[->,*,*], Bi] =
     new Endobifunctor[Dual[->,*,*], Bi]:
@@ -64,24 +61,13 @@ object Exobifunctor extends ExobifunctorInstances
     new Exobifunctor[Iso[==>,*,*], Iso[-->,*,*], >->, Bi]:
       override def bimap[A, X, B, Y](left: Iso[==>, A, X], right: Iso[-->, B, Y]) =
         E.bimap(Dicat[==>, A, X](left.to, left.from), Dicat[-->, B, Y](right.to, right.from))
-}
+end Exobifunctor
 
-object Endobifunctor {
-  def apply[->[_,_], Bi[_,_]](using e: Endobifunctor[->, Bi]): Endobifunctor[->, Bi] = e
-}
-
-trait ExobifunctorInstances {
+trait ExobifunctorInstances:
 
   given semicatToExobifunctor[->[_,_]](using s: Semicategory[->]): Exobifunctor[Dual[->,*,*], ->, Function, ->] =
     new Exobifunctor[Dual[->,*,*], ->, * => *, ->]:
       def bimap[A, X, B, Y](left: Dual[->, A, X], right: B -> Y): (A -> B) => (X -> Y) = left.toFn >>> _ >>> right
-
-  given arrowEndofunctor[->[_,_], P[_,_]]: IsoFunctorK2[* => *, * => *, [f[_,_]] =>> Endobifunctor[f, P]] =
-    new IsoFunctorK2.ProtoF[[f[_,_]] =>> Endobifunctor[f, P]]:
-      protected def mapK2[F[_,_], G[_,_]](iso: F <~~> G): Endobifunctor[F, P] => Endobifunctor[G, P] = ef =>
-        new Endobifunctor[G, P]:
-          def bimap[A, X, B, Y](l: G[A, X], r: G[B, Y]): G[P[A, B], P[X, Y]] =
-            iso.to(ef.bimap(iso.from(l), iso.from(r)))
 
   given profunctor[->[_,_]: Semicategory]: Exobifunctor[Dual[->,*,*], ->, * => *, ->] =
     new Exobifunctor[Dual[->,*,*], ->, * => *, ->]:
@@ -97,7 +83,7 @@ trait ExobifunctorInstances {
       override def bimap[A, X, B, Y](l: A => X, r: B => Y): Either[A, B] => Either[X, Y] =
         _.fold(x => l(x).asLeft, x => r(x).asRight)
 
-}
+end ExobifunctorInstances
 
 object ExobifunctorHelpers:
   
