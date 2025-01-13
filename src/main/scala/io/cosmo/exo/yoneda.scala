@@ -38,7 +38,7 @@ object yoneda {
     ca: SubcatHasId[->, A], cb: SubcatHasId[->, B]
   ): (->[A,*] <~> ->[B,*]) <=> Iso[->, B, A] =
       Iso.unsafe(
-        i => Iso.unsafe(i.to[A](ca.id), i.from[B](cb.id))(using ca.s),
+        i => Iso.unsafe(i.apply[A].to(ca.id), i.apply[B].from(cb.id))(using ca.s),
         i => <~>.unsafe(yoEmbedding[->, A, B].from(i.to), yoEmbedding[->, B, A].from(i.from))
       )
 
@@ -46,7 +46,7 @@ object yoneda {
     ca: SubcatHasId[->, A], cb: SubcatHasId[->, B]
   ): (->[*,A] <~> ->[*,B]) <=> Iso[->, A, B] =
     Iso.unsafe(
-      i => Iso.unsafe(i.to[A](ca.id), i.from[B](cb.id))(using ca.s),
+      i => Iso.unsafe(i.apply[A].to(ca.id), i.apply[B].from(cb.id))(using ca.s),
       i => <~>.unsafe[->[*,A], ->[*,B]](coyoEmbedding[->, A, B].from(i.to), coyoEmbedding[->, B, A].from(i.from))
     )
 

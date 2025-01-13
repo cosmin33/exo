@@ -34,8 +34,8 @@ trait MonoidalK[->[_,_], ⊙[_,_]] extends AssociativeK[->, ⊙]:
   def coidr[A[_]: TC]: ∀[[a] =>> A[a] -> ⊙[A[a], Id[a]]]
 
   private type <->[a[_], b[_]] = IsoK[->, a, b]
-  def isoUnitorL[A[_]: TC]: ([a] =>> ⊙[Id[a], A[a]]) <-> A = IsoK.unsafe[->, [a] =>> ⊙[Id[a], A[a]], A](idl[A], coidl[A])(using C)
-  def isoUnitorR[A[_]: TC]: ([a] =>> ⊙[A[a], Id[a]]) <-> A = IsoK.unsafe[->, [a] =>> ⊙[A[a], Id[a]], A](idr[A], coidr[A])(using C)
+  def isoUnitorL[A[_]: TC]: ([a] =>> ⊙[Id[a], A[a]]) <-> A = IsoK.unsafe[->, [a] =>> ⊙[Id[a], A[a]], A](idl[A], coidl[A])(using C.semicat)
+  def isoUnitorR[A[_]: TC]: ([a] =>> ⊙[A[a], Id[a]]) <-> A = IsoK.unsafe[->, [a] =>> ⊙[A[a], Id[a]], A](idr[A], coidr[A])(using C.semicat)
 
 object MonoidalK:
   type Aux [->[_,_], ⊙[_,_], TC0[_[_]], I[_]] = MonoidalK[->, ⊙] { type TC[a[_]] = TC0[a]; type Id[a] = I[a] }
@@ -56,8 +56,8 @@ trait MonoidalK2[->[_,_], ⊙[_,_]] extends AssociativeK2[->, ⊙]:
   def coidr[A[_,_]: TC]: ∀∀[[a, b] =>> A[a, b] -> ⊙[A[a, b], Id[a, b]]]
 
   private type <->[a[_,_], b[_,_]] = IsoK2[->, a, b]
-  def isoUnitorL[A[_,_]: TC]: ([a, b] =>> ⊙[Id[a, b], A[a, b]]) <-> A = IsoK2.unsafe[->, [a, b] =>> ⊙[Id[a, b], A[a, b]], A](idl[A], coidl[A])(using C)
-  def isoUnitorR[A[_,_]: TC]: ([a, b] =>> ⊙[A[a, b], Id[a, b]]) <-> A = IsoK2.unsafe[->, [a, b] =>> ⊙[A[a, b], Id[a, b]], A](idr[A], coidr[A])(using C)
+  def isoUnitorL[A[_,_]: TC]: ([a, b] =>> ⊙[Id[a, b], A[a, b]]) <-> A = IsoK2.unsafe[->, [a, b] =>> ⊙[Id[a, b], A[a, b]], A](idl[A], coidl[A])(using C.semicat)
+  def isoUnitorR[A[_,_]: TC]: ([a, b] =>> ⊙[A[a, b], Id[a, b]]) <-> A = IsoK2.unsafe[->, [a, b] =>> ⊙[A[a, b], Id[a, b]], A](idr[A], coidr[A])(using C.semicat)
 
 object MonoidalK2:
   type Aux [->[_,_], ⊙[_,_], TC0[_[_,_]], I[_,_]] = MonoidalK2[->, ⊙] { type TC[a[_,_]] = TC0[a]; type Id[a, b] = I[a, b] }
@@ -77,8 +77,8 @@ trait MonoidalH[->[_,_], ⊙[_,_]] extends AssociativeH[->, ⊙]:
   def coidr[A[_[_]] : TC]: ∀~[[a[_]] =>> A[a] -> ⊙[A[a], Id[a]]]
 
   private type <->[a[_[_]], b[_[_]]] = IsoH[->, a, b]
-  def isoUnitorL[A[_[_]] : TC]: ([a[_]] =>> ⊙[Id[a], A[a]]) <-> A = IsoH.unsafe[->, [a[_]] =>> ⊙[Id[a], A[a]], A](idl[A], coidl[A])(using C)
-  def isoUnitorR[A[_[_]] : TC]: ([a[_]] =>> ⊙[A[a], Id[a]]) <-> A = IsoH.unsafe[->, [a[_]] =>> ⊙[A[a], Id[a]], A](idr[A], coidr[A])(using C)
+  def isoUnitorL[A[_[_]] : TC]: ([a[_]] =>> ⊙[Id[a], A[a]]) <-> A = IsoH.unsafe[->, [a[_]] =>> ⊙[Id[a], A[a]], A](idl[A], coidl[A])(using C.semicat)
+  def isoUnitorR[A[_[_]] : TC]: ([a[_]] =>> ⊙[A[a], Id[a]]) <-> A = IsoH.unsafe[->, [a[_]] =>> ⊙[A[a], Id[a]], A](idr[A], coidr[A])(using C.semicat)
 
 object MonoidalH:
   type Aux [->[_,_], ⊙[_,_], TC0[_[_[_]]], I[_[_]]] = MonoidalH[->, ⊙] {type TC[a[_[_]]] = TC0[a]; type Id[a[_]] = I[a]}

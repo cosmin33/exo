@@ -92,7 +92,7 @@ object Iso extends IsoInstances with IsoImplicits:
 
   /** If two arrow are isomorphic then those arrows isomorphisms are isomorphic */
   def liftIsoFnToIso[==>[_,_] : Subcat, -->[_,_] : Subcat](iso: ==> <~~> -->): Iso[==>, *, *] <~~> Iso[-->, *, *] =
-    IsoK2.unsafe(liftFnFnToFnIso[==>, -->](iso.forallTo), liftFnFnToFnIso[-->, ==>](iso.forallFrom))
+    IsoK2.unsafe(liftFnFnToFnIso[==>, -->](iso.toK2), liftFnFnToFnIso[-->, ==>](iso.fromK2))
 
   /** Isomorphism between any isomorphism and it's flipped self */
   given flippedIso[->[_,_], A, B](using n: A =!= B): (Iso[->, A, B] <=> Iso[->, B, A]) = Iso.unsafe(_.flip, _.flip)

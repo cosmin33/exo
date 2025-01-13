@@ -40,16 +40,16 @@ object SemicategoryImplicitsHelpers:
   trait SemicatArrowFunctor[==>[_,_], -->[_,_]] extends Semicategory[-->]:
     protected def I: ==> <~~> -->
     protected def S: Semicategory[==>]
-    def andThen[A, B, C](ab: A --> B, bc: B --> C): A --> C = I.to(S.andThen(I.from(ab), I.from(bc)))
+    def andThen[A, B, C](ab: A --> B, bc: B --> C): A --> C = I.apply.to(S.andThen(I.apply.from(ab), I.apply.from(bc)))
 
   trait SubcatArrowFunctor[==>[_,_], -->[_,_], T[_]] extends SemicatArrowFunctor[==>, -->] with Subcategory[-->]:
     type TC[a] = T[a]
     protected def S: Subcategory.Aux[==>, T]
-    def id[A: T]: -->[A, A] = I.to[A, A](S.id[A])
+    def id[A: T]: -->[A, A] = I.apply[A, A].to(S.id[A])
 
   trait ConcreteArrowFunctor[==>[_,_], -->[_,_], T[_]] extends SubcatArrowFunctor[==>, -->, T] with Concrete[-->]:
     protected def S: Concrete.Aux[==>, T]
-    def concretize[A, B](f: A --> B): (A, T[A]) => (B, T[B]) = S.concretize(I.from(f))
+    def concretize[A, B](f: A --> B): (A, T[A]) => (B, T[B]) = S.concretize(I.apply.from(f))
 
   trait DistributiveArrowFunctor[==>[_,_], -->[_,_], T[_], ⨂[_,_], PI, ⨁[_,_], SI]
     extends SubcatArrowFunctor[==>, -->, T] with Distributive[-->, ⨂, ⨁]:
@@ -58,8 +58,8 @@ object SemicategoryImplicitsHelpers:
     protected def S: Distributive.Aux[==>, T, ⨂, PI, ⨁, SI]
     def cartesian: Cartesian.Aux[--> , ⨂, T, PI] = ???
     def cocartesian: Cocartesian.Aux[--> , ⨁, T, SI] = ???
-    override def distribute  [A: T, B: T, C: T]: ⨂[A, ⨁[B, C]] --> ⨁[⨂[A, B], ⨂[A, C]] = I.to(S.distribute)
-    override def codistribute[A: T, B: T, C: T]: ⨁[⨂[A, B], ⨂[A, C]] --> ⨂[A, ⨁[B, C]] = I.to(S.codistribute)
+    override def distribute  [A: T, B: T, C: T]: ⨂[A, ⨁[B, C]] --> ⨁[⨂[A, B], ⨂[A, C]] = I.apply.to(S.distribute)
+    override def codistribute[A: T, B: T, C: T]: ⨁[⨂[A, B], ⨂[A, C]] --> ⨂[A, ⨁[B, C]] = I.apply.to(S.codistribute)
 
   trait SubcatTypeclassFunctor[->[_,_], T0[_], T[_]] extends Subcategory[->]:
     protected def fk: T ~> T0
@@ -75,8 +75,8 @@ object SemicategoryImplicitsHelpers:
     override def S: Concrete.Aux[->, T0]
     def concretize[A, B](f: A -> B): (A, T[A]) => (B, T[B]) =
       case (a, ta) =>
-        val (b, tb) = S.concretize(f)(a, I.to(ta))
-        (b, I.from(tb))
+        val (b, tb) = S.concretize(f)(a, I.apply.to(ta))
+        (b, I.apply.from(tb))
 
   trait DistributiveTypeclassFunctor[->[_,_], T0[_], T[_], P[_,_], PI, S[_,_], SI]
     extends SubcatTypeclassFunctor[->, T0, T] with Distributive[->, P, S]:

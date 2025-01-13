@@ -16,4 +16,4 @@ private[exo] object EqImpIsoH:
 opaque type HasIsoH[->[_,_], F[_[_]], G[_[_]]] <: IsoH[->, F, G] = IsoH[->, F, G]
 object HasIsoH:
   given impl[->[_,_], F[_[_]], G[_[_]]](using e: EqImpIsoH[->, F, G] \/ (IsoH[->, F, G] \/ IsoH[->, G, F])): HasIsoH[->, F, G] =
-    e.fold3(identity, identity, _.flip)
+    e.fold3(identity, identity, _.flipH)

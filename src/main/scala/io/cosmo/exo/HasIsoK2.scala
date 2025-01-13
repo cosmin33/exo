@@ -16,4 +16,4 @@ private[exo] object EqImpIsoK2:
 opaque type HasIsoK2[->[_,_], F[_,_], G[_,_]] <: IsoK2[->, F, G] = IsoK2[->, F, G]
 object HasIsoK2:
   given impl[->[_,_], F[_,_], G[_,_]](using e: EqImpIsoK2[->, F, G] \/ (IsoK2[->, F, G] \/ IsoK2[->, G, F])): HasIsoK2[->, F, G] =
-    e.fold3(identity, identity, _.flip)
+    e.fold3(identity, identity, _.flipK2)

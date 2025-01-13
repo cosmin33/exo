@@ -44,6 +44,25 @@ type AnyK[x] = Any
 type AnyK2[x, y] = Any
 type AnyH[f[_]] = Any
 
+type IsoK[->[_,_], F[_], G[_]] = ∀[[a] =>> Iso[->, F[a], G[a]]]
+type IsoK2[->[_,_], F[_,_], G[_,_]] = ∀∀[[a, b] =>> Iso[->, F[a, b], G[a, b]]]
+type IsoH[->[_,_], A[_[_]], B[_[_]]] = ∀~[[f[_]] =>> Iso[->, A[f], B[f]]]
+
+object IsoK:
+  def unsafe[->[_,_], F[_], G[_]](f: ∀[[a] =>> F[a] -> G[a]], g: ∀[[a] =>> G[a] -> F[a]])(using s: Semicategory[->]): IsoK[->, F, G] =
+    ∀.mk[IsoK[->, F, G]].fromH([a] => () => Iso.unsafe(f[a], g[a]))
+  def refl[->[_,_], F[_]](using s: SubcatKHasId[->, F]): IsoK[->, F, F] = ??? //∀.mk[IsoK[->, F, F]].from(Iso.refl)
+
+object IsoK2:
+  def unsafe[->[_,_], F[_,_], G[_,_]](f: ∀∀[[a, b] =>> F[a, b] -> G[a, b]], g: ∀∀[[a, b] =>> G[a, b] -> F[a, b]])(using s: Semicategory[->]): IsoK2[->, F, G] =
+    ∀∀.mk[IsoK2[->, F, G]].fromH([a, b] => () => Iso.unsafe(f[a, b], g[a, b]))
+  def refl[->[_,_], F[_,_]](using s: SubcatK2HasId[->, F]): IsoK2[->, F, F] = ??? //∀∀.mk[IsoK2[->, F]].from(Iso.refl)
+
+object IsoH:
+  def unsafe[->[_,_], A[_[_]], B[_[_]]](f: ∀~[[F[_]] =>> A[F] -> B[F]], g: ∀~[[F[_]] =>> B[F] -> A[F]])(using s: Semicategory[->]): IsoH[->, A, B] =
+    ∀~.mk[IsoH[->, A, B]].fromH([F[_]] => () => Iso.unsafe(f[F], g[F]))
+  def refl[->[_,_], A[_[_]]](using s: SubcatHHasId[->, A]): IsoH[->, A, A] = ??? //∀~.mk[IsoH[->, A]].from(Iso.refl)
+
 type <=>[A, B] = Iso[Function, A, B]
 
 type ~> [F[_], G[_]] = ∀[[a] =>> F[a] => G[a]]
