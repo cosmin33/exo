@@ -56,8 +56,8 @@ private object SemicategoryHInstancesHelpers:
     type ProductId[a[_]] = PI
     type SumId[a[_]] = SI
     protected def S: Distributive.Aux[->, T, ⨂, PI, ⨁, SI]
-    def cartesian: CartesianH.Aux[->, ⨂, TC, ProductId] = ???
-    def cocartesian: CocartesianH.Aux[->, ⨁, TC, SumId] = ???
+    def cartesian: CartesianH.Aux[->, ⨂, TC, ProductId] = AssociativeH.cartesianHUpper(using S.cartesian)
+    def cocartesian: CocartesianH.Aux[->, ⨁, TC, SumId] = AssociativeH.cartesianHUpper(using S.cocartesian)
     def distribute[F[_[_]], G[_[_]], H[_[_]]](using f: TC[F], g: TC[G], h: TC[H])
     : ∀~[[a[_]] =>> F[a] ⨂ (G[a] ⨁ H[a]) -> (F[a] ⨂ G[a] ⨁ (F[a] ⨂ H[a]))] =
       ∀~[[a[_]] =>> F[a] ⨂ (G[a] ⨁ H[a]) -> (F[a] ⨂ G[a] ⨁ (F[a] ⨂ H[a]))](S.distribute(using f.apply, g.apply, h.apply))

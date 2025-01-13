@@ -17,26 +17,22 @@ opaque type Trivial[A] = Unit
 object Trivial:
   def apply[A]: Trivial[A] = ()
   given [A]: Trivial[A] = ()
-  given [F[_]]    :   ∀[[a]       =>> Trivial[F[a]]]       =   ∀.of[[a]       =>> Trivial[F[a]]].from(apply)
-  given [F[_,_]]  :  ∀∀[[a, b]    =>> Trivial[F[a, b]]]    =  ∀∀.of[[a, b]    =>> Trivial[F[a, b]]].from(apply)
-  given [F[_,_,_]]: ∀∀∀[[a, b, c] =>> Trivial[F[a, b, c]]] = ∀∀∀.of[[a, b, c] =>> Trivial[F[a, b, c]]].from(apply)
-  given [A[_[_]]] :  ∀~[[f[_]]    =>> Trivial[A[f]]]       =  ∀~.of[[f[_]]    =>> Trivial[A[f]]].from(apply)
-opaque type TrivialK[A[_]] = Unit
+  given [F[_]]    : TrivialK[F]  = TrivialK[F]
+  given [F[_,_]]  : TrivialK2[F] = TrivialK2[F]
+  given [F[_,_,_]]: TrivialK3[F] = TrivialK3[F]
+  given [A[_[_]]] : TrivialH[A]  = TrivialH[A]
+type TrivialK[F[_]] = ∀[[a] =>> Trivial[F[a]]]
 object TrivialK:
-  def apply[A[_]]: TrivialK[A] = ()
-  given [A[_]]: TrivialK[A] = ()
-opaque type TrivialK2[A[_,_]] = Unit
+  def apply[F[_]]: TrivialK[F] = ∀.of[[a] =>> Trivial[F[a]]].from(())
+type TrivialK2[F[_,_]] = ∀∀[[a, b] =>> Trivial[F[a, b]]]
 object TrivialK2:
-  def apply[A[_,_]]: TrivialK2[A] = ()
-  given [A[_,_]]: TrivialK2[A] = ()
-opaque type TrivialK3[A[_,_,_]] = Unit
+  def apply[F[_,_]]: TrivialK2[F] = ∀∀.of[[a, b] =>> Trivial[F[a, b]]].from(())
+type TrivialK3[F[_,_,_]] = ∀∀∀[[a, b, c] =>> Trivial[F[a, b, c]]]
 object TrivialK3:
-  def apply[A[_,_,_]]: TrivialK3[A] = ()
-  given [A[_,_,_]]: TrivialK3[A] = ()
-opaque type TrivialH[A[_[_]]] = Unit
+  def apply[F[_,_,_]]: TrivialK3[F] = ∀∀∀.of[[a, b, c] =>> Trivial[F[a, b, c]]].from(())
+type TrivialH[A[_[_]]] = ∀~[[f[_]] =>> Trivial[A[f]]]
 object TrivialH:
-  def apply[A[_[_]]]: TrivialH[A] = ()
-  given [A[_[_]]]: TrivialH[A] = ()
+  def apply[A[_[_]]]: TrivialH[A] = ∀~.of[[f[_]] =>> Trivial[A[f]]].from(())
 
 type VoidK[x] = Void
 type VoidK2[x, y] = Void

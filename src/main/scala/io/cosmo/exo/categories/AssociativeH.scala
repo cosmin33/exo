@@ -23,7 +23,7 @@ trait AssociativeH[->[_,_], ⊙[_,_]]:
   def isoAssociator[F[_[_]], G[_[_]], H[_[_]]](using F: TC[F], G: TC[G], H: TC[H]): ([a[_]] =>> ⊙[⊙[F[a], G[a]], H[a]]) <-> ([a[_]] =>> ⊙[F[a], ⊙[G[a], H[a]]]) =
     IsoH.unsafe[->, [a[_]] =>> ⊙[⊙[F[a], G[a]], H[a]], [a[_]] =>> ⊙[F[a], ⊙[G[a], H[a]]]](associate[F,G,H], diassociate[F,G,H])(using C)
 
-object AssociativeH:
+object AssociativeH extends AssociativeHInstances:
   type Aux[->[_,_], ⊙[_,_], TC0[_[_[_]]]] = AssociativeH[->, ⊙] { type TC[A[_[_]]] = TC0[A] }
   def apply[->[_,_], ⊙[_,_]](using ev: AssociativeH[->, ⊙]): AssociativeH[->, ⊙] = ev
 end AssociativeH

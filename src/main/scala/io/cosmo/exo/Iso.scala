@@ -75,10 +75,16 @@ object Iso extends IsoInstances with IsoImplicits:
 
   extension[->[_,_], F[_], G[_]](i: ∀[[a] =>> Iso[->, F[a], G[a]]])
     def flipK: ∀[[a] =>> Iso[->, G[a], F[a]]] = ∀[[a] =>> Iso[->, G[a], F[a]]](i.apply.flip)
+    def toK:   ∀[[a] =>> F[a] -> G[a]] = ∀[[a] =>> F[a] -> G[a]](i.apply.to)
+    def fromK: ∀[[a] =>> G[a] -> F[a]] = ∀[[a] =>> G[a] -> F[a]](i.apply.from)
   extension[->[_,_], F[_,_], G[_,_]](i: ∀∀[[a, b] =>> Iso[->, F[a, b], G[a, b]]])
     def flipK2: ∀∀[[a, b] =>> Iso[->, G[a, b], F[a, b]]] = ∀∀[[a, b] =>> Iso[->, G[a, b], F[a, b]]](i.apply.flip)
-  extension[->[_,_], A[_[_]], B[_[_]]](i: ∀~[[f[_]] =>> A[f] <=> B[f]])
-    def flipH: ∀~[[f[_]] =>> B[f] <=> A[f]] = ∀~[[f[_]] =>> B[f] <=> A[f]](i.apply.flip)
+    def toK2:   ∀∀[[a, b] =>> F[a, b] -> G[a, b]] = ∀∀[[a, b] =>> F[a, b] -> G[a, b]](i.apply.to)
+    def fromK2: ∀∀[[a, b] =>> G[a, b] -> F[a, b]] = ∀∀[[a, b] =>> G[a, b] -> F[a, b]](i.apply.from)
+  extension[->[_,_], A[_[_]], B[_[_]]](i: ∀~[[f[_]] =>> Iso[->, A[f], B[f]]])
+    def flipH: ∀~[[f[_]] =>> Iso[->, B[f], A[f]]] = ∀~[[f[_]] =>> Iso[->, B[f], A[f]]](i.apply.flip)
+    def toH:   ∀~[[f[_]] =>> A[f] -> B[f]] = ∀~[[f[_]] =>> A[f] -> B[f]](i.apply.to)
+    def fromH: ∀~[[f[_]] =>> B[f] -> A[f]] = ∀~[[f[_]] =>> B[f] -> A[f]](i.apply.from)
 
   /** if I can transform an arrow into another then I can also transform the corresponding isomorphisms */
   def liftFnFnToFnIso[==>[_,_], -->[_,_] :Subcat](fn: ==> ~~> -->): Iso[==>, *, *] ~~> Iso[-->, *, *] =

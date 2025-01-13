@@ -56,8 +56,8 @@ private object SemicategoryK2InstancesHelpers:
     type ProductId[a, b] = PI
     type SumId[a, b] = SI
     protected def S: Distributive.Aux[->, T, ⨂, PI, ⨁, SI]
-    def cartesian: CartesianK2.Aux[->, ⨂, TC, ProductId] = ???
-    def cocartesian: CocartesianK2.Aux[->, ⨁, TC, SumId] = ???
+    def cartesian: CartesianK2.Aux[->, ⨂, TC, ProductId] = AssociativeK2.cartesianK2Upper(using S.cartesian)
+    def cocartesian: CocartesianK2.Aux[->, ⨁, TC, SumId] = AssociativeK2.cartesianK2Upper(using S.cocartesian)
     def distribute[F[_,_], G[_,_], H[_,_]](using f: TC[F], g: TC[G], h: TC[H])
     : ∀∀[[a, b] =>> F[a, b] ⨂ (G[a, b] ⨁ H[a, b]) -> (F[a, b] ⨂ G[a, b] ⨁ (F[a, b] ⨂ H[a, b]))] =
       ∀∀[[a, b] =>> F[a, b] ⨂ (G[a, b] ⨁ H[a, b]) -> (F[a, b] ⨂ G[a, b] ⨁ (F[a, b] ⨂ H[a, b]))](S.distribute(using f.apply, g.apply, h.apply))
