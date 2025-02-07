@@ -35,8 +35,6 @@ trait Iso[->[_,_], A, B]:
 
   /** Having A <-> B searches implicits for B <-> C to obtain A <-> C */
   def chain[C](using i: HasIso[->, B, C]): A <-> C = self andThen i
-  /** Having F <~> G searches implicits for G <~> H to obtain F <~> H */
-  def chainK[C[_]](using i: HasIso[->, B, TypeK[C]]): A <-> TypeK[C] = self.andThen(i)
 
   /** For some F[_] that has an iso functor, if we have an F[A] we can obtain an F[B] using A <-> B */
   def derive[F[_]](using fa: F[A], I: Exo.IsoFun[->, F]): F[B] = I.map(self)(fa)
@@ -50,7 +48,7 @@ trait Iso[->[_,_], A, B]:
   /** From A <-> B, X <-> Y we can obtain (A, X) <-> (B, Y) if -> has an Associative instance with Tuple2 */
   def and[I, J](ij: I <-> J)(using C: Associative[->, Tuple2]): (A, I) <-> (B, J) = grouped[Tuple2](ij)
   /** From A <-> B, X <-> Y we can obtain (A, X) <-> (B, Y) if -> has an Associative instance with Tuple2 */
-  def /\[I, J](ij: I <-> J)(using C: Associative[->, /\]): (A /\ I) <-> (B /\ J) = grouped[/\](ij)
+  def /\ [I, J](ij: I <-> J)(using C: Associative[->, /\]): (A /\ I) <-> (B /\ J) = grouped[/\](ij)
 
   /** From A <-> B, X <-> Y we can obtain (A \/ X) <-> (B \/ Y) if -> has an associative instance with \/ */
   def or[I, J](ij: I <-> J)(using C: Associative[->, Either]): Either[A, I] <-> Either[B, J] = grouped[Either](ij)
@@ -69,22 +67,31 @@ object Iso extends IsoInstances with IsoImplicits:
   def refl[->[_,_], A](using c: SubcatHasId[->, A]): Iso[->, A, A] =
     new Iso[->, A, A] { val cat = c.s; val to, from = c.id }
 
-  private[this] val forall = ∀.of[[a] =>> a <=> a].from(<=>.unsafe(identity, identity))
+  private[this] val forall = ∀.of[[a] =>> a <=> a](<=>.unsafe(identity, identity))
 
   def refl[A]: A <=> A = forall[A]
 
-  extension[->[_,_], F[_], G[_]](i: ∀[[a] =>> Iso[->, F[a], G[a]]])
-    def flipK: ∀[[a] =>> Iso[->, G[a], F[a]]] = ∀[[a] =>> Iso[->, G[a], F[a]]](i.apply.flip)
+  extension[->[_,_], F[_], G[_]](i: IsoK[->, F, G])
+    def flipK: IsoK[->, G, F] = ∀.mk[IsoK[->, G, F]](i.apply.flip)
     def toK:   ∀[[a] =>> F[a] -> G[a]] = ∀[[a] =>> F[a] -> G[a]](i.apply.to)
     def fromK: ∀[[a] =>> G[a] -> F[a]] = ∀[[a] =>> G[a] -> F[a]](i.apply.from)
-  extension[->[_,_], F[_,_], G[_,_]](i: ∀∀[[a, b] =>> Iso[->, F[a, b], G[a, b]]])
-    def flipK2: ∀∀[[a, b] =>> Iso[->, G[a, b], F[a, b]]] = ∀∀[[a, b] =>> Iso[->, G[a, b], F[a, b]]](i.apply.flip)
+    def chainK[H[_]](using j: HasIsoK[->, G, H]): IsoK[->, F, H] = ∀.mk[IsoK[->, F, H]](i.apply andThen j.apply)
+    def teleportK(f: ∀[[a] =>> F[a] -> F[a]]): ∀[[a] =>> G[a] -> G[a]] =
+      ∀[[a] =>> G[a] -> G[a]](i.apply.teleport(f.apply))
+  extension[->[_,_], F[_,_], G[_,_]](i: IsoK2[->, F, G])
+    def flipK2: IsoK2[->, G, F] = ∀∀.mk[IsoK2[->, G, F]](i.apply.flip)
     def toK2:   ∀∀[[a, b] =>> F[a, b] -> G[a, b]] = ∀∀[[a, b] =>> F[a, b] -> G[a, b]](i.apply.to)
     def fromK2: ∀∀[[a, b] =>> G[a, b] -> F[a, b]] = ∀∀[[a, b] =>> G[a, b] -> F[a, b]](i.apply.from)
-  extension[->[_,_], A[_[_]], B[_[_]]](i: ∀~[[f[_]] =>> Iso[->, A[f], B[f]]])
-    def flipH: ∀~[[f[_]] =>> Iso[->, B[f], A[f]]] = ∀~[[f[_]] =>> Iso[->, B[f], A[f]]](i.apply.flip)
+    def chainK2[H[_,_]](using j: HasIsoK2[->, G, H]): IsoK2[->, F, H] = ∀∀.mk[IsoK2[->, F, H]](i.apply andThen j.apply)
+    def teleportK2(f: ∀∀[[a, b] =>> F[a, b] -> F[a, b]]): ∀∀[[a, b] =>> G[a, b] -> G[a, b]] =
+      ∀∀[[a, b] =>> G[a, b] -> G[a, b]](i.apply.teleport(f.apply))
+  extension[->[_,_], A[_[_]], B[_[_]]](i: IsoH[->, A, B])
+    def flipH: IsoH[->, B, A] = ∀~.mk[IsoH[->, B, A]](i.apply.flip)
     def toH:   ∀~[[f[_]] =>> A[f] -> B[f]] = ∀~[[f[_]] =>> A[f] -> B[f]](i.apply.to)
     def fromH: ∀~[[f[_]] =>> B[f] -> A[f]] = ∀~[[f[_]] =>> B[f] -> A[f]](i.apply.from)
+    def chainH[C[_[_]]](using j: HasIsoH[->, B, C]): IsoH[->, A, C] = ∀~.mk[IsoH[->, A, C]](i.apply andThen j.apply)
+    def teleportH(f: ∀~[[f[_]] =>> A[f] -> A[f]]): ∀~[[f[_]] =>> B[f] -> B[f]] =
+      ∀~[[f[_]] =>> B[f] -> B[f]](i.apply.teleport(f.apply))
 
   /** if I can transform an arrow into another then I can also transform the corresponding isomorphisms */
   def liftFnFnToFnIso[==>[_,_], -->[_,_] :Subcat](fn: ==> ~~> -->): Iso[==>, *, *] ~~> Iso[-->, *, *] =
@@ -101,34 +108,29 @@ end Iso
 
 import IsoHelperTraits.*
 
-trait IsoInstances extends IsoInstances01 {
-  given bifunctor[->[_,_], ->#[_], ⊙[_,_]](using
-    S: Subcat.Aux[->, ->#], B: Endobifunctor[->, ⊙],
-  ): Endobifunctor[Iso[->, *, *], ⊙] =
-    new IsoBifunctor[->, ->#, ⊙] {val cat = S; val bif = B}
+trait IsoInstances extends IsoInstances01:
+  given bifunctor[->[_,_], ⊙[_,_]](using S: Subcat[->], B: Endobifunctor[->, ⊙]): Endobifunctor[Iso[->, *, *], ⊙] =
+    new IsoBifunctor[->, S.TC, ⊙] {val cat = S; val bif = B}
   given groupoid[->[_,_], T[_]](using C: Subcat.Aux[->, T]
   ): Groupoid.Aux[Iso[->, *, *], T] = new IsoGroupoid[->, T] {val cat = C}
   given associative[->[_,_], ⊙[_,_]](using
     a: Associative[->, ⊙]
   ): Associative.Aux[Iso[->, *, *], ⊙, a.TC] = new IsoAssoc[->, a.TC, ⊙] {val A = a}
-}
 
-trait IsoInstances01 extends IsoInstances02 {
+trait IsoInstances01 extends IsoInstances02:
   given braided[->[_,_], ⊙[_,_]](using
     a: Braided[->, ⊙]
   ): Braided.Aux[Iso[->, *, *], ⊙, a.TC] = new IsoBraided[->, ⊙, a.TC] {val A = a}
   given monoidal[->[_,_], ⊙[_,_]](using
     a: Monoidal[->, ⊙]
   ): Monoidal.Aux[Iso[->, *, *], ⊙, a.TC, a.Id] = new IsoMonoidal[->, ⊙, a.TC, a.Id] {val A = a}
-}
 
-trait IsoInstances02 {
+trait IsoInstances02:
   given symmetric[->[_,_], ⊙[_,_]](using
     a: Symmetric[->, ⊙]
   ): Symmetric.Aux[Iso[->, *, *], ⊙, a.TC] = new IsoSymmetric[->, ⊙, a.TC] {val A = a}
-}
 
-private[exo] object IsoHelperTraits {
+private[exo] object IsoHelperTraits:
   trait IsoBifunctor[->[_,_], ->#[_], ⊙[_,_]] extends Endobifunctor[Iso[->,*,*], ⊙]:
     given cat: Subcat.Aux[->, ->#]
     def bif: Endobifunctor[->, ⊙]
@@ -166,9 +168,7 @@ private[exo] object IsoHelperTraits {
     def idr  [A: TC]: Iso[->, A ⊙ I, A] = Iso.unsafe(A.idr[A], A.coidr[A])(using A.C)
     def coidr[A: TC]: Iso[->, A, A ⊙ I] = Iso.unsafe(A.coidr[A], A.idr[A])(using A.C)
 
-}
-
-trait IsoImplicits extends IsoImplicits01 {
+trait IsoImplicits extends IsoImplicits01:
 
   /** Any singleton is isomorphic with unit */
   given isoUnitSingleton[A <: Singleton](using a: ValueOf[A]): (A <=> Unit) = Iso.unsafe(_ => (), _ => a.value)
@@ -238,9 +238,7 @@ trait IsoImplicits extends IsoImplicits01 {
 
   given isoUnitToA[A]: ((Unit => A) <=> A) = Iso.unsafe(_(()), a => _ => a)
 
-}
-
-trait IsoImplicits01 extends IsoImplicits02 {
+trait IsoImplicits01 extends IsoImplicits02:
   /** Isomorphisms from categorical constructs (continuation) */
   given isoAssociator[->[_,_], ⊙[_,_], A, B, C, T[_]](using
     A: Associative.Aux[->, ⊙, T], a: T[A], b: T[B], c: T[C]
@@ -248,9 +246,7 @@ trait IsoImplicits01 extends IsoImplicits02 {
   given isoGroupoidFlip[->[_,_], A, B](using
     G: Groupoid[->], n: A =!= B
   ): ((A -> B) <=> (B -> A)) = Iso.unsafe(Groupoid[->].flip, Groupoid[->].flip)
-}
 
-trait IsoImplicits02 {
+trait IsoImplicits02:
   /** Isomorphism between two equal values */
   given fromIs[A, B](using eq: A === B): (A <=> B) = eq.toIso
-}

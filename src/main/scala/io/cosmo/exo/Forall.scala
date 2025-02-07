@@ -10,7 +10,7 @@ type Forall[F[_]] = Forall.Forall[F]
 type ∀[F[_]] = Forall.Forall[F]
 
 /** universal quantifier, taken from scalaz 8 */
-sealed trait ForallModule {
+sealed trait ForallModule:
   type Forall[F[_]]
   type ∀[F[_]] = Forall[F]
 
@@ -40,7 +40,6 @@ sealed trait ForallModule {
   object Unapply:
     type Aux[X, F0[_]] = Unapply[X] { type F[a] = F0[a] }
     given [G[_]]: Unapply.Aux[∀[G], G] = new Unapply[∀[G]] { type F[A] = G[A] }
-}
 
 object ForallModule extends ForallFunctions:
   extension[F[_]] (f: ∀[F])
@@ -67,7 +66,7 @@ private[exo] final class MkForallImpl[F[_]](val dummy: Boolean = false) extends 
   type T = Any
   def from(ft: F[T]): ForallImpl.∀[F] = ft
 
-trait ForallFunctions {
+trait ForallFunctions:
   extension[F[_], G[_]] (fg: F ~> G)
     def run[A](fa: F[A]): G[A] = fg[A](fa)
     def $(f: ∀[F]): ∀[G] = ∀.of[G].from(run(f.apply))
@@ -151,4 +150,4 @@ trait ForallFunctions {
     )
 
   ////////////////////////
-}
+end ForallFunctions

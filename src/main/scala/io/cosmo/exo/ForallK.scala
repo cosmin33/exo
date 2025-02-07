@@ -59,9 +59,3 @@ object ForallKModule:
     def $(f: ∀~[F]): ∀~[G] = ∀~.of[G].from(run(f.apply))
     def andThen[H[_[_]]](gh: G ≈> H): F ≈> H = ≈>[F, H]([T[_]] => (ft: F[T]) => gh.run(fg.run(ft)))
     def compose[E[_[_]]](ef: E ≈> F): E ≈> G = ef andThen fg
-//  extension[->[_,_], F[_[_]], G[_[_]]](iso: IsoH[->, F, G])
-//    def to:   ∀~[[a[_]] =>> F[a] -> G[a]] = ∀~.of[[a[_]] =>> F[a] -> G[a]].fromH([T[_]] => () => iso[T].to)
-//    def from: ∀~[[a[_]] =>> G[a] -> F[a]] = ∀~.of[[a[_]] =>> G[a] -> F[a]].fromH([T[_]] => () => iso[T].from)
-//    def flip: IsoH[->, G, F] = ∀~.mk[IsoH[->, G, F]].fromH([T[_]] => () => iso[T].flip)
-//    def andThen[H[_[_]]](iso2: IsoH[->, G, H])(using DummyImplicit): IsoH[->, F, H] =
-//      ∀~.mk[IsoH[->, F, H]].fromH([T[_]] => () => iso[T].andThen(iso2[T]))

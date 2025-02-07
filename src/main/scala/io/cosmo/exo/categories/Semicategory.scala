@@ -32,9 +32,39 @@ end Semicategory
 
 import SemicategoryImplicitsHelpers.*
 
-trait SemicategoryImplicits {
-  
-}
+trait SemicategoryImplicits:
+  // functors on the arrow type parameter
+  given semicatArrowFunctor: IsofunctorK2[Semicategory] =
+    new IsofunctorK2.Proto[Semicategory]:
+      override def isomap[==>[_,_], -->[_,_]](i: ==> <~~> -->): Semicategory[==>] => Semicategory[-->] =
+        s => new SemicatArrowFunctor[==>, -->] { val I = i; val S = s }
+  given subcatArrowFunctor[T[_]]: IsofunctorK2[[f[_,_]] =>> Subcat.Aux[f, T]] =
+    new IsofunctorK2.Proto[[f[_,_]] =>> Subcat.Aux[f, T]]:
+      override def isomap[==>[_,_], -->[_,_]](i: ==> <~~> -->): Subcat.Aux[==>, T] => Subcat.Aux[-->, T] =
+        s => new SubcatArrowFunctor[==>, -->, T] { val I = i; val S = s }
+  given concreteArrowFunctor[T[_]]: IsofunctorK2[[f[_,_]] =>> Concrete.Aux[f, T]] =
+    new IsofunctorK2.Proto[[f[_,_]] =>> Concrete.Aux[f, T]]:
+      override def isomap[==>[_,_], -->[_,_]](i: ==> <~~> -->): Concrete.Aux[==>, T] => Concrete.Aux[-->, T] =
+        s => new ConcreteArrowFunctor[==>, -->, T] { val I = i; val S = s }
+  given distributiveArrowFunctor[T[_], ⨂[_,_], PI, ⨁[_,_], SI]: IsofunctorK2[[f[_,_]] =>> Distributive.Aux[f, T, ⨂, PI, ⨁, SI]] =
+    new IsofunctorK2.Proto[[f[_,_]] =>> Distributive.Aux[f, T, ⨂, PI, ⨁, SI]]:
+      override def isomap[==>[_,_], -->[_,_]](i: ==> <~~> -->): Distributive.Aux[==>, T, ⨂, PI, ⨁, SI] => Distributive.Aux[-->, T, ⨂, PI, ⨁, SI] =
+        s => new DistributiveArrowFunctor[==>, -->, T, ⨂, PI, ⨁, SI] { val I = i; val S = s }
+
+  // functors on the typeclass type parameter
+  given subcatTypeclassFunctor[->[_,_]]: ContravariantK[[t[_]] =>> Subcat.Aux[->, t]] =
+    new ContravariantK.Proto[[t[_]] =>> Subcat.Aux[->, t]]:
+      override def comap[F[_], G[_]](f: G ~> F): Subcat.Aux[->, F] => Subcat.Aux[->, G] =
+        s => new SubcatTypeclassFunctor[->, F, G] { val fk = f; val S = s }
+  given concreteTypeclassFunctor[->[_,_]]: IsofunctorK[[t[_]] =>> Concrete.Aux[->, t]] =
+    new IsofunctorK.Proto[[t[_]] =>> Concrete.Aux[->, t]]:
+      def isomap[F[_], G[_]](i: F <~> G): Concrete.Aux[->, F] => Concrete.Aux[->, G] =
+        s => new ConcreteTypeclassFunctor[->, F, G] { val I = i; val S = s }
+  given distributiveTypeclassFunctor[->[_,_], P[_,_], PI, S[_,_], SI]: ContravariantK[[t[_]] =>> Distributive.Aux[->, t, P, PI, S, SI]] =
+    new ContravariantK.Proto[[t[_]] =>> Distributive.Aux[->, t, P, PI, S, SI]]:
+      override def comap[F[_], G[_]](f: G ~> F): Distributive.Aux[->, F, P, PI, S, SI] => Distributive.Aux[->, G, P, PI, S, SI] =
+        s => new DistributiveTypeclassFunctor[->, F, G, P, PI, S, SI] { val fk = f; val S = s }
+end SemicategoryImplicits
 
 object SemicategoryImplicitsHelpers:
   trait SemicatArrowFunctor[==>[_,_], -->[_,_]] extends Semicategory[-->]:
@@ -61,22 +91,22 @@ object SemicategoryImplicitsHelpers:
     override def distribute  [A: T, B: T, C: T]: ⨂[A, ⨁[B, C]] --> ⨁[⨂[A, B], ⨂[A, C]] = I.apply.to(S.distribute)
     override def codistribute[A: T, B: T, C: T]: ⨁[⨂[A, B], ⨂[A, C]] --> ⨂[A, ⨁[B, C]] = I.apply.to(S.codistribute)
 
-  trait SubcatTypeclassFunctor[->[_,_], T0[_], T[_]] extends Subcategory[->]:
-    protected def fk: T ~> T0
-    protected def S: Subcategory.Aux[->, T0]
-    type TC[a] = T[a]
-    def id[A](using T: T[A]): A -> A = S.id[A](using fk[A](T))
+  trait SubcatTypeclassFunctor[->[_,_], T[_], T0[_]] extends Subcategory[->]:
+    protected def fk: T0 ~> T
+    protected def S: Subcategory.Aux[->, T]
+    type TC[a] = T0[a]
+    def id[A](using T: T0[A]): A -> A = S.id[A](using fk[A](T))
     def andThen[A, B, C](ab: A -> B, bc: B -> C): A -> C = S.andThen(ab, bc)
 
-  trait ConcreteTypeclassFunctor[->[_,_], T0[_], T[_]] extends SubcatTypeclassFunctor[->, T0, T] with Concrete[->]:
-    type TC[a] = T[a]
+  trait ConcreteTypeclassFunctor[->[_,_], T[_], T0[_]] extends SubcatTypeclassFunctor[->, T, T0] with Concrete[->]:
+    type TC[a] = T0[a]
     protected def I: T <~> T0
-    override def fk: T ~> T0 = I.toK
-    override def S: Concrete.Aux[->, T0]
-    def concretize[A, B](f: A -> B): (A, T[A]) => (B, T[B]) =
+    override def fk: T0 ~> T = I.fromK
+    override def S: Concrete.Aux[->, T]
+    def concretize[A, B](f: A -> B): (A, T0[A]) => (B, T0[B]) =
       case (a, ta) =>
-        val (b, tb) = S.concretize(f)(a, I.apply.to(ta))
-        (b, I.apply.from(tb))
+        val (b, tb) = S.concretize(f)(a, I.apply.from(ta))
+        (b, I.apply.to(tb))
 
   trait DistributiveTypeclassFunctor[->[_,_], T0[_], T[_], P[_,_], PI, S[_,_], SI]
     extends SubcatTypeclassFunctor[->, T0, T] with Distributive[->, P, S]:

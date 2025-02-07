@@ -22,7 +22,7 @@ trait SymmetricK[->[_,_], ⊙[_,_]] extends BraidedK[->, ⊙]:
 
   private type <->[a[_], b[_]] = IsoK[->, a, b]
   def isoSymmetric[A[_]: TC, B[_]: TC]: ([a] =>> ⊙[A[a], B[a]]) <-> ([a] =>> ⊙[B[a], A[a]]) =
-    IsoK.unsafe[->, [a] =>> ⊙[A[a], B[a]], [a] =>> ⊙[B[a], A[a]]](swap[A, B], swap[B, A])(using C.semicat)
+    IsoK.unsafe[->, [a] =>> ⊙[A[a], B[a]], [a] =>> ⊙[B[a], A[a]]](swap[A, B], swap[B, A])(using C.lower)
 
 object SymmetricK:
   def apply[->[_,_], ⊙[_,_]](using ev: SymmetricK[->, ⊙]): SymmetricK[->, ⊙] = ev
@@ -37,7 +37,7 @@ trait SymmetricK2[->[_,_], ⊙[_,_]] extends BraidedK2[->, ⊙]:
 
   private type <->[a[_,_], b[_,_]] = IsoK2[->, a, b]
   def isoSymmetric[A[_,_]: TC, B[_,_]: TC]: ([a, b] =>> ⊙[A[a, b], B[a, b]]) <-> ([a, b] =>> ⊙[B[a, b], A[a, b]]) =
-    IsoK2.unsafe[->, [a, b] =>> ⊙[A[a, b], B[a, b]], [a, b] =>> ⊙[B[a, b], A[a, b]]](swap[A, B], swap[B, A])(using C.semicat)
+    IsoK2.unsafe[->, [a, b] =>> ⊙[A[a, b], B[a, b]], [a, b] =>> ⊙[B[a, b], A[a, b]]](swap[A, B], swap[B, A])(using C.lower)
 
 object SymmetricK2:
   def apply[->[_,_], ⊙[_,_]](using ev: SymmetricK2[->, ⊙]): SymmetricK2[->, ⊙] = ev
@@ -52,7 +52,7 @@ trait SymmetricH[->[_,_], ⊙[_,_]] extends BraidedH[->, ⊙]:
 
   private type <->[a[_[_]], b[_[_]]] = IsoH[->, a, b]
   def isoSymmetric[A[_[_]]: TC, B[_[_]]: TC]: ([a[_]] =>> ⊙[A[a], B[a]]) <-> ([a[_]] =>> ⊙[B[a], A[a]]) =
-    IsoH.unsafe[->, [a[_]] =>> ⊙[A[a], B[a]], [a[_]] =>> ⊙[B[a], A[a]]](swap[A, B], swap[B, A])(using C.semicat)
+    IsoH.unsafe[->, [a[_]] =>> ⊙[A[a], B[a]], [a[_]] =>> ⊙[B[a], A[a]]](swap[A, B], swap[B, A])(using C.lower)
 
 object SymmetricH:
   def apply[->[_,_], ⊙[_,_]](using ev: SymmetricH[->, ⊙]): SymmetricH[->, ⊙] = ev

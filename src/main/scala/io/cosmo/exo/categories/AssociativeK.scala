@@ -21,7 +21,7 @@ trait AssociativeK[->[_,_], ⊙[_,_]]:
 
   private type <->[a[_], b[_]] = IsoK[->, a, b]
   def isoAssociator[F[_]: TC, G[_]: TC, H[_]: TC]: ([a] =>> ⊙[⊙[F[a], G[a]], H[a]]) <-> ([a] =>> ⊙[F[a], ⊙[G[a], H[a]]]) =
-    IsoK.unsafe[->, [a] =>> ⊙[⊙[F[a], G[a]], H[a]], [a] =>> ⊙[F[a], ⊙[G[a], H[a]]]](associate[F,G,H], diassociate[F,G,H])(using C.semicat)
+    IsoK.unsafe[->, [a] =>> ⊙[⊙[F[a], G[a]], H[a]], [a] =>> ⊙[F[a], ⊙[G[a], H[a]]]](associate[F,G,H], diassociate[F,G,H])(using C.lower)
 
 object AssociativeK extends AssociativeKInstances:
   type Aux[->[_,_], ⊙[_,_], TC0[_[_]]] = AssociativeK[->, ⊙] { type TC[A[_]] = TC0[A] }

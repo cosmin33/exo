@@ -7,7 +7,7 @@ val ∀∀∀ : Forall3.type = Forall3
 type Forall3[F[_,_,_]] = Forall3.Forall3[F]
 type ∀∀∀[F[_,_,_]] = Forall3.Forall3[F]
 
-private[exo] sealed trait Forall3Module {
+private[exo] sealed trait Forall3Module:
   type Forall3[F[_,_,_]]
   type ∀∀∀[F[_,_,_]] = Forall3[F]
 
@@ -20,6 +20,7 @@ private[exo] sealed trait Forall3Module {
   def monotonicity[F[_,_,_], G[_,_,_]](ev: ∀∀∀[[a, b, c] =>> F[a, b, c] <~< G[a, b, c]]): ∀∀∀[F] <~< ∀∀∀[G]
   def from[F[_,_,_]](p: Prototype[F]): ∀∀∀[F]
   def of[F[_,_,_]]: MkForall3[F]
+  def apply[F[_,_,_]]: MkForall3[F] = of[F]
   def mk[X](using u: Unapply[X]): MkForall3[u.F] = of[u.F]
 
   sealed trait MkForall3[F[_,_,_]] extends Any:
@@ -36,7 +37,6 @@ private[exo] sealed trait Forall3Module {
   object Unapply:
     given unapply[G[_,_,_]]: (Unapply[∀∀∀[G]] {type F[A, B, C] = G[A, B, C]}) = new Unapply[∀∀∀[G]]:
       type F[A, B, C] = G[A, B, C]
-}
 
 private[exo] object Forall3Impl extends Forall3Module:
   type Forall3[F[_,_,_]] = F[Any, Any, Any]

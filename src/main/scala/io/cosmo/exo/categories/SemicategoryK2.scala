@@ -9,14 +9,14 @@ trait SemicategoryK2[->[_,_]]:
   def andThen[F[_,_], G[_,_], H[_,_]](f: ∀∀[[a, b] =>> F[a, b] -> G[a, b]], g: ∀∀[[a, b] =>> G[a, b] -> H[a, b]]): ∀∀[[a, b] =>> F[a, b] -> H[a, b]]
   final def compose[F[_,_], G[_,_], H[_,_]](f: ∀∀[[a, b] =>> F[a, b] -> G[a, b]], g: ∀∀[[a, b] =>> G[a, b] -> H[a, b]]): ∀∀[[a, b] =>> F[a, b] -> H[a, b]] = andThen(f, g)
 
-  def semicat: Semicategory[->] = new Semicategory[->]:
+  def lower: Semicategory[->] = new Semicategory[->]:
     def andThen[A, B, C](ab: A -> B, bc: B -> C): A -> C =
       self.andThen[[a,b] =>> A, [a,b] =>> B, [a,b] =>> C](∀∀[[a, b] =>> A -> B](ab), ∀∀[[a, b] =>> B -> C](bc)).apply
 
 object SemicategoryK2 extends SemicategoryK2Instances:
   def apply[->[_,_]](using ev: SemicategoryK2[->]): SemicategoryK2[->] = ev
 
-  given lowerIso[->[_,_]]: (SemicategoryK2[->] <=> Semicategory[->]) = Iso.unsafe(_.semicat, _.semicatK2)
+  given lowerIso[->[_,_]]: (SemicategoryK2[->] <=> Semicategory[->]) = Iso.unsafe(_.lower, _.semicatK2)
   
 end SemicategoryK2
 

@@ -1,10 +1,10 @@
 package io.cosmo.exo.functors
 
-import io.cosmo.exo._
-import io.cosmo.exo.categories._
-import io.cosmo.exo.syntax._
-import io.cosmo.exo.internal.any._
-import io.cosmo.exo.internal._
+import io.cosmo.exo.*
+import io.cosmo.exo.categories.*
+import io.cosmo.exo.syntax.*
+import io.cosmo.exo.internal.any.*
+import io.cosmo.exo.internal.*
 
 trait Exobifunctor[==>[_,_], -->[_,_], >->[_,_], ⊙[_,_]]:
   def bimap[A, X, B, Y](left: A ==> X, right: B --> Y): ⊙[A, B] >-> ⊙[X, Y]
@@ -22,7 +22,8 @@ trait Exobifunctor[==>[_,_], -->[_,_], >->[_,_], ⊙[_,_]]:
   def rightForall[T[_]](using C: Subcat.Aux[==>, T]): T ~> ([x] =>> Exo[-->, >->, ⊙[x, *]]) =
     ~>([A] => (ta: T[A]) => rightFunctor(using SubcatHasId.from(using C, ta)))
 
-object Exobifunctor extends ExobifunctorInstances 
+object Exobifunctor extends ExobifunctorInstances
+  with ExobifunctorImplicits
   with DualBifunctorInstances 
   with EvidenceCatBifunctorInstances
   with ProdcatBifunctorInstances:
@@ -52,38 +53,84 @@ object Exobifunctor extends ExobifunctorInstances
   def opp[->[_,_], Bi[_,_]](F: Endobifunctor[->, Bi]): Endobifunctor[Opp[->], Bi] =
     Dual.leibniz[->].flip.subst[[f[_,_]] =>> Endobifunctor[f, Bi]](dual(F))
 
-  private[exo] def dicatToIso[==>[_,_], -->[_,_], >->[_,_], Bi[_,_], TC[_]](
-    E: Exobifunctor[Dicat[==>,*,*], Dicat[-->,*,*], >->, Bi]
-  )(using
-    S1: Subcat.Aux[==>, TC],
-    S2: Subcat.Aux[-->, TC],
-  ): Exobifunctor[Iso[==>,*,*], Iso[-->,*,*], >->, Bi] =
-    new Exobifunctor[Iso[==>,*,*], Iso[-->,*,*], >->, Bi]:
-      override def bimap[A, X, B, Y](left: Iso[==>, A, X], right: Iso[-->, B, Y]) =
-        E.bimap(Dicat[==>, A, X](left.to, left.from), Dicat[-->, B, Y](right.to, right.from))
 end Exobifunctor
 
 trait ExobifunctorInstances:
-
   given semicatToExobifunctor[->[_,_]](using s: Semicategory[->]): Exobifunctor[Dual[->,*,*], ->, Function, ->] =
     new Exobifunctor[Dual[->,*,*], ->, * => *, ->]:
       def bimap[A, X, B, Y](left: Dual[->, A, X], right: B -> Y): (A -> B) => (X -> Y) = left.toFn >>> _ >>> right
-
   given profunctor[->[_,_]: Semicategory]: Exobifunctor[Dual[->,*,*], ->, * => *, ->] =
     new Exobifunctor[Dual[->,*,*], ->, * => *, ->]:
       def bimap[A, X, B, Y](left: Dual[->, A, X], right: B -> Y): A -> B => (X -> Y) = f => left.toFn >>> f >>> right
-
   given tuple2: EndobifunctorF[Tuple2] =
     new Endobifunctor[* => *, Tuple2]:
-      override def bimap[A, X, B, Y](l: A => X, r: B => Y): ((A, B)) => (X, Y) =
-        (a, b) => (l(a), r(b))
-
+      def bimap[A, X, B, Y](l: A => X, r: B => Y): ((A, B)) => (X, Y) = (a, b) => (l(a), r(b))
   given either: EndobifunctorF[Either] =
     new Endobifunctor[* => *, Either]:
-      override def bimap[A, X, B, Y](l: A => X, r: B => Y): Either[A, B] => Either[X, Y] =
-        _.fold(x => l(x).asLeft, x => r(x).asRight)
-
+      def bimap[A, X, B, Y](l: A => X, r: B => Y): Either[A, B] => Either[X, Y] = _.fold(l(_).asLeft, r(_).asRight)
 end ExobifunctorInstances
+
+trait ExobifunctorImplicits:
+  // Functor instances
+  given cofunctorArrow1[-->[_,_], >->[_,_], ⊙[_,_]]: ContravariantK2[[f[_,_]] =>> Exobifunctor[f, -->, >->, ⊙]] =
+    new ContravariantK2.Proto[[f[_,_]] =>> Exobifunctor[f, -->, >->, ⊙]]:
+      def comap[F[_, _], G[_, _]](f: G ~~> F): Exobifunctor[F, -->, >->, ⊙] => Exobifunctor[G, -->, >->, ⊙] =
+        F => new Exobifunctor[G, -->, >->, ⊙]:
+          def bimap[A, X, B, Y](l: G[A, X], r: B --> Y): A ⊙ B >-> (X ⊙ Y) = F.bimap(f.apply(l), r)
+  given cofunctorArrow2[==>[_,_], >->[_,_], ⊙[_,_]]: ContravariantK2[[f[_,_]] =>> Exobifunctor[==>, f, >->, ⊙]] =
+    new ContravariantK2.Proto[[f[_,_]] =>> Exobifunctor[==>, f, >->, ⊙]]:
+      def comap[F[_, _], G[_, _]](f: G ~~> F): Exobifunctor[==>, F, >->, ⊙] => Exobifunctor[==>, G, >->, ⊙] =
+        F => new Exobifunctor[==>, G, >->, ⊙]:
+          def bimap[A, X, B, Y](l: A ==> X, r: G[B, Y]): A ⊙ B >-> (X ⊙ Y) = F.bimap(l, f.apply(r))
+  given functorArrow3[==>[_,_], -->[_,_], ⊙[_,_]]: FunctorK2[[f[_,_]] =>> Exobifunctor[==>, -->, f, ⊙]] =
+    new FunctorK2[[f[_,_]] =>> Exobifunctor[==>, -->, f, ⊙]]:
+      def map[F[_,_], G[_,_]](f: F ~~> G): Exobifunctor[==>, -->, F, ⊙] => Exobifunctor[==>, -->, G, ⊙] =
+        F => new Exobifunctor[==>, -->, G, ⊙]:
+          def bimap[A, X, B, Y](l: A ==> X, r: B --> Y): G[A ⊙ B, X ⊙ Y] = f.apply(F.bimap(l, r))
+  given cofunctorEndoArrow[>->[_,_], ⊙[_,_]]: ContravariantK2[[f[_,_]] =>> Exobifunctor[f, f, >->, ⊙]] =
+    new ContravariantK2.Proto[[f[_,_]] =>> Exobifunctor[f, f, >->, ⊙]]:
+      def comap[F[_,_], G[_,_]](f: G ~~> F): Exobifunctor[F, F, >->, ⊙] => Exobifunctor[G, G, >->, ⊙] =
+        F => new Exobifunctor[G, G, >->, ⊙]:
+          def bimap[A, X, B, Y](l: G[A, X], r: G[B, Y]): A ⊙ B >-> (X ⊙ Y) = F.bimap(f.apply(l), f.apply(r))
+  given isofunctorEndoArrow[⊙[_,_]]: IsofunctorK2[[f[_,_]] =>> Exobifunctor[f, f, f, ⊙]] =
+    new IsofunctorK2.Proto[[f[_,_]] =>> Exobifunctor[f, f, f, ⊙]]:
+      def isomap[F[_,_], G[_,_]](i: F <~~> G): Exobifunctor[F, F, F, ⊙] => Exobifunctor[G, G, G, ⊙] =
+        F => new Exobifunctor[G, G, G, ⊙]:
+          def bimap[A, X, B, Y](l: G[A, X], r: G[B, Y]): G[A ⊙ B, X ⊙ Y] =
+            i.apply.to(F.bimap(i.apply.from(l), i.apply.from(r)))
+  given isofunctorFunctor[==>[_,_], -->[_,_], >->[_,_], >=>[_,_]](using P: Exoprofunctor[>=>, >=>, * => *, >->])
+  : ExofunctorK2[Iso[>=>,*,*], * => *, [f[_,_]] =>> Exobifunctor[==>, -->, >->, f]] =
+    new ExofunctorK2[Iso[>=>,*,*], * => *, [f[_,_]] =>> Exobifunctor[==>, -->, >->, f]]:
+      def map[F[_,_], G[_,_]](i: ∀∀[[a, b] =>> Iso[>=>, F[a, b], G[a, b]]])
+      : Exobifunctor[==>, -->, >->, F] => Exobifunctor[==>, -->, >->, G] =
+        F => new Exobifunctor[==>, -->, >->, G]:
+          def bimap[A, X, B, Y](l: A ==> X, r: B --> Y): G[A, B] >-> G[X, Y] =
+            P.bimap(i.apply.from.dual, i.apply.to)(F.bimap(l, r))
+  // Lax monoidal functor instances
+  given laxArrow1[-->[_,_], >->[_,_], ⊙[_,_]]: LaxSemigroupalK2.Aux[Either, * => *, (*,*), Trivial, [f[_,_]] =>> Exobifunctor[f, -->, >->, ⊙]] =
+    new LaxSemigroupalK2.Proto[Either, * => *, (*,*), Trivial, [f[_,_]] =>> Exobifunctor[f, -->, >->, ⊙]]:
+      def A: Associative.Aux[Function, Tuple2, Trivial] = summon
+      def product[F[_,_], G[_,_]]: ((Exobifunctor[F, -->, >->, ⊙], Exobifunctor[G, -->, >->, ⊙])) => Exobifunctor[[a, b] =>> Either[F[a, b], G[a, b]], -->, >->, ⊙] =
+        P => new Exobifunctor[[a, b] =>> Either[F[a, b], G[a, b]], -->, >->, ⊙]:
+          def bimap[A, X, B, Y](l: Either[F[A, X], G[A, X]], r: B --> Y): A ⊙ B >-> (X ⊙ Y) =
+            l.fold(P._1.bimap(_, r), P._2.bimap(_, r))
+  given laxArrow2[==>[_,_], >->[_,_], ⊙[_,_]]: LaxSemigroupalK2.Aux[Either, * => *, (*,*), Trivial, [f[_,_]] =>> Exobifunctor[==>, f, >->, ⊙]] =
+    new LaxSemigroupalK2.Proto[Either, * => *, (*,*), Trivial, [f[_,_]] =>> Exobifunctor[==>, f, >->, ⊙]]:
+      def A: Associative.Aux[Function, Tuple2, Trivial] = summon
+      def product[F[_,_], G[_,_]]: ((Exobifunctor[==>, F, >->, ⊙], Exobifunctor[==>, G, >->, ⊙])) => Exobifunctor[==>, [a, b] =>> Either[F[a, b], G[a, b]], >->, ⊙] =
+        P => new Exobifunctor[==>, [a, b] =>> Either[F[a, b], G[a, b]], >->, ⊙]:
+          def bimap[A, X, B, Y](l: A ==> X, r: Either[F[B, Y], G[B, Y]]): A ⊙ B >-> (X ⊙ Y) =
+            r.fold(P._1.bimap(l, _), P._2.bimap(l, _))
+  given laxArrow3[==>[_,_], -->[_,_], >->[_,_], ⊙[_,_]]: LaxSemigroupalK2.Aux[(*,*), * => *, (*,*), Trivial, [f[_,_]] =>> Exobifunctor[==>, -->, f, ⊙]] =
+    new LaxSemigroupalK2.Proto[(*,*), * => *, (*,*), Trivial, [f[_,_]] =>> Exobifunctor[==>, -->, f, ⊙]]:
+      def A: Associative.Aux[Function, Tuple2, Trivial] = summon
+      def product[F[_,_], G[_,_]]: ((Exobifunctor[==>, -->, F, ⊙], Exobifunctor[==>, -->, G, ⊙])) => Exobifunctor[==>, -->, [a, b] =>> (F[a, b], G[a, b]), ⊙] =
+        P => new Exobifunctor[==>, -->, [a, b] =>> (F[a, b], G[a, b]), ⊙]:
+          def bimap[A, X, B, Y](l: A ==> X, r: B --> Y): (F[A ⊙ B, X ⊙ Y], G[A ⊙ B, X ⊙ Y]) =
+            (P._1.bimap(l, r), P._2.bimap(l, r))
+
+end ExobifunctorImplicits
+
 
 object ExobifunctorHelpers:
   

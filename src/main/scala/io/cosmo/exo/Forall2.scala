@@ -7,7 +7,7 @@ val ∀∀ : Forall2.type = Forall2
 type Forall2[F[_,_]] = Forall2.Forall2[F]
 type ∀∀[F[_,_]] = Forall2.Forall2[F]
 
-private[exo] sealed trait Forall2Module {
+private[exo] sealed trait Forall2Module:
   type Forall2[F[_,_]]
   type ∀∀[F[_,_]] = Forall2[F]
 
@@ -36,7 +36,6 @@ private[exo] sealed trait Forall2Module {
   object Unapply:
     given unapply[G[_,_]]: (Unapply[∀∀[G]] {type F[A, B] = G[A, B]}) = new Unapply[∀∀[G]]:
       type F[A, B] = G[A, B]
-}
 
 private[exo] object Forall2Impl extends Forall2Module:
   type Forall2[F[_,_]] = F[Any, Any]
@@ -57,16 +56,9 @@ private[exo] final class MkForall2Impl[F[_,_]](val dummy: Boolean = false) exten
   type U = Any
   def from(ft: F[T, U]): Forall2Impl.∀∀[F] = ft
 
-trait Forall2Functions {
+trait Forall2Functions:
   extension[F[_,_], G[_,_]] (fg: F ~~> G)
     def run[A, B](fab: F[A, B]): G[A, B] = fg[A, B](fab)
     def $(f: ∀∀[F]): ∀∀[G] = ∀∀.of[G].from(run(f.apply))
     def andThen[H[_,_]](gh: G ~~> H): F ~~> H = ~~>[F, H]([A, B] => (fab: F[A, B]) => gh.run(fg.run(fab)))
     def compose[E[_,_]](ef: E ~~> F): E ~~> G = ef andThen fg
-//  extension[->[_,_], F[_,_], G[_,_]] (iso: IsoK2[->, F, G])
-//    def to:   ∀∀[[a, b] =>> F[a, b] -> G[a, b]] = ∀∀.of[[a, b] =>> F[a, b] -> G[a, b]].fromH([T, U] => () => iso[T, U].to)
-//    def from: ∀∀[[a, b] =>> G[a, b] -> F[a, b]] = ∀∀.of[[a, b] =>> G[a, b] -> F[a, b]].fromH([T, U] => () => iso[T, U].from)
-//    def flip: IsoK2[->, G, F] = ∀∀.mk[IsoK2[->, G, F]].fromH([T, U] => () => iso[T, U].flip)
-//    def andThen[H[_,_]](iso2: IsoK2[->, G, H])(using DummyImplicit): IsoK2[->, F, H] =
-//      ∀∀.mk[IsoK2[->, F, H]].fromH([T, U] => () => iso[T, U].andThen(iso2[T, U]))
-}

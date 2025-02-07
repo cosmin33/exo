@@ -11,14 +11,14 @@ trait SemicategoryK[->[_,_]]:
   final def compose[F[_], G[_], H[_]](f: ∀[[a] =>> F[a] -> G[a]], g: ∀[[a] =>> G[a] -> H[a]]): ∀[[a] =>> F[a] -> H[a]] =
     andThen(f, g)
 
-  def semicat: Semicategory[->] = new Semicategory[->]:
+  def lower: Semicategory[->] = new Semicategory[->]:
     def andThen[A, B, C](ab: A -> B, bc: B -> C): A -> C =
       self.andThen[[a] =>> A, [a] =>> B, [a] =>> C](∀.of[[a] =>> A -> B](ab), ∀.of[[a] =>> B -> C](bc)).apply
 
 object SemicategoryK extends SemicategoryKInstances:
   def apply[->[_,_]](using ev: SemicategoryK[->]): SemicategoryK[->] = ev
   
-  given lowerIso[->[_,_]]: (SemicategoryK[->] <=> Semicategory[->]) = Iso.unsafe(_.semicat, _.semicatK)
+  given lowerIso[->[_,_]]: (SemicategoryK[->] <=> Semicategory[->]) = Iso.unsafe(_.lower, _.semicatK)
 
 end SemicategoryK
 

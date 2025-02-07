@@ -54,7 +54,7 @@ trait DistributiveK[->[_,_], ⨂[_,_], ⨁[_,_]] extends SubcatK[->]:
 
   private type <->[a[_], b[_]] = IsoK[->, a, b]
   def isoDistributive[F[_]: TC, G[_]: TC, H[_]: TC]: ([a] =>> F[a] ⨂ (G[a] ⨁ H[a])) <-> ([a] =>> (F[a] ⨂ G[a]) ⨁ (F[a] ⨂ H[a])) =
-    IsoK.unsafe[->, [a] =>> F[a] ⨂ (G[a] ⨁ H[a]), [a] =>> (F[a] ⨂ G[a]) ⨁ (F[a] ⨂ H[a])](distribute[F, G, H], codistribute[F, G, H])(using this.semicat)
+    IsoK.unsafe[->, [a] =>> F[a] ⨂ (G[a] ⨁ H[a]), [a] =>> (F[a] ⨂ G[a]) ⨁ (F[a] ⨂ H[a])](distribute[F, G, H], codistribute[F, G, H])(using this.lower)
 
 object DistributiveK:
   type Aux[->[_,_], C[_[_]], ⨂[_,_], PI[_], ⨁[_,_], SI[_]] =
@@ -89,7 +89,7 @@ trait DistributiveK2[->[_,_], ⨂[_,_], ⨁[_,_]] extends SubcatK2[->]:
 
   private type <->[a[_,_], b[_,_]] = IsoK2[->, a, b]
   def isoDistributive[F[_,_]: TC, G[_,_]: TC, H[_,_]: TC]: ([a, b] =>> F[a, b] ⨂ (G[a, b] ⨁ H[a, b])) <-> ([a, b] =>> (F[a, b] ⨂ G[a, b]) ⨁ (F[a, b] ⨂ H[a, b])) =
-    IsoK2.unsafe[->, [a, b] =>> F[a, b] ⨂ (G[a, b] ⨁ H[a, b]), [a, b] =>> (F[a, b] ⨂ G[a, b]) ⨁ (F[a, b] ⨂ H[a, b])](distribute[F, G, H], codistribute[F, G, H])(using this.semicat)
+    IsoK2.unsafe[->, [a, b] =>> F[a, b] ⨂ (G[a, b] ⨁ H[a, b]), [a, b] =>> (F[a, b] ⨂ G[a, b]) ⨁ (F[a, b] ⨂ H[a, b])](distribute[F, G, H], codistribute[F, G, H])(using this.lower)
 
 object DistributiveK2:
   type Aux[->[_,_], C[_[_,_]], ⨂[_,_], PI[_,_], ⨁[_,_], SI[_,_]] =
@@ -124,7 +124,7 @@ trait DistributiveH[->[_,_], ⨂[_,_], ⨁[_,_]] extends SubcatH[->]:
 
   private type <->[a[_[_]], b[_[_]]] = IsoH[->, a, b]
   def isoDistributive[F[_[_]]: TC, G[_[_]]: TC, H[_[_]]: TC]: ([a[_]] =>> F[a] ⨂ (G[a] ⨁ H[a])) <-> ([a[_]] =>> (F[a] ⨂ G[a]) ⨁ (F[a] ⨂ H[a])) =
-    IsoH.unsafe[->, [a[_]] =>> F[a] ⨂ (G[a] ⨁ H[a]), [a[_]] =>> (F[a] ⨂ G[a]) ⨁ (F[a] ⨂ H[a])](distribute[F, G, H], codistribute[F, G, H])(using this.semicat)
+    IsoH.unsafe[->, [a[_]] =>> F[a] ⨂ (G[a] ⨁ H[a]), [a[_]] =>> (F[a] ⨂ G[a]) ⨁ (F[a] ⨂ H[a])](distribute[F, G, H], codistribute[F, G, H])(using this.lower)
 
 object DistributiveH:
   type Aux[->[_,_], C[_[_[_]]], ⨂[_,_], PI[_[_]], ⨁[_,_], SI[_[_]]] =

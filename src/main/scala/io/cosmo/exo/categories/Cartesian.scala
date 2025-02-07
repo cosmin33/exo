@@ -11,6 +11,7 @@ trait Cartesian[->[_,_], ⨂[_,_]] extends Monoidal[->, ⨂] with Symmetric[->, 
   def diag[A: TC]: A -> ⨂[A, A]
   
   def &&&[A, B, C](f: A -> B, g: A -> C): A -> ⨂[B, C]
+  // this is almost the same, just that it requires the typeclass defined for the first parameter
   private def &&&&[A: TC, B, C](f: A -> B, g: A -> C): A -> ⨂[B, C] = C.andThen(diag[A], bifunctor.bimap(f, g))
   def merge[A, B, C](f: A -> B, g: A -> C): A -> ⨂[B, C] = &&&(f, g)
   def merge3[A, B, C, D](f1: A -> B, f2: A -> C, f3: A -> D): A -> ⨂[B, ⨂[C, D]] = merge(f1, merge(f2, f3))

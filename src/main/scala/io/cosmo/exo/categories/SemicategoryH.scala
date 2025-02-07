@@ -9,14 +9,14 @@ trait SemicategoryH[->[_,_]]:
   def andThen[F[_[_]], G[_[_]], H[_[_]]](f: ∀~[[a[_]] =>> F[a] -> G[a]], g: ∀~[[a[_]] =>> G[a] -> H[a]]): ∀~[[a[_]] =>> F[a] -> H[a]]
   final def compose[F[_[_]], G[_[_]], H[_[_]]](f: ∀~[[a[_]] =>> F[a] -> G[a]], g: ∀~[[a[_]] =>> G[a] -> H[a]]): ∀~[[a[_]] =>> F[a] -> H[a]] = andThen(f, g)
   
-  def semicat: Semicategory[->] = new Semicategory[->]:
+  def lower: Semicategory[->] = new Semicategory[->]:
     def andThen[A, B, C](ab: A -> B, bc: B -> C): A -> C =
       self.andThen[[a[_]] =>> A, [a[_]] =>> B, [a[_]] =>> C](∀~[[a[_]] =>> A -> B](ab), ∀~[[a[_]] =>> B -> C](bc)).apply
       
 object SemicategoryH extends SemicategoryHInstances:
   def apply[->[_,_]](using ev: SemicategoryH[->]): SemicategoryH[->] = ev
   
-  given lowerIso[->[_,_]]: (SemicategoryH[->] <=> Semicategory[->]) = Iso.unsafe(_.semicat, _.semicatH)
+  given lowerIso[->[_,_]]: (SemicategoryH[->] <=> Semicategory[->]) = Iso.unsafe(_.lower, _.semicatH)
   
 end SemicategoryH
 

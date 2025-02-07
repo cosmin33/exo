@@ -46,12 +46,21 @@ object FunctorH:
 type ContravariantK[A[_[_]]] = ExofunctorK[Dual[* => *,*,*], * => *, A]
 object ContravariantK:
   def apply[A[_[_]]](using E: ContravariantK[A]): ContravariantK[A] = E
+  trait Proto[A[_[_]]] extends ExofunctorK[Dual[* => *,*,*], * => *, A]:
+    def comap[F[_], G[_]](f: G ~> F): A[F] => A[G]
+    def map[F[_], G[_]](f: ∀[[a] =>> Dual[Function, F[a], G[a]]]): A[F] => A[G] = comap(f.toFnK)
 type ContravariantK2[A[_[_,_]]] = ExofunctorK2[Dual[* => *,*,*], * => *, A]
 object ContravariantK2:
   def apply[A[_[_,_]]](using E: ContravariantK2[A]): ContravariantK2[A] = E
+  trait Proto[A[_[_,_]]] extends ExofunctorK2[Dual[* => *,*,*], * => *, A]:
+    def comap[F[_,_], G[_,_]](f: ∀∀[[a, b] =>> G[a, b] => F[a, b]]): A[F] => A[G]
+    def map[F[_,_], G[_,_]](f: ∀∀[[a, b] =>> Dual[Function, F[a, b], G[a, b]]]): A[F] => A[G] = comap(f.toFnK2)
 type ContravariantH[A[_[_[_]]]] = ExofunctorH[Dual[* => *,*,*], * => *, A]
 object ContravariantH:
   def apply[A[_[_[_]]]](using E: ContravariantH[A]): ContravariantH[A] = E
+  trait Proto[A[_[_[_]]]] extends ExofunctorH[Dual[* => *,*,*], * => *, A]:
+    def comap[F[_[_]], G[_[_]]](f: ∀~[[a[_]] =>> G[a] => F[a]]): A[F] => A[G]
+    def map[F[_[_]], G[_[_]]](f: ∀~[[a[_]] =>> Dual[Function, F[a], G[a]]]): A[F] => A[G] = comap(f.toFnH)
 
 type Isofunctor[F[_]] = Exofunctor[<=>, <=>, F]
 object Isofunctor:
@@ -63,20 +72,20 @@ type IsofunctorK[A[_[_]]] = ExofunctorK[<=>, <=>, A]
 object IsofunctorK:
   def apply[A[_[_]]](using E: IsofunctorK[A]): IsofunctorK[A] = E
   trait Proto[A[_[_]]] extends ExofunctorK[<=>, <=>, A]:
-    def map1[F[_], G[_]](i: ∀[[a] =>> F[a] <=> G[a]]): A[F] => A[G]
-    def map[F[_], G[_]](i: ∀[[a] =>> F[a] <=> G[a]]): A[F] <=> A[G] = <=>.unsafe(map1(i), map1(i.flipK))
+    def isomap[F[_], G[_]](i: ∀[[a] =>> F[a] <=> G[a]]): A[F] => A[G]
+    def map[F[_], G[_]](i: ∀[[a] =>> F[a] <=> G[a]]): A[F] <=> A[G] = <=>.unsafe(isomap(i), isomap(i.flipK))
 type IsofunctorK2[A[_[_,_]]] = ExofunctorK2[<=>, <=>, A]
 object IsofunctorK2:
   def apply[A[_[_,_]]](using E: IsofunctorK2[A]): IsofunctorK2[A] = E
   trait Proto[A[_[_,_]]] extends ExofunctorK2[<=>, <=>, A]:
-    def map1[F[_,_], G[_,_]](i: ∀∀[[a, b] =>> F[a, b] <=> G[a, b]]): A[F] => A[G]
-    def map[F[_,_], G[_,_]](i: ∀∀[[a, b] =>> F[a, b] <=> G[a, b]]): A[F] <=> A[G] = <=>.unsafe(map1(i), map1(i.flipK2))
+    def isomap[F[_,_], G[_,_]](i: ∀∀[[a, b] =>> F[a, b] <=> G[a, b]]): A[F] => A[G]
+    def map[F[_,_], G[_,_]](i: ∀∀[[a, b] =>> F[a, b] <=> G[a, b]]): A[F] <=> A[G] = <=>.unsafe(isomap(i), isomap(i.flipK2))
 type IsofunctorH[A[_[_[_]]]] = ExofunctorH[<=>, <=>, A]
 object IsofunctorH:
   def apply[A[_[_[_]]]](using E: IsofunctorH[A]): IsofunctorH[A] = E
   trait Proto[A[_[_[_]]]] extends ExofunctorH[<=>, <=>, A]:
-    def map1[F[_[_]], G[_[_]]](i: ∀~[[a[_]] =>> F[a] <=> G[a]]): A[F] => A[G]
-    def map[F[_[_]], G[_[_]]](i: ∀~[[a[_]] =>> F[a] <=> G[a]]): A[F] <=> A[G] = <=>.unsafe(map1(i), map1(i.flipH))
+    def isomap[F[_[_]], G[_[_]]](i: ∀~[[a[_]] =>> F[a] <=> G[a]]): A[F] => A[G]
+    def map[F[_[_]], G[_[_]]](i: ∀~[[a[_]] =>> F[a] <=> G[a]]): A[F] <=> A[G] = <=>.unsafe(isomap(i), isomap(i.flipH))
 
 type Endofunctor[->[_,_], F[_]] = Exofunctor[->, ->, F]
 object Endofunctor:

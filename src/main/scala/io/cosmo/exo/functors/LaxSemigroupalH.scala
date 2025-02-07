@@ -22,8 +22,8 @@ object LaxSemigroupalH:
   extension[⊙=[_,_], -->[_,_], ⊙-[_,_], A[_[_[_]]]](l: OplaxSemigroupalH[⊙=, -->, ⊙-, A])
     def opProduct[F[_[_]], G[_[_]]]: A[[a[_]] =>> F[a] ⊙= G[a]] --> (A[F] ⊙- A[G]) = l.product[F, G]
     def opcomap2[==>[_,_], F[_[_]], G[_[_]], H[_[_]]](fn: ∀~[[a[_]] =>> (F[a] ⊙= G[a]) ==> H[a]])(using
-      C: Semicategory[-->], E: ExofunctorH[==>, Dual[-->,*,*], A]
+      Semicategory[-->], ExofunctorH[==>, Dual[-->,*,*], A]
     ): A[H] --> (A[F] ⊙- A[G]) = l.map2(fn)
     def opmap2[==>[_,_], F[_[_]], G[_[_]], H[_[_]]](fn: ∀~[[a[_]] =>> H[a] ==> (F[a] ⊙= G[a])])(using
-      C: Semicategory[-->], E: ExofunctorH[Dual[==>,*,*], Dual[-->,*,*], A]
+      Semicategory[-->], ExofunctorH[Dual[==>,*,*], Dual[-->,*,*], A]
     ): A[H] --> (A[F] ⊙- A[G]) = l.map2(Dual.forallK[==>, [a[_]] =>> F[a] ⊙= G[a], H](fn))

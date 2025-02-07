@@ -17,13 +17,16 @@ trait LaxSemigroupalK2[⊙=[_,_], -->[_,_], ⊙-[_,_], A[_[_,_]]]:
     CSemigroup.unsafe(map2(ma.op))(using A)
 
 object LaxSemigroupalK2:
+  type Aux[⊙=[_,_], -->[_,_], ⊙-[_,_], C[_], A[_[_,_]]] = LaxSemigroupalK2[⊙=, -->, ⊙-, A] { type TC[a] = C[a] }
   def apply[⊙=[_,_], -->[_,_], ⊙-[_,_], A[_[_,_]]](using l: LaxSemigroupalK2[⊙=, -->, ⊙-, A]): LaxSemigroupalK2[⊙=, -->, ⊙-, A] = l
   extension[⊙=[_,_], -->[_,_], ⊙-[_,_], A[_[_,_]]](l: OplaxSemigroupalK2[⊙=, -->, ⊙-, A])
     def opProduct[F[_,_], G[_,_]]: A[[a, b] =>> F[a, b] ⊙= G[a, b]] --> (A[F] ⊙- A[G]) = l.product[F, G]
     def opcomap2[==>[_,_], F[_,_], G[_,_], H[_,_]](fn: ∀∀[[a, b] =>> (F[a, b] ⊙= G[a, b]) ==> H[a, b]])(using
-      C: Semicategory[-->], E: ExofunctorK2[==>, Dual[-->,*,*], A]
+      Semicategory[-->], ExofunctorK2[==>, Dual[-->,*,*], A]
     ): A[H] --> (A[F] ⊙- A[G]) = l.map2(fn)
     def opmap2[==>[_,_], F[_,_], G[_,_], H[_,_]](fn: ∀∀[[a, b] =>> H[a, b] ==> (F[a, b] ⊙= G[a, b])])(using
-      C: Semicategory[-->], E: ExofunctorK2[Dual[==>,*,*], Dual[-->,*,*], A]
+      Semicategory[-->], ExofunctorK2[Dual[==>,*,*], Dual[-->,*,*], A]
     ): A[H] --> (A[F] ⊙- A[G]) = l.map2(Dual.forall2[==>, [a, b] =>> F[a, b] ⊙= G[a, b], H](fn))
-
+  
+  trait Proto[⊙=[_,_], -->[_,_], ⊙-[_,_], C[_], A[_[_,_]]] extends LaxSemigroupalK2[⊙=, -->, ⊙-, A]:
+    type TC[a] = C[a]
