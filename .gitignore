@@ -16,5 +16,5 @@ src_managed/
 project/boot/
 project/plugins/project/
 .cache
-.lib/
 .bloop/
+.lib/

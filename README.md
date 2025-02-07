@@ -1,1 +1,3 @@
 # exo
+
+Exofunctors and categories
