@@ -23,7 +23,9 @@ trait LaxSemigroupal[⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]]:
       type TD[a] = G.TD[a]; val D = G.D; def product[A, B] = G.map2(self.product[A, B])
 
 object LaxSemigroupal extends LaxSemigroupalInstances:
+  type Aux[⊙=[_,_], -->[_,_], ⊙-[_,_], TD0[_], F[_]] = LaxSemigroupal[⊙=, -->, ⊙-, F] { type TD[a] = TD0[a] }
   def apply[⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]](using l: LaxSemigroupal[⊙=, -->, ⊙-, F]): LaxSemigroupal[⊙=, -->, ⊙-, F] = l
+  
   extension[⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]](l: OplaxSemigroupal[⊙=, -->, ⊙-, F])
     def opProduct[A, B]: F[A ⊙= B] --> (F[A] ⊙- F[B]) = l.product[A, B]
     def opcomap2[==>[_,_], A, B, C](fn: (A ⊙= B) ==> C)(using
