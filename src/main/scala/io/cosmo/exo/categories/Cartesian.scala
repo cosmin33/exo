@@ -2,7 +2,6 @@ package io.cosmo.exo.categories
 
 import io.cosmo.exo
 import io.cosmo.exo.*
-import io.cosmo.exo.evidence.*
 import io.cosmo.exo.syntax.*
 
 trait Cartesian[->[_,_], ⨂[_,_]] extends Monoidal[->, ⨂] with Symmetric[->, ⨂]:
@@ -32,14 +31,14 @@ object Cartesian:
     def inl[A: self.TC, B: self.TC]: A -> ⨁[A, B] = self.fst
     def inr[A: self.TC, B: self.TC]: B -> ⨁[A, B] = self.snd
     def codiag[A: self.TC]: ⨁[A, A] -> A = self.diag
-    def |||  [A, B, C](f: A -> C, g: B -> C): ⨁[A, B] -> C = self.&&&(Dual(f), Dual(g))
+    def |||  [A, B, C](f: A -> C, g: B -> C): ⨁[A, B] -> C = self.&&&(f.dual, g.dual)
     def split[A, B, C](f: A -> C, g: B -> C): ⨁[A, B] -> C = |||(f, g)
     def split3[A, B, C, D](f1: A -> D, f2: B -> D, f3: C -> D): ⨁[A, ⨁[B, C]] -> D = |||(f1, |||(f2, f3))
     def split4[A, B, C, D, E](f1: A -> E, f2: B -> E, f3: C -> E, f4: D -> E): ⨁[A, ⨁[B, ⨁[C, D]]] -> E = |||(f1, |||(f2, |||(f3, f4)))
     def isoCocartesian[A: self.TC, B: self.TC, C: self.TC]: (A -> C, B -> C) <=> (⨁[A, B] -> C) =
       Iso.unsafe(
         |||,
-        fn => (self.C.andThen(Dual(fn), self.fst[A, B]), self.C.andThen(Dual(fn), self.snd[A, B]))
+        fn => (self.C.andThen(fn.dual, self.fst[A, B]), self.C.andThen(fn.dual, self.snd[A, B]))
       )
 end Cartesian
 
@@ -78,15 +77,15 @@ object CartesianK:
     def |||  [F[_], G[_], H[_]](f: ∀[[a] =>> F[a] -> H[a]], g: ∀[[a] =>> G[a] -> H[a]]): ∀[[a] =>> ⨁[F[a], G[a]] -> H[a]] =
       ∀[[a] =>> ⨁[F[a], G[a]] -> H[a]](
         self.&&&(
-          ∀[[a] =>> Dual[->, H[a], F[a]]](Dual(f.apply)),
-          ∀[[a] =>> Dual[->, H[a], G[a]]](Dual(g.apply))
+          ∀[[a] =>> Dual[->, H[a], F[a]]](f.apply.dual),
+          ∀[[a] =>> Dual[->, H[a], G[a]]](g.apply.dual)
         ).apply
       )
     def isoCocartesian[F[_]: self.TC, G[_]: self.TC, H[_]]: (∀[[a] =>> F[a] -> H[a]], ∀[[a] =>> G[a] -> H[a]]) <=> ∀[[a] =>> ⨁[F[a], G[a]] -> H[a]] =
       Iso.unsafe(
         |||,
         fn => {
-          val ff = ∀[[a] =>> Dual[->, H[a], F[a] ⨁ G[a]]](Dual(fn.apply))
+          val ff = ∀[[a] =>> Dual[->, H[a], F[a] ⨁ G[a]]](fn.apply.dual)
           (
             ∀[[a] =>> F[a] -> H[a]](self.C.andThen[H, [a] =>> F[a] ⨁ G[a], F](ff, self.fst[F, G]).apply),
             ∀[[a] =>> G[a] -> H[a]](self.C.andThen[H, [a] =>> F[a] ⨁ G[a], G](ff, self.snd[F, G]).apply)
@@ -130,15 +129,15 @@ object CartesianK2:
     def |||  [F[_,_], G[_,_], H[_,_]](f: ∀∀[[a, b] =>> F[a, b] -> H[a, b]], g: ∀∀[[a, b] =>> G[a, b] -> H[a, b]]): ∀∀[[a, b] =>> ⨁[F[a, b], G[a, b]] -> H[a, b]] =
       ∀∀[[a, b] =>> ⨁[F[a, b], G[a, b]] -> H[a, b]](
         self.&&&(
-          ∀∀[[a, b] =>> Dual[->, H[a, b], F[a, b]]](Dual(f.apply)),
-          ∀∀[[a, b] =>> Dual[->, H[a, b], G[a, b]]](Dual(g.apply))
+          ∀∀[[a, b] =>> Dual[->, H[a, b], F[a, b]]](f.apply.dual),
+          ∀∀[[a, b] =>> Dual[->, H[a, b], G[a, b]]](g.apply.dual)
         ).apply
       )
     def isoCocartesian[F[_,_]: self.TC, G[_,_]: self.TC, H[_,_]]: (∀∀[[a, b] =>> F[a, b] -> H[a, b]], ∀∀[[a, b] =>> G[a, b] -> H[a, b]]) <=> ∀∀[[a, b] =>> ⨁[F[a, b], G[a, b]] -> H[a, b]] =
       Iso.unsafe(
         |||,
         fn => {
-          val ff = ∀∀[[a, b] =>> Dual[->, H[a, b], F[a, b] ⨁ G[a, b]]](Dual(fn.apply))
+          val ff = ∀∀[[a, b] =>> Dual[->, H[a, b], F[a, b] ⨁ G[a, b]]](fn.apply.dual)
           (
             ∀∀[[a, b] =>> F[a, b] -> H[a, b]](self.C.andThen[H, [a, b] =>> F[a, b] ⨁ G[a, b], F](ff, self.fst[F, G]).apply),
             ∀∀[[a, b] =>> G[a, b] -> H[a, b]](self.C.andThen[H, [a, b] =>> F[a, b] ⨁ G[a, b], G](ff, self.snd[F, G]).apply)
@@ -182,15 +181,15 @@ object CartesianH:
     def |||  [F[_[_]], G[_[_]], H[_[_]]](f: ∀~[[a[_]] =>> F[a] -> H[a]], g: ∀~[[a[_]] =>> G[a] -> H[a]]): ∀~[[a[_]] =>> ⨁[F[a], G[a]] -> H[a]] =
       ∀~[[a[_]] =>> ⨁[F[a], G[a]] -> H[a]](
         self.&&&(
-          ∀~[[a[_]] =>> Dual[->, H[a], F[a]]](Dual(f.apply)),
-          ∀~[[a[_]] =>> Dual[->, H[a], G[a]]](Dual(g.apply))
+          ∀~[[a[_]] =>> Dual[->, H[a], F[a]]](f.apply.dual),
+          ∀~[[a[_]] =>> Dual[->, H[a], G[a]]](g.apply.dual)
         ).apply
       )
     def isoCocartesian[F[_[_]]: self.TC, G[_[_]]: self.TC, H[_[_]]]: (∀~[[a[_]] =>> F[a] -> H[a]], ∀~[[a[_]] =>> G[a] -> H[a]]) <=> ∀~[[a[_]] =>> ⨁[F[a], G[a]] -> H[a]] =
       Iso.unsafe(
         |||,
         fn => {
-          val ff = ∀~[[a[_]] =>> Dual[->, H[a], F[a] ⨁ G[a]]](Dual(fn.apply))
+          val ff = ∀~[[a[_]] =>> Dual[->, H[a], F[a] ⨁ G[a]]](fn.apply.dual)
           (
             ∀~[[a[_]] =>> F[a] -> H[a]](self.C.andThen[H, [a[_]] =>> F[a] ⨁ G[a], F](ff, self.fst[F, G]).apply),
             ∀~[[a[_]] =>> G[a] -> H[a]](self.C.andThen[H, [a[_]] =>> F[a] ⨁ G[a], G](ff, self.snd[F, G]).apply)
