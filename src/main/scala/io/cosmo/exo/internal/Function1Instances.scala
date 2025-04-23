@@ -60,8 +60,8 @@ trait Function1AssociativeInstances {
       def snd[A: TC, B: TC]: (A, B) -> B = (_, b) => b
       def &&&[A, B, C](f: A -> B, g: A -> C): A -> (B, C) = x => (f(x), g(x))
       def diag[A: TC]: A -> (A, A) = a => (a, a)
-      def curry[X, Y, Z](f: ((X, Y)) => Z): X => (Y => Z) = x => y => f((x, y))
-      def uncurry[X, Y, Z](f: X => (Y => Z)): ((X, Y)) => Z = (x, y) => f(x)(y)
+      def curry[X, Y, Z](f: (X, Y) -> Z): X -> (Y -> Z) = x => y => f((x, y))
+      def uncurry[X, Y, Z](f: X -> (Y -> Z)): (X, Y) -> Z = (x, y) => f(x)(y)
       override def apply[A, B](using TC[A => B]): ((A => B, A)) => B = (ab, a) => ab(a)
     }
 

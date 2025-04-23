@@ -28,7 +28,5 @@ trait LaxMonoidal[⊙=[_,_], -->[_,_], ⊙-[_,_], F[_]] extends LaxSemigroupal[�
       def product[A, B]: G[F[A]] ⊙~ G[F[B]] ~~> G[F[A ⊙= B]] = that.map2(self.product[A, B])
 
 object LaxMonoidal:
-  type Aux[⊙=[_,_], -->[_,_], ⊙-[_,_], TD0[_], ID0, IC0, F[_]] = LaxMonoidal[⊙=, -->, ⊙-, F]: 
-    type TD[a] = TD0[a]
-    type ID = ID0
-    type IC = IC0
+  type Aux[⊙=[_,_], -->[_,_], ⊙-[_,_], TD0[_], ID0, IC0, F[_]] = LaxMonoidal[⊙=, -->, ⊙-, F]:
+    type TD[a] = TD0[a]; type ID = ID0; type IC = IC0
