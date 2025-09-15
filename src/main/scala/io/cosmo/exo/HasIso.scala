@@ -6,9 +6,16 @@ import scala.compiletime.summonFrom
 
 opaque type HasIso[->[_,_], A, B] <: Iso[->, A, B] = Iso[->, A, B]
 
-object HasIso:
-  given[->[_,_], A, B](using e: EqImpIso[->, A, B] \/ (Iso[->, A, B] \/ Iso[->, B, A])): HasIso[->, A, B] =
-    e.fold3(identity, identity, _.flip)
+object HasIso extends HasIsoImplicits:
+  def apply[->[_,_], A, B](i: Iso[->, A, B]): HasIso[->, A, B] = i
+
+  given first[->[_,_], A, B](using e: EqImpIso[->, A, B]): HasIso[->, A, B] = e
+
+private[exo] trait HasIsoImplicits extends HasIsoImplicits01:
+  given second[->[_,_], A, B](using i: Iso[->, A, B]): HasIso[->, A, B] = HasIso(i)
+
+private[exo] trait HasIsoImplicits01:
+  given third[->[_,_], A, B](using i: Iso[->, B, A]): HasIso[->, A, B] = HasIso(i.flip)
 
 private[exo] opaque type ReflImpIso[->[_,_], A] = Iso[->, A, A]
 

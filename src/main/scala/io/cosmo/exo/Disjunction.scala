@@ -23,12 +23,11 @@ object Disjunction extends DisjunctionImplicits
 
   def either[A, B, C](ac: A => C, bc: B => C): (A \/ B) => C = _.fold(ac, bc)
 
-  /**  */
   def unsafeLeibniz: Either =~~= \/ = =~~=.refl
 
   given iso[L, R]: (Either[L, R] <=> (L \/ R)) = unsafeLeibniz.is[L, R].toIso
-  
-//  given isoK2: (Either <~~> \/) = unsafeLeibniz.toIso
+
+  given isoK2: (Either <~~> \/) = unsafeLeibniz.toIso
 
   given bifunctor: Endobifunctor[Function, \/] with
     def bimap[A, B, C, D](fab: A => B, fcd: C => D): (A \/ C) => (B \/ D) = _.bimap(fab, fcd)
@@ -37,7 +36,7 @@ object Disjunction extends DisjunctionImplicits
     def toEither: Either[A, B] = e
     def fold[X](f1: A => X, f2: B => X): X = e.toEither.fold(f1, f2)
     def bimap[C, D](f: A => C, g: B => D): C \/ D = e.fold(f(_).left, g(_).right)
-  
+
   extension[A, B, C](e: A \/ (B \/ C))
     def toEither3: Either[A, Either[B, C]] = e
     def fold3[X](f1: A => X, f2: B => X, f3: C => X): X = e.fold(f1, _.fold(f2, f3))
@@ -49,7 +48,7 @@ object Disjunction extends DisjunctionImplicits
   extension[A, B, C, D, E](e: A \/ (B \/ (C \/ (D \/ E))))
     def toEither5: Either[A, Either[B, Either[C, Either[D, E]]]] = e
     def fold5[X](f1: A => X, f2: B => X, f3: C => X, f4: D => X, f5: E => X): X = e.fold4(f1, f2, f3, _.fold(f4, f5))
-    
+
   extension[A, B, C, D, E, F](e: A \/ (B \/ (C \/ (D \/ (E \/ F)))))
     def toEither6: Either[A, Either[B, Either[C, Either[D, Either[E, F]]]]] = e
     def fold6[X](f1: A => X, f2: B => X, f3: C => X, f4: D => X, f5: E => X, f6: F => X): X = e.fold5(f1, f2, f3, f4, _.fold(f5, f6))
