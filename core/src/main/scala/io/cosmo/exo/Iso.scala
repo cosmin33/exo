@@ -89,7 +89,7 @@ object Iso extends IsoInstances with IsoImplicits {
     ∀∀.mk[Iso[==>,*,*] ~~> Iso[-->,*,*]].from(i => Iso.unsafe(fn.exec(i.to),   fn.exec(i.from)))
 
   /** If two arrow are isomorphic then those arrows isomorphisms are isomorphic */
-  implicit def liftIsoFnToIso[==>[_,_]: Subcat, -->[_,_]: Subcat](iso: ==> <~~> -->): Iso[==>,*,*] <~~> Iso[-->,*,*] =
+  def liftIsoFnToIso[==>[_,_]: Subcat, -->[_,_]: Subcat](iso: ==> <~~> -->): Iso[==>,*,*] <~~> Iso[-->,*,*] =
     <~~>.unsafe(liftFnFnToFnIso(iso.to), liftFnFnToFnIso(iso.from))
 
   /** Isomorphism between any iso and it's flipped iso */

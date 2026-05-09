@@ -45,8 +45,8 @@ object Associative extends AssociativeImplicits {
 
   def dual[->[_,_], ⊙[_,_], T[_]](a: Associative.Aux[->, ⊙, T]): Associative.Aux[Dual[->,*,*], ⊙, T] =
     new Associative.Proto[Dual[->,*,*], ⊙, T] {
-      def C: Subcat.Aux[Dual[->, *, *], T] = a.C.dual
-      def bifunctor: Endobifunctor[Dual[->, *, *], ⊙] = Exobifunctor.dual(a.bifunctor)
+      lazy val C: Subcat.Aux[Dual[->, *, *], T] = a.C.dual
+      lazy val bifunctor: Endobifunctor[Dual[->, *, *], ⊙] = Exobifunctor.dual(a.bifunctor)
       def associate  [X: TC, Y: TC, Z: TC] = Dual(a.diassociate)
       def diassociate[X: TC, Y: TC, Z: TC] = Dual(a.associate)
     }
@@ -59,8 +59,8 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
         type TC[a] = Trivial.T1[a]
         type Id = Unit
         private type ->[a, b] = a => b
-        def C: Subcat.AuxT[* => *] = Semicategory.function1
-        def bifunctor = Exobifunctor.tuple2Endobifunctor
+        lazy val C: Subcat.AuxT[* => *] = Semicategory.function1
+        lazy val bifunctor = Exobifunctor.tuple2Endobifunctor
         def associate  [X: TC, Y: TC, Z: TC]: ((X, Y), Z) -> (X, (Y, Z)) = { case ((x, y), z) => (x, (y, z)) }
         def diassociate[X: TC, Y: TC, Z: TC]: (X, (Y, Z)) -> ((X, Y), Z) = { case (x, (y, z)) => ((x, y), z) }
         def braid[A: TC, B: TC]: ((A, B)) => (B, A) = { case (a, b) => (b, a) }
@@ -83,8 +83,8 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
       new Cartesian[Opp[* => *]#l, \/] {
         type TC[a] = Trivial.T1[a]
         type Id = Void
-        def C: Subcat.AuxT[Opp[* => *]#l] = DualModule.oppSubcat(implicitly[Subcat.Aux[* => *, Trivial.T1]])
-        def bifunctor = DualModule.oppEndobifunctor(Endobifunctor[* => *, \/])
+        lazy val C: Subcat.AuxT[Opp[* => *]#l] = DualModule.oppSubcat(implicitly[Subcat.Aux[* => *, Trivial.T1]])
+        lazy val bifunctor = DualModule.oppEndobifunctor(Endobifunctor[* => *, \/])
         def diassociate[X: TC, Y: TC, Z: TC]: (X \/ Y \/ Z) => (X \/ (Y \/ Z)) = _.fold(_.fold(_.left[Y \/ Z], _.left[Z].right[X]), _.right[Y].right[X])
         def associate  [X: TC, Y: TC, Z: TC]: (X \/ (Y \/ Z)) => (X \/ Y \/ Z) = _.fold(_.left[Y].left[Z], _.fold(_.right[X].left[Z], _.right[X \/ Y]))
         def braid[A: TC, B: TC]: (B \/ A) => (A \/ B) = _.fold(_.right, _.left)
@@ -101,8 +101,8 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
   implicit def assocFn1Disj: Associative.Aux[* => *, \/, Trivial.T1] =
     new Associative[* => *, \/] {
       type TC[a] = Trivial.T1[a]
-      def C = implicitly
-      def bifunctor = implicitly
+      lazy val C = implicitly
+      lazy val bifunctor = implicitly
       def associate  [X: TC, Y: TC, Z: TC]: X \/ Y \/ Z => X \/ (Y \/ Z) = cocartesianFn1Disj.diassociate(trivial, trivial, trivial)
       def diassociate[X: TC, Y: TC, Z: TC]: X \/ (Y \/ Z) => X \/ Y \/ Z = cocartesianFn1Disj.associate(trivial, trivial, trivial)
     }
@@ -124,7 +124,7 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
     new Monoidal[Inject, (*, *)] with Symmetric[Inject, (*, *)] {
       type Id = Unit
       type TC[a] = Trivial.T1[a]
-      def C: Subcat.Aux[>->, Trivial.T1] = Semicategory.injSubcat
+      lazy val C: Subcat.Aux[>->, Trivial.T1] = Semicategory.injSubcat
       def idl[A: TC]: >->[(Unit, A), A] = new >->[(Unit, A), A] {
         val inj: ((Unit, A)) => A = _._2
         val prj: A => Option[(Unit, A)] = a => ((), a).some
@@ -167,7 +167,7 @@ trait AssociativeImplicits extends AssociativeImplicits01 {
     new Cartesian[Opp[Inject]#l, \/] {
       override type Id = Void
       override type TC[a] = Trivial.T1[a]
-      def C: Subcat.Aux[Opp[>->]#l, Trivial.T1] = DualModule.oppSubcat(implicitly[Subcat.Aux[>->, Trivial.T1]])
+      lazy val C: Subcat.Aux[Opp[>->]#l, Trivial.T1] = DualModule.oppSubcat(implicitly[Subcat.Aux[>->, Trivial.T1]])
       override def idl[A: TC]: >->[A, Void \/ A] = new >->[A, Void \/ A] {
         val inj: A => Void \/ A = _.right[Void]
         val prj: Void \/ A => Option[A] = _.fold(_ => none[A], _.some)

@@ -151,14 +151,7 @@ private[exo] object FunKHelpers {
 
     type |->[A, B] = FunK[A, B]
     type ⊙[A, B] = (A, B)
-    def curry[A, B, C](f: FunK[(A, B), C]): FunK[A, FunK[B, C]] = {
-      val f1: f.TypeA ~> f.TypeB = f.fn
-      val x1: IsKind.Aux[(A, B), f.TypeA] = f.kindA
-//      val x2 = IsKind.pair2(f.)
-//      val f2 = ~>.curry(f.fn)
-//      FunK.from()
-      ???
-    }
+    def curry[A, B, C](f: FunK[(A, B), C]): FunK[A, FunK[B, C]] = ??? //FunK.from(~>.curry(f.fn))
     def uncurry[A, B, C](f: FunK[A, FunK[B, C]]): FunK[(A, B), C] = ???
 
     def id[A](implicit ia: IsKind[A]): FunK[A, A] = FunK.from(~>.id[ia.Type])(ia, ia)
@@ -237,11 +230,11 @@ private[exo] object FunKHelpers {
     def diag[A](implicit ia: IsKind[A]): FunK[Either[A, A], A] =
       FunK.from(~>.coproduct.codiag[ia.Type])(IsKind.either2(ia, ia), ia)
     def &&&[X, Y, Z](f: FunK[Y, X], g: FunK[Z, X]): FunK[Either[Y, Z], X] =
-    FunK.from(
-      ~>.coproduct.split(f.fn, IsKind.injectivity(g.kindB, f.kindB).subst[λ[f[_] => g.TypeA ~> f]](g.fn)))(
-      IsKind.either2(f.kindA, g.kindA),
-      f.kindB
-    )
+      FunK.from(
+        ~>.coproduct.split(f.fn, IsKind.injectivity(g.kindB, f.kindB).subst[λ[f[_] => g.TypeA ~> f]](g.fn)))(
+        IsKind.either2(f.kindA, g.kindA),
+        f.kindB
+      )
     def idl  [A](implicit ia: IsKind[A]): FunK[A, Either[TypeK[VoidK], A]] =
       FunK.from(~>.coproduct.idl[ia.Type])(ia, IsKind.either2(IsKind[TypeK[VoidK]], ia))
     def coidl[A](implicit ia: IsKind[A]): FunK[Either[TypeK[VoidK], A], A] =

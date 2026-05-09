@@ -46,11 +46,11 @@ package object functors {
 
     trait Proto[H[_[_]]] extends IsoFunctorK[H] {
       def map[A, B](i: IsoFunK[A, B]): HasTc[H, A] <=> HasTc[H, B] = {
-        val ito = i.to
-        val isok: ito.TypeA <~> ito.TypeB = FunK.isoFunKUnapply(i)(ito.kindA, ito.kindB)
+        val to = i.to
+        val isok: to.TypeA <~> to.TypeB = FunK.isoFunKUnapply(i)(to.kindA, to.kindB)
         Iso.unsafe(
-          HasTc.isoFun1(ito.kindA, ito.kindB).flip(mapK(isok)),
-          HasTc.isoFun1(ito.kindB, ito.kindA).flip(mapK(isok.flip))
+          HasTc.isoFun1(to.kindA, to.kindB).flip(mapK(isok)),
+          HasTc.isoFun1(to.kindB, to.kindA).flip(mapK(isok.flip))
         )
       }
       protected def mapK[F[_], G[_]](f: F <~> G): H[F] => H[G]

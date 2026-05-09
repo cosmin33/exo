@@ -60,7 +60,7 @@ trait Ccc[->[_, _]] extends Subcat[->] { self =>
       def F: Exo[->, ->, ⊙[*, X]] = Exo.unsafe[->, ->, ⊙[*, X]](cartesian.bifunctor.leftMap(_))
       def G: Exo[->, ->, X |-> *] = exo
       override def iso[A, B]: (A ⊙ X) -> B <=> (A -> (X |-> B)) = isoClosedAdjunction
-      def unit  [A]: A -> (X |-> (A ⊙ X)) = iso[A,   A ⊙ X].to  (subL.id[A ⊙ X] (t1.apply[A]))
+      def unit  [A]: A -> (X |-> (A ⊙ X)) = iso[A,   A ⊙ X].to  (subL.id[A ⊙ X](t1.apply[A]))
       def counit[A]: ((X |-> A) ⊙ X) -> A = iso[X |-> A, A].from(subR.id[X |-> A](t2.apply[A]))
     }
 }
