@@ -18,3 +18,6 @@ project/plugins/project/
 .cache
 .bloop/
 .lib/
+.bsp/
+.metals/
+.claude/
