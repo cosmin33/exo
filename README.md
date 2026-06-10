@@ -1,5 +1,7 @@
 # exo
 
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.cosmin33/exo-core_3)](https://central.sonatype.com/artifact/io.github.cosmin33/exo-core_3)
+
 **Exofunctors and categories for Scala 3** — a category-theory library built around functors between *arbitrary* categories, not just the category of Scala types and functions.
 
 Where libraries like cats fix the category to `Function1` (so `Functor[F]` always means `(A => B) => F[A] => F[B]`), exo abstracts over the arrow itself. A functor in exo maps arrows of *any* source category to arrows of *any* target category — type equalities, subtyping evidence, isomorphisms, Kleisli arrows, dual arrows, or plain functions. Covariance, contravariance, and invariance stop being separate type classes and become choices of source category.
